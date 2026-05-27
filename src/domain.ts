@@ -2,6 +2,8 @@ export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; message: string }
 
+export { formatMoney, parseMoney } from './money'
+
 export const supportedCurrencies = ['AUD', 'USD', 'EUR', 'GBP', 'NZD'] as const
 export type SupportedCurrency = (typeof supportedCurrencies)[number]
 
@@ -115,40 +117,18 @@ function isSupportedCurrency(currency: string): currency is SupportedCurrency {
   return supportedCurrencies.includes(currency as SupportedCurrency)
 }
 
-export function parseMoney(value: unknown, currency: string): Result<number> {
-  void currency
-
-  if (typeof value !== 'string' && typeof value !== 'number') {
-    return { ok: false, message: 'Amount is required' }
-  }
-
-  const text = String(value).trim()
-  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) {
-    return { ok: false, message: 'Amount must be a positive decimal amount' }
-  }
-
-  const [wholePart, decimalPart = ''] = text.split('.')
-  const amountMinor = Number(wholePart) * 100 + Number(decimalPart.padEnd(2, '0'))
-  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
-    return { ok: false, message: 'Amount must be positive' }
-  }
-
-  return { ok: true, value: amountMinor }
-}
-
-export function formatMoney(amountMinor: number, currency: string, locale = 'en'): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency
-  }).format(amountMinor / 100)
-}
-
-export function createEventToken(random = Math.random, length = 18): string {
+export function createEventToken(random = secureRandom, length = 18): string {
   let token = ''
   for (let index = 0; index < length; index += 1) {
     token += tokenAlphabet[Math.floor(random() * tokenAlphabet.length)] ?? tokenAlphabet[0]
   }
   return token
+}
+
+function secureRandom(): number {
+  const value = new Uint32Array(1)
+  crypto.getRandomValues(value)
+  return (value[0] ?? 0) / 2 ** 32
 }
 
 export function calculateBalances(

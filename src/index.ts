@@ -1,10 +1,11 @@
 import { Hono } from 'hono'
 import {
-  parseCurrency,
-  parseMoney,
-  trimRequired
-} from './domain'
-import type { ExpenseInput, Result, SettlementPaymentInput, Share, SupportedCurrency } from './domain'
+  CommandInputError,
+  parseCreateEventInput,
+  parseExpenseInput,
+  parseParticipantDisplayName,
+  parseSettlementPaymentInput
+} from './event-command-input'
 import { D1Store, StoreError } from './store'
 import type { AppStore } from './store'
 import { clientScript } from './ui/client'
@@ -73,7 +74,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
     try {
       body = await readJson(c.req.raw)
     } catch (error: unknown) {
-      if (error instanceof StoreError) {
+      if (error instanceof CommandInputError) {
         return validationError(error.message)
       }
       throw error
@@ -97,21 +98,17 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
 
   app.post('/api/events/:token/participants', async (c) => {
     return handleStore(storeFactory(c.env), async (store) => {
-      const name = trimRequired(field(await readJson(c.req.raw), 'displayName'), 'Participant display name')
-      if (!name.ok) {
-        throw new StoreError(name.message)
-      }
-      return store.addParticipant(c.req.param('token'), name.value)
+      return store.addParticipant(c.req.param('token'), parseParticipantDisplayName(await readJson(c.req.raw)))
     })
   })
 
   app.patch('/api/events/:token/participants/:participantId', async (c) => {
     return handleStore(storeFactory(c.env), async (store) => {
-      const name = trimRequired(field(await readJson(c.req.raw), 'displayName'), 'Participant display name')
-      if (!name.ok) {
-        throw new StoreError(name.message)
-      }
-      return store.renameParticipant(c.req.param('token'), c.req.param('participantId'), name.value)
+      return store.renameParticipant(
+        c.req.param('token'),
+        c.req.param('participantId'),
+        parseParticipantDisplayName(await readJson(c.req.raw))
+      )
     })
   })
 
@@ -127,7 +124,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       if (!snapshot) {
         throw new StoreError('Event not found', 404)
       }
-      return store.createExpense(c.req.param('token'), parseExpenseBody(await readJson(c.req.raw), snapshot.event.currency))
+      return store.createExpense(c.req.param('token'), parseExpenseInput(await readJson(c.req.raw), snapshot.event.currency))
     })
   })
 
@@ -140,7 +137,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       return store.updateExpense(
         c.req.param('token'),
         c.req.param('expenseId'),
-        parseExpenseBody(await readJson(c.req.raw), snapshot.event.currency)
+        parseExpenseInput(await readJson(c.req.raw), snapshot.event.currency)
       )
     })
   })
@@ -157,7 +154,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       }
       return store.createSettlementPayment(
         c.req.param('token'),
-        parseSettlementPaymentBody(await readJson(c.req.raw), snapshot.event.currency)
+        parseSettlementPaymentInput(await readJson(c.req.raw), snapshot.event.currency)
       )
     })
   })
@@ -171,7 +168,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       return store.updateSettlementPayment(
         c.req.param('token'),
         c.req.param('settlementPaymentId'),
-        parseSettlementPaymentBody(await readJson(c.req.raw), snapshot.event.currency)
+        parseSettlementPaymentInput(await readJson(c.req.raw), snapshot.event.currency)
       )
     })
   })
@@ -189,99 +186,12 @@ const app = createApp()
 
 export default app
 
-function parseCreateEventInput(raw: unknown): Result<{ title: string; currency: SupportedCurrency; displayName: string }> {
-  const title = trimRequired(field(raw, 'title'), 'Event Title')
-  if (!title.ok) {
-    return title
-  }
-  const currency = parseCurrency(field(raw, 'currency'))
-  if (!currency.ok) {
-    return currency
-  }
-  const displayName = trimRequired(field(raw, 'displayName'), 'Participant display name')
-  if (!displayName.ok) {
-    return displayName
-  }
-  return createResult({ title: title.value, currency: currency.value, displayName: displayName.value })
-}
-
-function parseExpenseBody(raw: unknown, currency: string): ExpenseInput {
-  const description = trimRequired(field(raw, 'description'), 'Expense description')
-  if (!description.ok) {
-    throw new StoreError(description.message)
-  }
-  const amount = parseMoney(field(raw, 'amount'), currency)
-  if (!amount.ok) {
-    throw new StoreError(amount.message)
-  }
-  const payer = trimRequired(field(raw, 'payerParticipantId'), 'Payer')
-  if (!payer.ok) {
-    throw new StoreError(payer.message)
-  }
-
-  return {
-    description: description.value,
-    amountMinor: amount.value,
-    payerParticipantId: payer.value,
-    shares: parseShares(field(raw, 'shares'), currency)
-  }
-}
-
-function parseShares(raw: unknown, currency: string): Share[] {
-  if (!Array.isArray(raw)) {
-    throw new StoreError('Shares are required')
-  }
-
-  return raw.map((item) => {
-    const participantId = trimRequired(field(item, 'participantId'), 'Share Participant')
-    if (!participantId.ok) {
-      throw new StoreError(participantId.message)
-    }
-    const amount = parseMoney(field(item, 'amount'), currency)
-    if (!amount.ok) {
-      throw new StoreError(amount.message)
-    }
-    return {
-      participantId: participantId.value,
-      amountMinor: amount.value
-    }
-  })
-}
-
-function parseSettlementPaymentBody(raw: unknown, currency: string): SettlementPaymentInput {
-  const sender = trimRequired(field(raw, 'senderParticipantId'), 'Sender')
-  if (!sender.ok) {
-    throw new StoreError(sender.message)
-  }
-  const recipient = trimRequired(field(raw, 'recipientParticipantId'), 'Recipient')
-  if (!recipient.ok) {
-    throw new StoreError(recipient.message)
-  }
-  const amount = parseMoney(field(raw, 'amount'), currency)
-  if (!amount.ok) {
-    throw new StoreError(amount.message)
-  }
-
-  return {
-    senderParticipantId: sender.value,
-    recipientParticipantId: recipient.value,
-    amountMinor: amount.value
-  }
-}
-
 async function readJson(request: Request): Promise<unknown> {
   try {
     return await request.json()
   } catch {
-    throw new StoreError('Request body must be JSON')
+    throw new CommandInputError('Request body must be JSON')
   }
-}
-
-function field(raw: unknown, key: string): unknown {
-  if (raw && typeof raw === 'object' && key in raw) {
-    return (raw as Record<string, unknown>)[key]
-  }
-  return undefined
 }
 
 async function handleStore(
@@ -293,6 +203,9 @@ async function handleStore(
   } catch (error: unknown) {
     if (error instanceof StoreError) {
       return jsonError(error.status === 404 ? 'not_found' : 'validation_error', error.message, error.status)
+    }
+    if (error instanceof CommandInputError) {
+      return validationError(error.message)
     }
     throw error
   }
@@ -308,8 +221,4 @@ function jsonError(code: string, message: string, status: number): Response {
 
 function jsonCreated(value: unknown): Response {
   return Response.json(value, { status: 201 })
-}
-
-function createResult<T>(value: T): { ok: true; value: T } {
-  return { ok: true, value }
 }

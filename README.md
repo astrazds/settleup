@@ -2,6 +2,15 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost occasi
 
 The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and CSS. The current visual system is documented in [`docs/design/brandkit.md`](./docs/design/brandkit.md), with the standalone review artifact in [`docs/design/mockups.html`](./docs/design/mockups.html).
 
+## Architecture
+
+- `src/index.ts` owns the Hono routes and response shapes.
+- `src/event-command-input.ts` parses raw form or JSON command input into typed Event commands.
+- `src/event-record.ts` owns Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
+- `src/store.ts` provides storage adapters: `MemoryStore` for route tests and `D1Store` for Cloudflare D1.
+- `src/money.ts` owns two-decimal Currency amount parsing/formatting rules used by server code and browser draft validation.
+- `src/ui/client*.ts` keeps the browser Event screen as plain TypeScript modules that are concatenated into the single `/static/client.js` asset.
+
 ## Development
 
 ```txt

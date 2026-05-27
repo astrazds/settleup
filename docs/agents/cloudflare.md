@@ -33,3 +33,7 @@ npm run deploy
 ```
 
 Before creating, deleting, or mutating remote Cloudflare resources, confirm the intended resource name, binding name, and environment match `wrangler.jsonc` and the task.
+
+## D1 tests
+
+D1 adapter behavior is tested with Miniflare and the checked-in SQL migrations instead of a hand-written SQL fake. When changing D1 schema or queries, update `migrations/`, keep `D1Store` aligned with the migrated schema, and run `npm test` so the migration-backed tests exercise the real D1 binding shape.

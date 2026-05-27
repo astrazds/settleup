@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { calculateBalances, createEventToken, parseCurrency, parseMoney, supportedCurrencies } from './domain'
 import type { Expense, Participant, SettlementPayment } from './domain'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('money parsing', () => {
   it('accepts only the MVP supported currency codes', () => {
@@ -38,6 +42,13 @@ describe('Event Link token generation', () => {
 
     expect(token).toMatch(/^[a-z2-9]+$/)
     expect(token).not.toMatch(/[01ilo]/)
+  })
+
+  it('uses Web Crypto rather than Math.random by default', () => {
+    const random = vi.spyOn(Math, 'random')
+
+    expect(createEventToken()).toMatch(/^[a-z2-9]{18}$/)
+    expect(random).not.toHaveBeenCalled()
   })
 })
 

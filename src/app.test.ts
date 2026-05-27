@@ -207,6 +207,56 @@ describe('Event workflows', () => {
       }
     })
   })
+
+  it('rejects Expense commands without Shares using the route validation error shape', async () => {
+    const store = new MemoryStore()
+    const app = createApp({ storeFactory: () => store })
+    const created = await createEvent(app)
+    const token = created.event.token
+    const sarah = created.participants[0]
+
+    const response = await app.request(jsonRequest(`/api/events/${token}/expenses`, {
+      description: 'Dinner',
+      amount: '80.00',
+      payerParticipantId: sarah.id
+    }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Shares are required'
+      }
+    })
+  })
+
+  it('rejects Settlement Payment commands with invalid amounts using the route validation error shape', async () => {
+    const store = new MemoryStore()
+    const app = createApp({ storeFactory: () => store })
+    const created = await createEvent(app)
+    const token = created.event.token
+    const sarah = created.participants[0]
+
+    const alexResponse = await app.request(jsonRequest(`/api/events/${token}/participants`, {
+      displayName: 'Alex'
+    }))
+    const withAlex = await responseJson<EventSnapshot>(alexResponse)
+    const alex = requireParticipant(withAlex, 'Alex')
+
+    const response = await app.request(jsonRequest(`/api/events/${token}/settlement-payments`, {
+      senderParticipantId: alex.id,
+      recipientParticipantId: sarah.id,
+      amount: '10/3'
+    }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Amount must be a positive decimal amount'
+      }
+    })
+  })
 })
 
 describe('Frontend design contract', () => {

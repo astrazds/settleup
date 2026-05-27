@@ -12,6 +12,14 @@ _Avoid_: Trip, group, room, tab, ledger
 The shareable URL that grants access to one **Event**. Anyone with the **Event Link** may view the Event and act as a **Participant** within it.
 _Avoid_: Invite, login link, magic link, access token
 
+**Event Record**:
+The saved state of an **Event** before derived **Balances** and **Suggested Settlements** are added. An **Event Record** contains the Event summary, Participants, Expenses, Shares, and Settlement Payments that storage adapters persist or load.
+_Avoid_: Raw event, database row bundle, store payload
+
+**Event Snapshot**:
+The full readable state of an **Event** returned to callers after **Balances** and **Suggested Settlements** have been derived from an **Event Record**.
+_Avoid_: View model, response blob, DTO
+
 **Event Title**:
 The required human-readable name of an **Event**. An **Event Title** helps **Participants** recognize the Event but does not identify or grant access to it.
 _Avoid_: Slug, event id, token
