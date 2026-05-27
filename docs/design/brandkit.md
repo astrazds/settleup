@@ -91,10 +91,28 @@ Use a receipt-grid shape language:
 
 Use panels only for true task regions. Repeated records should read as ledger rows, not floating cards.
 
+Spacing scale:
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `spaceSm` | `10px` | Tight component groups and compact metadata |
+| `spaceMd` | `14px` | Form fields, ledger stacks, and nearby panels |
+| `spaceLg` | `20px` | Screen padding and major form grouping |
+| `spaceXl` | `28px` | Mockup rows and state comparison gaps |
+| `space2xl` | `40px` | Page-level separation |
+| `space3xl` | `56px` | Bottom breathing room and artifact endings |
+
 Radius:
 
 - panels and controls: `8px`
 - small tags, compact marks, and state chips: `4px`
+
+Mockup layout:
+
+- Create Event and Populated Event are full-width anchor states.
+- Empty Event pairs with Settle Up State so starting and resolving an Event can be compared.
+- Mobile Event pairs with Interaction States so responsive behavior and component states can be reviewed together.
+- The create surface is centered on the form. Brand copy stays compact and does not turn into a marketing hero.
 
 ## Copy Voice
 

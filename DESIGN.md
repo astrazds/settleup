@@ -71,6 +71,9 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - Balance wording should say "is owed", "owes", or "is settled" instead of relying on signed numbers.
 - Use medium product density. Desktop should use compact rows, aligned amounts, and fewer large empty panels. Mobile should keep generous tap targets without marketing-scale spacing. Forms should be dense but legible, with progressive sections. Records should be scan-first and row-based, not card-heavy.
 - On the Event page, Balances are visually dominant and Add Expense is the close second. Suggested Settlements become prominent when Balances are non-zero and the group is ready to settle.
+- Use a named spacing scale for product rhythm. Related controls should group tightly, while distinct states and mockup frames should have visibly larger gaps.
+- In design artifacts, use full-width anchor states for Create Event and Populated Event, then pair smaller state comparisons such as Empty Event with Settle Up and Mobile Event with Interaction States.
+- The create Event mockup should stay centered on the form surface. Supporting brand copy may sit above the form, but it must not become a split hero or feature pitch.
 
 ## Mockup Set
 
@@ -86,6 +89,8 @@ Required mockups:
 - Interaction state strip covering default, hover, focus, disabled, validation error, settled success row, owes row, and copied Event Link feedback
 
 Mockups should be built as a standalone HTML artifact before redesigning the live app. Use `docs/design/mockups.html` for state mockups and `docs/design/brandkit.md` for the product brandkit. The mockup page should reuse tokens that can later be moved into the live UI.
+
+The mockup artifact should be laid out as a product review board, not a marketing page. It should make the main task states easy to compare, keep secondary states paired, and preserve the receipt-grid rhythm through rows, dividers, and aligned amounts.
 
 Use realistic sample data in mockups. Default scenario: Event Title "Sydney weekend", Currency AUD, Participants Sarah, Alex, Priya, and Marco, with realistic Expenses such as Dinner, Ferry tickets, Groceries, and Petrol. Avoid placeholder-only mockups.
 
