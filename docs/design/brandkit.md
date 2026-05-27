@@ -69,15 +69,26 @@ Use system sans-serif:
 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif
 ```
 
-Scale:
+Type scale:
 
-- Page title: `28px / 1.15`, 750 weight
-- Section title: `17px / 1.2`, 720 weight
-- Body: `15px / 1.45`, 400 weight
-- Label: `12px / 1.2`, 700 weight
-- Amount: tabular numeric, 720 weight
+| Token | Value | Use |
+| --- | --- | --- |
+| `textCaption` | `0.75rem` | Labels, chips, and eyebrows |
+| `textSmall` | `0.875rem` | Secondary copy, captions, and row details |
+| `textBody` | `1rem` | Body text, controls, and ledger rows |
+| `textSubheading` | `1.125rem` | Section headings |
+| `textHeading` | `1.5rem` | Event titles and screen headings |
+| `textDisplay` | `1.875rem` | Artifact title and create-flow promise |
 
-Use fixed sizes, not viewport-scaled type.
+Use fixed `rem` sizes, not viewport-scaled type.
+
+Weight roles:
+
+- `400`: body text
+- `700`: headings, labels, and row names
+- `750`: brand, display headings, and amounts
+
+Use tabular numerals for money amounts so columns align.
 
 ## Shape And Layout
 

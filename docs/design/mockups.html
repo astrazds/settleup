@@ -25,7 +25,17 @@
       --space-xl: 28px;
       --space-2xl: 40px;
       --space-3xl: 56px;
+      --text-caption: 0.75rem;
+      --text-small: 0.875rem;
+      --text-body: 1rem;
+      --text-subheading: 1.125rem;
+      --text-heading: 1.5rem;
+      --text-display: 1.875rem;
+      --weight-strong: 700;
+      --weight-heavy: 750;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-kerning: normal;
+      text-rendering: optimizeLegibility;
     }
 
     * { box-sizing: border-box; }
@@ -34,14 +44,34 @@
       margin: 0;
       background: var(--paper);
       color: var(--ink);
-      font-size: 15px;
-      line-height: 1.45;
+      font-size: var(--text-body);
+      line-height: 1.5;
     }
 
     h1, h2, h3, p { margin-top: 0; }
-    h1 { font-size: 28px; line-height: 1.15; margin-bottom: 10px; letter-spacing: 0; }
-    h2 { font-size: 17px; line-height: 1.2; margin-bottom: 12px; letter-spacing: 0; }
-    h3 { font-size: 15px; line-height: 1.2; margin-bottom: 4px; letter-spacing: 0; }
+    h1 {
+      font-size: var(--text-heading);
+      line-height: 1.16;
+      margin-bottom: var(--space-sm);
+      font-weight: var(--weight-heavy);
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: var(--text-subheading);
+      line-height: 1.25;
+      margin-bottom: 12px;
+      font-weight: var(--weight-strong);
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: var(--text-body);
+      line-height: 1.25;
+      margin-bottom: 4px;
+      font-weight: var(--weight-strong);
+      letter-spacing: 0;
+    }
 
     button, input, select {
       font: inherit;
@@ -54,7 +84,7 @@
       background: var(--ledger);
       color: oklch(98% 0.006 157);
       padding: 0 14px;
-      font-weight: 720;
+      font-weight: var(--weight-strong);
     }
 
     button.secondary {
@@ -95,8 +125,8 @@
       display: grid;
       gap: 6px;
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 720;
+      font-size: var(--text-caption);
+      font-weight: var(--weight-strong);
       line-height: 1.2;
     }
 
@@ -116,6 +146,12 @@
 
     .artifact-header h1 {
       margin-bottom: 0;
+      font-size: var(--text-display);
+      line-height: 1.12;
+    }
+
+    .artifact-header p {
+      max-width: 68ch;
     }
 
     .mockup-stack {
@@ -156,7 +192,8 @@
     .mockup-title p {
       margin: 0;
       color: var(--muted);
-      font-size: 13px;
+      font-size: var(--text-small);
+      line-height: 1.35;
     }
 
     .screen {
@@ -173,7 +210,7 @@
       align-items: center;
       gap: 9px;
       color: var(--ink);
-      font-weight: 760;
+      font-weight: var(--weight-heavy);
     }
 
     .mark {
@@ -201,14 +238,18 @@
     .eyebrow {
       margin-bottom: 8px;
       color: var(--ledger-deep);
-      font-size: 12px;
-      font-weight: 780;
+      font-size: var(--text-caption);
+      font-weight: var(--weight-heavy);
       text-transform: uppercase;
-      letter-spacing: 0;
+      letter-spacing: 0.02em;
     }
 
     .muted { color: var(--muted); }
-    .amount { font-variant-numeric: tabular-nums; font-weight: 760; white-space: nowrap; }
+    .amount {
+      font-variant-numeric: tabular-nums;
+      font-weight: var(--weight-heavy);
+      white-space: nowrap;
+    }
     .positive { color: var(--ledger-deep); }
     .negative { color: var(--clay); }
     .zero { color: var(--muted); }
@@ -223,6 +264,16 @@
       display: grid;
       gap: var(--space-lg);
       width: min(540px, 100%);
+    }
+
+    .create-card > h1 {
+      max-width: 21ch;
+      font-size: var(--text-display);
+      line-height: 1.12;
+    }
+
+    .create-card > .muted {
+      max-width: 58ch;
     }
 
     .panel {
@@ -251,7 +302,8 @@
       background: color-mix(in oklch, var(--wash), var(--sheet) 45%);
       padding: 12px 16px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: var(--text-small);
+      line-height: 1.4;
     }
 
     .app-top {
@@ -274,7 +326,8 @@
       background: var(--wash);
       border: 1px solid var(--rule);
       border-radius: 8px;
-      font-size: 13px;
+      font-size: var(--text-small);
+      line-height: 1.35;
     }
 
     .app-grid {
@@ -323,6 +376,11 @@
       margin: 0;
     }
 
+    .section-head .amount,
+    .section-head .chip {
+      font-size: var(--text-small);
+    }
+
     .ledger-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -337,12 +395,13 @@
     }
 
     .ledger-row strong {
-      font-weight: 720;
+      font-weight: var(--weight-strong);
     }
 
     .subline {
       color: var(--muted);
-      font-size: 13px;
+      font-size: var(--text-small);
+      line-height: 1.35;
     }
 
     .subtotal {
@@ -356,6 +415,7 @@
     .empty-state {
       padding: 18px 14px;
       color: var(--muted);
+      font-size: var(--text-small);
     }
 
     .share-grid {
@@ -378,8 +438,9 @@
       padding: 2px 7px;
       background: var(--wash);
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
+      font-size: var(--text-caption);
+      font-weight: var(--weight-strong);
+      line-height: 1.35;
     }
 
     .state-strip {
