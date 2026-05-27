@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. The Worker entrypoint is `src/index.ts`; Wrangler configuration is in `wrangler.jsonc` with worker name `settleup`. TypeScript settings live in `tsconfig.json`, npm scripts live in `package.json`, and D1 migrations live in `migrations/`. Keep runtime source under `src/`. Place tests beside covered code as `*.test.ts` or in top-level `test/` for cross-module behavior.
+This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. The Worker entrypoint is `src/index.ts`; Wrangler configuration is in `wrangler.jsonc` with worker name `settleup`. The current Cloudflare binding is `DB`, a D1 database named `settleup`; D1 migrations live in `migrations/`. TypeScript settings live in `tsconfig.json`, npm scripts live in `package.json`, and generated Cloudflare binding types live in `worker-configuration.d.ts`. Keep runtime source under `src/`. Place tests beside covered code as `*.test.ts` or in top-level `test/` for cross-module behavior.
 
 ## Build, Test, and Development Commands
 
@@ -13,6 +13,7 @@ This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. 
 - `npm test`: run Vitest behavior tests.
 - `npm run typecheck`: run strict TypeScript checking without emitting files.
 - `npx wrangler d1 migrations apply settleup --local`: apply D1 migrations to the local development database.
+- `npx wrangler deploy --dry-run --outdir dist-dry-run`: verify Worker packaging without deploying; remove `dist-dry-run/` afterwards.
 
 ## Coding Style & Naming Conventions
 
@@ -34,7 +35,7 @@ Use short, imperative commit messages such as `Add expense route` or `Configure 
 
 ## Security & Configuration Tips
 
-Do not commit secrets or real Cloudflare resource IDs unless they are intended for shared development. Keep bindings, compatibility flags, and resource declarations in `wrangler.jsonc`, then regenerate types after configuration changes.
+Do not commit secrets or real Cloudflare resource IDs unless they are intended for shared development. Keep bindings, compatibility flags, and resource declarations in `wrangler.jsonc`, then regenerate types after configuration changes. Treat `wrangler.jsonc` as the local configuration source, but verify remote Cloudflare state with MCP or Wrangler before assuming a Worker, D1 database, KV namespace, or R2 bucket exists in the account.
 
 ## Agent skills
 
@@ -42,7 +43,20 @@ Do not commit secrets or real Cloudflare resource IDs unless they are intended f
 
 When working on TypeScript in this repository, use the `typescript-expert` skill and preserve the current strict, ESM, npm-based setup. For Hono-specific questions, check the official LLM documentation first: `https://hono.dev/llms.txt`, `https://hono.dev/llms-full.txt`, and `https://hono.dev/llms-small.txt`.
 
+For Cloudflare Workers, Wrangler, D1, bindings, deployments, or account resources, use the `cloudflare` skill. Add `workers-best-practices` when authoring or reviewing Worker runtime behavior, and add `wrangler` before running Wrangler commands or changing `wrangler.jsonc`. Check Cloudflare documentation through the Cloudflare docs MCP before relying on specific limits, binding syntax, compatibility flags, or Wrangler command behavior.
+
 For any frontend, creative, or design work, use the `impeccable` skill before shaping or editing UI. Apply it to product UI, layout, visual hierarchy, copy, accessibility, responsive behavior, theming, and interaction polish. Use `PRODUCT.md` and `DESIGN.md` as the product and design sources.
+
+### Cloudflare MCP use
+
+Use Cloudflare MCP tools for read-only discovery before editing Cloudflare configuration or diagnosing deployed behavior. See `docs/agents/cloudflare.md` for the repo workflow.
+
+- Use the Cloudflare docs MCP for current Workers, D1, bindings, and Wrangler documentation.
+- Use the Cloudflare bindings MCP to list or inspect account resources such as Workers, D1 databases, KV namespaces, and R2 buckets before assuming remote state from local files.
+- Use the Cloudflare builds MCP when checking Worker build or deploy failures.
+- Use the Cloudflare observability MCP when investigating Worker logs, request failures, or runtime metrics.
+
+Prefer Wrangler for repo-local development commands and migrations. Prefer MCP for account inventory, observability, and documentation lookup. Before creating, deleting, or mutating remote Cloudflare resources, state the intended resource and confirm it matches `wrangler.jsonc` and the current task.
 
 ### Issue tracker
 

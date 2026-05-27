@@ -15,6 +15,12 @@ Local development uses the `DB` D1 binding declared in `wrangler.jsonc`. D1-back
 npx wrangler d1 migrations apply settleup --local
 ```
 
+## Cloudflare Resources
+
+`wrangler.jsonc` is the source of truth for repo-local Cloudflare configuration. The Worker is named `settleup`, and the current binding is `DB`, a D1 database named `settleup`. The checked-in `database_id` is for local/shared development; verify the live account resource before deploying or applying remote migrations.
+
+Use Wrangler for local development, migrations, type generation, dry runs, and deployment. Use the Cloudflare MCP tools for account inventory, current documentation, Worker build diagnostics, and observability before assuming a remote Worker, D1 database, KV namespace, or R2 bucket exists.
+
 ## Verification
 
 ```txt
