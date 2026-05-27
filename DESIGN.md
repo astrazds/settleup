@@ -56,6 +56,7 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - Avoid blue or purple gradients, neon money cues, and beige SaaS wash.
 - Use a receipt-grid shape language: rows, dividers, subtotal-like bands, and compact grouped forms rather than repeated floating cards.
 - Use alignment as a brand cue. Money amounts should line up, and settlement rows should visually resolve left-to-right.
+- Use explicit semantic state classes for money rows when implementing the UI, such as positive and negative row states. Do not depend on CSS parent selectors for core money-state styling if simple classes are clearer.
 - Keep cards to actual panels and repeated records; do not nest cards.
 - Use 8px border radii for panels, buttons, and controls.
 - Keep body copy compact and task-focused.
@@ -72,7 +73,9 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - Use medium product density. Desktop should use compact rows, aligned amounts, and fewer large empty panels. Mobile should keep generous tap targets without marketing-scale spacing. Forms should be dense but legible, with progressive sections. Records should be scan-first and row-based, not card-heavy.
 - On the Event page, Balances are visually dominant and Add Expense is the close second. Suggested Settlements become prominent when Balances are non-zero and the group is ready to settle.
 - Use a named spacing scale for product rhythm. Related controls should group tightly, while distinct states and mockup frames should have visibly larger gaps.
+- Touch and narrow-screen controls should use at least 44px hit areas. Desktop controls may stay denser where pointer input and repeated data entry benefit from compactness.
 - In design artifacts, use full-width anchor states for Create Event and Populated Event, then pair smaller state comparisons such as Empty Event with Settle Up and Mobile Event with Interaction States.
+- On narrow screens, mockup headers stack title and description. Do not force secondary explanatory text into the same row when it causes cramped wrapping.
 - The create Event mockup should stay centered on the form surface. Supporting brand copy may sit above the form, but it must not become a split hero or feature pitch.
 
 ## Mockup Set
@@ -103,4 +106,7 @@ Use realistic sample data in mockups. Default scenario: Event Title "Sydney week
 - Current Participant selection controls defaults only; it must not imply permissions.
 - Current Participant UI should use defaults language such as "Expense defaults" or "defaults" rather than account, owner, or permission language.
 - Custom Share entry should show total, assigned, and remaining amounts near the share inputs. Equal split should remain available as a recovery action.
+- On mobile and in compact validation states, the total, assigned, and remaining summary should use separated label/value rows with dividers instead of a cramped multi-column grid.
 - Interaction state mockups should include saving/loading, validation recovery, edit mode, delete confirmation, copied feedback, and refresh feedback.
+- Mobile interaction states should stack as a single column. Button state examples may use a two-column grid, but edit and delete rows should stack copy above controls so labels and actions do not crowd each other.
+- Product HTML should use explicit button and input types, visible or programmatic group labels, and valid ARIA only where it adds semantics.

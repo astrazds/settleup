@@ -1,4 +1,6 @@
-SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), domain language is in [`CONTEXT.md`](./CONTEXT.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
+SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
+
+The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and CSS. The current visual system is documented in [`docs/design/brandkit.md`](./docs/design/brandkit.md), with the standalone review artifact in [`docs/design/mockups.html`](./docs/design/mockups.html).
 
 ## Development
 
@@ -18,6 +20,7 @@ npx wrangler d1 migrations apply settleup --local
 ```txt
 npm test
 npm run typecheck
+npx --yes html-validate docs/design/mockups.html
 npx wrangler deploy --dry-run --outdir dist-dry-run
 ```
 

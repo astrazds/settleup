@@ -57,6 +57,7 @@ Use OKLCH tokens.
 | `ledgerDeep` | `oklch(35% 0.11 157)` | Action hover, strong positive text |
 | `ledgerWash` | `oklch(94.5% 0.035 157)` | Positive row tint and current Participant tint |
 | `ledgerRule` | `oklch(78% 0.055 157)` | Positive/current hairline border |
+| `onLedger` | `oklch(98% 0.006 157)` | Text on primary ledger buttons |
 | `clay` | `oklch(49% 0.13 31)` | Error and owes state |
 | `clayDeep` | `oklch(38% 0.12 31)` | Strong error and owes text |
 | `clayWash` | `oklch(95% 0.028 31)` | Error and owes row tint |
@@ -132,6 +133,8 @@ Mockup layout:
 - Empty Event pairs with Settle Up State so starting and resolving an Event can be compared.
 - Mobile Event pairs with Interaction States so responsive behavior and component states can be reviewed together.
 - The create surface is centered on the form. Brand copy stays compact and does not turn into a marketing hero.
+- On narrow screens, mockup headers stack title above helper copy. Do not preserve a desktop horizontal header if it causes bunched labels.
+- Mobile and coarse-pointer controls use 44px minimum hit areas. Desktop controls can stay denser where the table-entry workflow benefits from compact scanning.
 
 ## Copy Voice
 
@@ -162,16 +165,33 @@ Avoid:
 - Destructive buttons use clay text and quiet clay border.
 - Current Participant indicators use ledger wash and ledger text.
 - Owed rows use ledger wash; owes rows use clay wash and clay text.
+- Implement owed and owes row tints with explicit row-state classes, not parent selector tricks. The mockup names these states `row-positive` and `row-negative`.
 - Suggested Settlement rows use amber wash until a Settlement Payment is recorded.
 - Private-by-link notes use amber wash because they are cautionary, not decorative.
 - Current Participant copy should say `Expense defaults` or `defaults`, not account or permission language.
 - Share forms should include a summary for total, assigned, and remaining amounts, plus an Equal split recovery action.
+- In compact validation states, the share summary should become separated label/value rows: Total, Assigned, Remaining. Add subtle dividers and keep Equal split below the rows as the recovery action.
 - Interaction state mockups should include saving, active, hover, disabled with reason, validation recovery, edit, delete confirmation, copied feedback, and refresh feedback.
 - Form controls have visible labels and stable 40px minimum height.
+- Buttons and inputs should declare explicit HTML types. Segmented controls should use a valid group role or visible label when they need an accessible name.
 - Validation errors appear near the relevant form.
 - Focus rings are visible and use the focus token.
 - Empty states teach the next action, not just absence.
 - Motion is optional and should only communicate state.
+
+## Interaction State Layout
+
+The Interaction States mockup is a design reference for implementation states, not a decorative gallery.
+
+Desktop can use a compact two-column state strip. Mobile should use one state box per row so each state is inspectable without compressed copy.
+
+Mobile state rules:
+
+- State buttons use a stable two-column grid, with disabled or explanatory actions allowed to span full width.
+- Validation summaries use label/value rows for Total, Assigned, and Remaining.
+- Edit and delete examples stack the record copy above actions.
+- Recovery buttons should sit below the problem state with clear breathing room.
+- Success, copied, refresh, and disabled reasons should be short enough to scan at phone width.
 
 ## Mockup Coverage
 

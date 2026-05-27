@@ -151,6 +151,35 @@ describe('Event workflows', () => {
   })
 })
 
+describe('Frontend design contract', () => {
+  it('serves the create flow with the brandkit layout and copy', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request('/')
+    const html = await response.text()
+
+    expect(response.status).toBe(200)
+    expect(html).toContain('Settle the shared cost without turning it into admin.')
+    expect(html).toContain('class="brand"')
+    expect(html).toContain('class="privacy-note"')
+    expect(html).toContain('<input type="text" name="title"')
+  })
+
+  it('serves frontend assets aligned to the documented visual system', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const styles = await (await app.request('/static/styles.css')).text()
+    const client = await (await app.request('/static/client.js')).text()
+
+    expect(styles).toContain('--on-ledger')
+    expect(styles).toContain('.ledger-row.row-positive')
+    expect(styles).toContain('@media (max-width: 820px)')
+    expect(client).toContain('Expense defaults')
+    expect(client).toContain('data-share-summary')
+    expect(client).toContain('Event Link copied')
+  })
+})
+
 async function createEvent(app: ReturnType<typeof createApp>) {
   const response = await app.request(jsonRequest('/api/events', {
     title: 'Sydney weekend',

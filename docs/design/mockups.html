@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -17,6 +17,7 @@
       --ledger-deep: oklch(35% 0.11 157);
       --ledger-wash: oklch(94.5% 0.035 157);
       --ledger-rule: oklch(78% 0.055 157);
+      --on-ledger: oklch(98% 0.006 157);
       --clay: oklch(49% 0.13 31);
       --clay-deep: oklch(38% 0.12 31);
       --clay-wash: oklch(95% 0.028 31);
@@ -90,7 +91,7 @@
       border: 1px solid var(--ledger);
       border-radius: 8px;
       background: var(--ledger);
-      color: oklch(98% 0.006 157);
+      color: var(--on-ledger);
       padding: 0 14px;
       font-weight: var(--weight-strong);
       transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, transform 120ms ease-out;
@@ -122,7 +123,7 @@
     button.is-loading {
       background: var(--ledger-deep);
       border-color: var(--ledger-deep);
-      color: color-mix(in oklch, oklch(98% 0.006 157), transparent 10%);
+      color: color-mix(in oklch, var(--on-ledger), transparent 10%);
     }
 
     button.small {
@@ -469,8 +470,8 @@
       line-height: 1.35;
     }
 
-    .ledger-row:has(.amount.positive) { background: color-mix(in oklch, var(--ledger-wash), var(--sheet) 35%); }
-    .ledger-row:has(.amount.negative) { background: color-mix(in oklch, var(--clay-wash), var(--sheet) 30%); }
+    .ledger-row.row-positive { background: color-mix(in oklch, var(--ledger-wash), var(--sheet) 35%); }
+    .ledger-row.row-negative { background: color-mix(in oklch, var(--clay-wash), var(--sheet) 30%); }
     .subtotal { background: var(--ledger-wash); }
 
     .suggestion {
@@ -631,6 +632,10 @@
       margin-bottom: 0;
     }
 
+    .state-actions + .control-note {
+      margin-top: 8px;
+    }
+
     .mobile-frame {
       width: 390px;
       max-width: 100%;
@@ -685,6 +690,100 @@
       .featured .screen, .screen { padding: 14px; }
     }
 
+    @media (max-width: 640px), (pointer: coarse) {
+      button,
+      button.small,
+      .segment {
+        min-height: 44px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .mockup-title {
+        display: grid;
+        justify-content: start;
+        gap: 4px;
+        min-height: 0;
+        padding: 12px 14px;
+      }
+
+      .state-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .state-box {
+        margin-bottom: 0;
+        padding: 12px;
+      }
+
+      .state-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        align-items: stretch;
+      }
+
+      .state-actions button {
+        width: 100%;
+        padding-inline: 10px;
+      }
+
+      .state-actions button:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .state-box .share-summary {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        padding: 12px;
+      }
+
+      .state-box .share-summary > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        padding-block: 8px;
+        border-top: 1px solid color-mix(in oklch, var(--clay-rule), transparent 55%);
+      }
+
+      .state-box .share-summary > div:first-child {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .state-box .share-summary > div:nth-of-type(3) {
+        padding-bottom: 12px;
+      }
+
+      .state-box .share-summary span,
+      .state-box .share-summary strong {
+        margin-top: 0;
+      }
+
+      .state-edit-row,
+      .state-delete-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 12px;
+      }
+
+      .state-box .row-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 8px;
+      }
+
+      .state-box .row-actions button,
+      .state-delete-row button {
+        width: 100%;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         transition-duration: 0.01ms !important;
@@ -724,12 +823,12 @@
                 <p class="eyebrow">Private-by-Link</p>
                 <h2>Create an Event</h2>
                 <div class="form">
-                  <label>Event Title<input value="Sydney weekend"></label>
+                  <label>Event Title<input type="text" value="Sydney weekend"></label>
                   <div class="form-grid">
                     <label>Currency<select><option>AUD</option></select></label>
-                    <label>Your name<input value="Sarah"></label>
+                    <label>Your name<input type="text" value="Sarah"></label>
                   </div>
-                  <button>Create Event</button>
+                  <button type="button">Create Event</button>
                 </div>
               </div>
               <div class="privacy-note">Anyone with this link can view and edit.</div>
@@ -752,12 +851,12 @@
             <h1>Sydney weekend</h1>
             <p class="muted">AUD, Anyone with this link can view and edit.</p>
           </div>
-          <button class="secondary">Copy Event Link</button>
+          <button type="button" class="secondary">Copy Event Link</button>
         </div>
         <div class="identity">
           <strong>Expense defaults</strong>
           <span class="chip chip-current">Sarah</span>
-          <button class="secondary">Switch</button>
+          <button type="button" class="secondary">Switch</button>
         </div>
         <div class="app-grid">
           <div class="column-stack">
@@ -769,8 +868,8 @@
               <div class="section-head"><h2>Add Expense</h2></div>
               <div class="panel-body">
                 <div class="form-grid">
-                  <label>Description<input placeholder="Dinner"></label>
-                  <label>Amount<input placeholder="80.00"></label>
+                  <label>Description<input type="text" placeholder="Dinner"></label>
+                  <label>Amount<input type="text" inputmode="decimal" placeholder="80.00"></label>
                 </div>
               </div>
             </section>
@@ -807,7 +906,7 @@
                 <p class="subline">Clears most of Alex's Balance</p>
               </div>
               <span class="amount">$84.70</span>
-              <button>Record</button>
+              <button type="button">Record</button>
             </div>
             <div class="ledger-row suggestion">
               <div>
@@ -815,12 +914,12 @@
                 <p class="subline">Finishes the remaining Balance</p>
               </div>
               <span class="amount">$52.70</span>
-              <button>Record</button>
+              <button type="button">Record</button>
             </div>
           </section>
           <section class="section">
             <div class="section-head"><h2>Settlement Payments</h2></div>
-            <div class="ledger-row">
+            <div class="ledger-row row-positive">
               <div>
                 <strong>Alex sent Sarah</strong>
                 <p class="subline">Recorded just now</p>
@@ -846,25 +945,25 @@
             <h1>Sydney weekend</h1>
             <p class="muted">AUD, 4 Participants, 4 Expenses</p>
           </div>
-          <button class="secondary">Copy Event Link</button>
+          <button type="button" class="secondary">Copy Event Link</button>
         </div>
         <div class="app-grid">
           <div class="column-stack">
             <section class="section">
               <div class="section-head"><h2>Balances</h2><span class="amount positive">Outstanding $137.40</span></div>
-              <div class="ledger-row subtotal">
+              <div class="ledger-row subtotal row-positive">
                 <strong>Sarah</strong>
                 <span class="amount positive">is owed $84.70</span>
               </div>
-              <div class="ledger-row">
+              <div class="ledger-row row-positive">
                 <strong>Marco</strong>
                 <span class="amount positive">is owed $52.70</span>
               </div>
-              <div class="ledger-row">
+              <div class="ledger-row row-negative">
                 <strong>Alex</strong>
                 <span class="amount negative">owes $91.20</span>
               </div>
-              <div class="ledger-row">
+              <div class="ledger-row row-negative">
                 <strong>Priya</strong>
                 <span class="amount negative">owes $46.20</span>
               </div>
@@ -906,35 +1005,35 @@
               <div class="section-head"><h2>Add Expense</h2></div>
               <div class="panel-body form">
                 <div class="form-grid">
-                  <label>Description<input value="Parking"></label>
-                  <label>Amount<input value="18.00"></label>
+                  <label>Description<input type="text" value="Parking"></label>
+                  <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
                   <label>Payer<select><option>Sarah</option></select></label>
                 </div>
                 <div class="share-grid">
                   <div class="share-row">
                     <label>Participant<select><option>Sarah</option></select></label>
-                    <label>Share<input value="4.50"></label>
+                    <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                   </div>
                   <div class="share-row">
                     <label>Participant<select><option>Alex</option></select></label>
-                    <label>Share<input value="4.50"></label>
+                    <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                   </div>
                   <div class="share-row">
                     <label>Participant<select><option>Priya</option></select></label>
-                    <label>Share<input value="4.50"></label>
+                    <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                   </div>
                   <div class="share-row">
                     <label>Participant<select><option>Marco</option></select></label>
-                    <label>Share<input value="4.50"></label>
+                    <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                   </div>
                 </div>
                 <div class="share-summary">
                   <div><span>Expense total</span><strong>$18.00</strong></div>
                   <div><span>Assigned</span><strong>$18.00</strong></div>
                   <div><span>Remaining</span><strong>$0.00</strong></div>
-                  <button class="secondary small">Equal split</button>
+                  <button type="button" class="secondary small">Equal split</button>
                 </div>
-                <button>Save Expense</button>
+                <button type="button">Save Expense</button>
               </div>
             </section>
             <section class="section">
@@ -975,53 +1074,53 @@
           <div class="identity">
             <strong>Expense defaults</strong>
             <span class="chip chip-current">Sarah</span>
-            <button class="secondary">Switch</button>
+            <button type="button" class="secondary">Switch</button>
           </div>
           <div class="mobile-actions">
-            <button class="secondary">Copy Event Link</button>
+            <button type="button" class="secondary">Copy Event Link</button>
             <span class="control-note">Anyone with this link can view and edit.</span>
           </div>
           <section class="section">
             <div class="section-head"><h2>Balances</h2></div>
-            <div class="ledger-row"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
-            <div class="ledger-row"><strong>Alex</strong><span class="amount negative">owes $91.20</span></div>
-            <div class="ledger-row"><strong>Priya</strong><span class="amount negative">owes $46.20</span></div>
+            <div class="ledger-row row-positive"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
+            <div class="ledger-row row-negative"><strong>Alex</strong><span class="amount negative">owes $91.20</span></div>
+            <div class="ledger-row row-negative"><strong>Priya</strong><span class="amount negative">owes $46.20</span></div>
           </section>
           <section class="section">
             <div class="section-head"><h2>Add Expense</h2></div>
             <div class="panel-body form">
-              <label>Description<input value="Parking"></label>
-              <label>Amount<input value="18.00"></label>
+              <label>Description<input type="text" value="Parking"></label>
+              <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
               <label>Payer<select><option>Sarah</option></select></label>
-              <div class="segmented" aria-label="Split mode">
-                <button class="segment" aria-pressed="false">Equal</button>
-                <button class="segment" aria-pressed="true">Custom</button>
+              <div class="segmented" role="group" aria-label="Split mode">
+                <button type="button" class="segment" aria-pressed="false">Equal</button>
+                <button type="button" class="segment" aria-pressed="true">Custom</button>
               </div>
               <div class="share-grid">
                 <div class="share-row">
                   <label>Participant<select><option>Sarah</option></select></label>
-                  <label>Share<input value="4.50"></label>
+                  <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                 </div>
                 <div class="share-row">
                   <label>Participant<select><option>Alex</option></select></label>
-                  <label>Share<input value="4.50"></label>
+                  <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                 </div>
                 <div class="share-row">
                   <label>Participant<select><option>Priya</option></select></label>
-                  <label>Share<input value="4.50"></label>
+                  <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                 </div>
                 <div class="share-row">
                   <label>Participant<select><option>Marco</option></select></label>
-                  <label>Share<input value="4.50"></label>
+                  <label>Share<input type="text" inputmode="decimal" value="4.50"></label>
                 </div>
               </div>
               <div class="share-summary">
                 <div><span>Total</span><strong>$18.00</strong></div>
                 <div><span>Assigned</span><strong>$18.00</strong></div>
                 <div><span>Remaining</span><strong>$0.00</strong></div>
-                <button class="secondary small">Equal split</button>
+                <button type="button" class="secondary small">Equal split</button>
               </div>
-              <button>Save Expense</button>
+              <button type="button">Save Expense</button>
             </div>
           </section>
           <section class="section">
@@ -1042,54 +1141,54 @@
           <div class="state-box">
             <h3>Buttons</h3>
             <div class="state-actions">
-              <button>Primary</button>
-              <button class="is-hovered">Hover</button>
-              <button class="is-active">Active</button>
-              <button class="is-loading">Saving...</button>
-              <button disabled>Save Expense</button>
+              <button type="button">Primary</button>
+              <button type="button" class="is-hovered">Hover</button>
+              <button type="button" class="is-active">Active</button>
+              <button type="button" class="is-loading">Saving...</button>
+              <button type="button" disabled>Save Expense</button>
             </div>
             <p class="control-note">Save Expense is disabled until Shares match the Expense amount.</p>
           </div>
           <div class="state-box">
             <h3>Focus And Validation</h3>
             <p class="error">Shares are $2.00 short. Adjust one Share or use Equal split.</p>
-            <label>Amount<input value="18.00"></label>
+            <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
             <div class="share-summary error-state">
               <div><span>Total</span><strong>$18.00</strong></div>
               <div><span>Assigned</span><strong>$16.00</strong></div>
               <div><span>Remaining</span><strong>$2.00</strong></div>
-              <button class="secondary small">Equal split</button>
+              <button type="button" class="secondary small">Equal split</button>
             </div>
           </div>
           <div class="state-box">
             <h3>Rows</h3>
-            <div class="ledger-row">
+            <div class="ledger-row row-positive">
               <span>Sarah</span>
               <span class="amount positive">is owed $24.00</span>
             </div>
-            <div class="ledger-row">
+            <div class="ledger-row row-negative">
               <span>Alex</span>
               <span class="amount negative">owes $24.00</span>
             </div>
           </div>
           <div class="state-box">
             <h3>Edit And Delete</h3>
-            <div class="ledger-row">
+            <div class="ledger-row state-edit-row">
               <div>
                 <strong>Dinner</strong>
                 <p class="subline">Editing amount and Shares</p>
               </div>
               <div class="row-actions">
-                <button class="secondary small">Cancel</button>
-                <button class="small">Save</button>
+                <button type="button" class="secondary small">Cancel</button>
+                <button type="button" class="small">Save</button>
               </div>
             </div>
-            <div class="ledger-row">
+            <div class="ledger-row state-delete-row">
               <div>
                 <strong>Delete Dinner?</strong>
                 <p class="subline">This removes the Expense from Balances.</p>
               </div>
-              <button class="danger small">Delete</button>
+              <button type="button" class="danger small">Delete</button>
             </div>
           </div>
           <div class="state-box">

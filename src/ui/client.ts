@@ -18,6 +18,11 @@ async function boot() {
 }
 
 async function refresh(preserveDrafts) {
+  const refreshNote = app.querySelector('[data-refresh-note]')
+  if (preserveDrafts && refreshNote) {
+    refreshNote.hidden = false
+    refreshNote.textContent = 'Refreshing Event data...'
+  }
   const response = await fetch('/api/events/' + token)
   if (!response.ok) {
     app.innerHTML = '<section class="section"><h1>Event not found</h1><p class="subtle">This Event Link does not work.</p></section>'
@@ -28,6 +33,13 @@ async function refresh(preserveDrafts) {
     currentParticipantId = null
   }
   render(preserveDrafts)
+  const renderedRefreshNote = app.querySelector('[data-refresh-note]')
+  if (preserveDrafts && renderedRefreshNote) {
+    renderedRefreshNote.textContent = 'Event data refreshed. Draft fields stayed unchanged.'
+    window.setTimeout(() => {
+      renderedRefreshNote.hidden = true
+    }, 1800)
+  }
 }
 
 function render(preserveDrafts) {
@@ -48,36 +60,44 @@ function render(preserveDrafts) {
   renderExpenses()
   renderSettlementPayments()
   fillParticipantSelects(preserveDrafts)
+  updateShareSummary()
 }
 
 function shell() {
-  return '<header class="topbar">' +
-    '<div><p class="eyebrow">SettleUp</p><h1 data-event-title></h1><p class="subtle">Currency: <span data-event-currency></span></p></div>' +
+  return '<header class="app-top">' +
+    '<div><div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div><h1 data-event-title></h1><p class="subtle"><span data-event-currency></span>, Anyone with this link can view and edit.</p></div>' +
     '<div class="actions"><button class="secondary" data-copy-link type="button">Copy Event Link</button></div>' +
     '</header>' +
-    '<section class="section"><div class="identity-bar"><strong>Viewing as</strong><select data-current-participant></select><button class="secondary" type="button" data-switch-participant>Switch</button></div><p class="subtle">Anyone with this Event Link can view and edit this Event.</p></section>' +
-    '<div class="grid"><div>' +
-    '<section class="section"><div class="section-header"><h2>Balances</h2></div><div data-balances class="stack"></div></section>' +
-    '<section class="section"><div class="section-header"><h2>Suggested Settlements</h2></div><div data-suggestions class="stack"></div></section>' +
-    '<section class="section"><h2>Add Expense</h2>' + expenseForm() + '</section>' +
-    '<section class="section"><div class="section-header"><h2>Expenses</h2></div><div data-expenses class="stack"></div></section>' +
-    '</div><aside>' +
-    '<section class="section"><h2>Participants</h2><form class="inline-form" data-participant-form><label><span>Display name</span><input name="displayName" required></label><button type="submit">Add Participant</button></form><div data-participants class="stack"></div></section>' +
-    '<section class="section"><h2>Record Settlement Payment</h2>' + settlementForm() + '</section>' +
-    '<section class="section"><div class="section-header"><h2>Settlement Payments</h2></div><div data-payments class="stack"></div></section>' +
+    '<p class="refresh-note" data-refresh-note hidden>Refreshing Event data...</p>' +
+    '<div class="identity-bar"><strong>Expense defaults</strong><select data-current-participant aria-label="Expense defaults Participant"></select><button class="secondary" type="button" data-switch-participant>Switch</button></div>' +
+    '<div class="app-grid"><div class="column-stack">' +
+    '<section class="section"><div class="section-head"><h2>Balances</h2><span class="amount amount-positive" data-outstanding></span></div><div data-balances></div></section>' +
+    '<section class="section"><div class="section-head"><h2>Add Expense</h2></div>' + expenseForm() + '</section>' +
+    '<section class="section"><div class="section-head"><h2>Expenses</h2></div><div data-expenses></div></section>' +
+    '</div><aside class="column-stack">' +
+    '<section class="section"><div class="section-head"><h2>Suggested Settlements</h2><span class="chip chip-pending" data-suggestion-count></span></div><div data-suggestions></div></section>' +
+    '<section class="section"><div class="section-head"><h2>Participants</h2></div><form class="inline-form" data-participant-form><label><span>Display name</span><input type="text" name="displayName" required></label><button type="submit">Add Participant</button></form><div data-participants></div></section>' +
+    '<section class="section"><div class="section-head"><h2>Record Settlement Payment</h2></div>' + settlementForm() + '</section>' +
+    '<section class="section"><div class="section-head"><h2>Settlement Payments</h2></div><div data-payments></div></section>' +
     '</aside></div>'
 }
 
 function expenseForm() {
   return '<form class="inline-form" data-expense-form>' +
     '<div class="form-grid">' +
-    '<label><span>Description</span><input name="description" required placeholder="Dinner"></label>' +
-    '<label><span>Amount</span><input name="amount" inputmode="decimal" required placeholder="80.00"></label>' +
+    '<label><span>Description</span><input type="text" name="description" required placeholder="Dinner"></label>' +
+    '<label><span>Amount</span><input type="text" name="amount" inputmode="decimal" required placeholder="80.00"></label>' +
     '<label><span>Payer</span><select name="payerParticipantId" data-participant-select></select></label>' +
     '</div>' +
-    '<div class="actions"><button class="secondary" type="button" data-equal-split>Equal split</button><button class="secondary" type="button" data-add-share>Add Share</button></div>' +
     '<input type="hidden" name="expenseId">' +
     '<div data-share-list class="share-list"></div>' +
+    '<div class="share-summary" data-share-summary>' +
+    '<div><span>Total</span><strong data-share-total>$0.00</strong></div>' +
+    '<div><span>Assigned</span><strong data-share-assigned>$0.00</strong></div>' +
+    '<div><span>Remaining</span><strong data-share-remaining>$0.00</strong></div>' +
+    '<button class="secondary" type="button" data-equal-split>Equal split</button>' +
+    '</div>' +
+    '<div class="actions"><button class="secondary" type="button" data-add-share>Add custom Share</button></div>' +
     '<p class="error" data-expense-error hidden></p>' +
     '<button type="submit">Save Expense</button>' +
     '</form>'
@@ -88,7 +108,7 @@ function settlementForm(senderId, recipientId, amount) {
     '<input type="hidden" name="settlementPaymentId">' +
     '<label><span>Sender</span><select name="senderParticipantId" data-participant-select></select></label>' +
     '<label><span>Recipient</span><select name="recipientParticipantId" data-participant-select></select></label>' +
-    '<label><span>Amount</span><input name="amount" inputmode="decimal" placeholder="24.00" value="' + escapeAttr(amount || '') + '"></label>' +
+    '<label><span>Amount</span><input type="text" name="amount" inputmode="decimal" placeholder="24.00" value="' + escapeAttr(amount || '') + '"></label>' +
     '<input type="hidden" name="suggestedSender" value="' + escapeAttr(senderId || '') + '">' +
     '<input type="hidden" name="suggestedRecipient" value="' + escapeAttr(recipientId || '') + '">' +
     '<p class="error" data-settlement-error hidden></p>' +
@@ -99,18 +119,25 @@ function settlementForm(senderId, recipientId, amount) {
 function bindStaticHandlers() {
   app.querySelector('[data-copy-link]').addEventListener('click', async () => {
     await navigator.clipboard.writeText(window.location.href)
+    const button = app.querySelector('[data-copy-link]')
+    button.textContent = 'Event Link copied'
+    window.setTimeout(() => {
+      button.textContent = 'Copy Event Link'
+    }, 1800)
   })
   app.querySelector('[data-switch-participant]').addEventListener('click', () => {
     const select = app.querySelector('[data-current-participant]')
     currentParticipantId = select.value || null
     if (currentParticipantId) localStorage.setItem('settleup:participant:' + token, currentParticipantId)
     fillParticipantSelects(false)
+    renderParticipants(true)
   })
   app.querySelector('[data-participant-form]').addEventListener('submit', submitParticipant)
   app.querySelector('[data-expense-form]').addEventListener('submit', submitExpense)
   app.querySelector('[data-settlement-form]').addEventListener('submit', submitSettlementPayment)
   app.querySelector('[data-equal-split]').addEventListener('click', equalSplit)
   app.querySelector('[data-add-share]').addEventListener('click', () => addShareRow())
+  app.querySelector('[data-expense-form]').amount.addEventListener('input', updateShareSummary)
 }
 
 function renderIdentity() {
@@ -126,7 +153,8 @@ function renderIdentity() {
 function renderParticipants(preserveDrafts) {
   const list = app.querySelector('[data-participants]')
   list.innerHTML = snapshot.participants.map((participant) =>
-    '<div class="row"><span>' + escapeHtml(participant.displayName) + '</span><span class="actions">' +
+    '<div class="ledger-row"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="row-actions">' +
+    (participant.id === currentParticipantId ? '<span class="chip chip-current">defaults</span>' : '') +
     '<button class="secondary" type="button" data-rename-participant="' + participant.id + '">Rename</button>' +
     '<button class="danger" type="button" data-delete-participant="' + participant.id + '">Delete</button>' +
     '</span></div>'
@@ -140,16 +168,22 @@ function renderParticipants(preserveDrafts) {
 
 function renderBalances() {
   const balances = app.querySelector('[data-balances]')
+  const outstanding = snapshot.balances.reduce((total, balance) => total + Math.max(balance.amountMinor, 0), 0)
+  const outstandingElement = app.querySelector('[data-outstanding]')
+  outstandingElement.textContent = outstanding > 0 ? 'Outstanding ' + money(outstanding) : ''
   balances.innerHTML = snapshot.balances.map((balance) => {
     const participant = findParticipant(balance.participantId)
     const cls = balance.amountMinor > 0 ? 'amount-positive' : balance.amountMinor < 0 ? 'amount-negative' : 'amount-zero'
+    const rowClass = balance.amountMinor > 0 ? ' row-positive' : balance.amountMinor < 0 ? ' row-negative' : ''
     const phrase = balance.amountMinor > 0 ? 'is owed ' + money(balance.amountMinor) : balance.amountMinor < 0 ? 'owes ' + money(Math.abs(balance.amountMinor)) : 'is settled'
-    return '<div class="row"><span>' + escapeHtml(participant.displayName) + '</span><span class="' + cls + '">' + phrase + '</span></div>'
+    return '<div class="ledger-row' + rowClass + '"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="amount ' + cls + '">' + phrase + '</span></div>'
   }).join('')
 }
 
 function renderSuggestedSettlements() {
   const list = app.querySelector('[data-suggestions]')
+  const count = app.querySelector('[data-suggestion-count]')
+  count.textContent = snapshot.suggestedSettlements.length > 0 ? snapshot.suggestedSettlements.length + ' payments' : ''
   if (snapshot.suggestedSettlements.length === 0) {
     list.innerHTML = '<p class="empty">Everyone is settled.</p>'
     return
@@ -157,7 +191,7 @@ function renderSuggestedSettlements() {
   list.innerHTML = snapshot.suggestedSettlements.map((suggestion) => {
     const sender = findParticipant(suggestion.senderParticipantId)
     const recipient = findParticipant(suggestion.recipientParticipantId)
-    return '<div class="row"><span>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</span><span class="actions"><strong>' + money(suggestion.amountMinor) + '</strong><button type="button" data-record-suggestion="' + suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor + '">Record</button></span></div>'
+    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p></div><span class="amount">' + money(suggestion.amountMinor) + '</span><button type="button" data-record-suggestion="' + suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor + '">Record</button></div>'
   }).join('')
   list.querySelectorAll('[data-record-suggestion]').forEach((button) => button.addEventListener('click', recordSuggestion))
 }
@@ -170,8 +204,8 @@ function renderExpenses() {
   }
   list.innerHTML = snapshot.expenses.map((expense) => {
     const payer = findParticipant(expense.payerParticipantId)
-    const shares = expense.shares.map((share) => escapeHtml(findParticipant(share.participantId).displayName) + ': ' + money(share.amountMinor)).join(', ')
-    return '<div class="row"><div><h3>' + escapeHtml(expense.description) + '</h3><p class="subtle">' + escapeHtml(payer.displayName) + ' paid ' + money(expense.amountMinor) + '</p><p class="subtle">' + shares + '</p></div><span class="actions"><button class="secondary" type="button" data-edit-expense="' + expense.id + '">Edit</button><button class="danger" type="button" data-delete-expense="' + expense.id + '">Delete</button></span></div>'
+    const shares = expense.shares.map((share) => escapeHtml(findParticipant(share.participantId).displayName) + ' ' + money(share.amountMinor)).join(', ')
+    return '<div class="ledger-row record-row"><div><h3>' + escapeHtml(expense.description) + '</h3><p class="subtle">' + escapeHtml(payer.displayName) + ' paid ' + money(expense.amountMinor) + ', ' + shares + '</p></div><span class="row-actions"><span class="amount">' + money(expense.amountMinor) + '</span><button class="secondary" type="button" data-edit-expense="' + expense.id + '">Edit</button><button class="danger" type="button" data-delete-expense="' + expense.id + '">Delete</button></span></div>'
   }).join('')
   list.querySelectorAll('[data-edit-expense]').forEach((button) => button.addEventListener('click', editExpense))
   list.querySelectorAll('[data-delete-expense]').forEach((button) => button.addEventListener('click', deleteExpense))
@@ -186,7 +220,7 @@ function renderSettlementPayments() {
   list.innerHTML = snapshot.settlementPayments.map((payment) => {
     const sender = findParticipant(payment.senderParticipantId)
     const recipient = findParticipant(payment.recipientParticipantId)
-    return '<div class="row"><span>' + escapeHtml(sender.displayName) + ' sent ' + escapeHtml(recipient.displayName) + '</span><span class="actions"><strong>' + money(payment.amountMinor) + '</strong><button class="secondary" type="button" data-edit-payment="' + payment.id + '">Edit</button><button class="danger" type="button" data-delete-payment="' + payment.id + '">Delete</button></span></div>'
+    return '<div class="ledger-row record-row row-positive"><div><strong>' + escapeHtml(sender.displayName) + ' sent ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Recorded Settlement Payment</p></div><span class="row-actions"><span class="amount amount-positive">' + money(payment.amountMinor) + '</span><button class="secondary" type="button" data-edit-payment="' + payment.id + '">Edit</button><button class="danger" type="button" data-delete-payment="' + payment.id + '">Delete</button></span></div>'
   }).join('')
   list.querySelectorAll('[data-edit-payment]').forEach((button) => button.addEventListener('click', editPayment))
   list.querySelectorAll('[data-delete-payment]').forEach((button) => button.addEventListener('click', deletePayment))
@@ -336,6 +370,7 @@ function equalSplit() {
     remainder -= 1
     addShareRow(participant.id, amount > 0 ? String((amount / 100).toFixed(2)) : '')
   }
+  updateShareSummary()
 }
 
 function addShareRow(participantId, amount) {
@@ -343,10 +378,41 @@ function addShareRow(participantId, amount) {
   const row = document.createElement('div')
   row.className = 'share-row'
   row.dataset.shareRow = 'true'
-  row.innerHTML = '<label><span>Participant</span><select name="shareParticipantId">' + snapshot.participants.map(optionForParticipant).join('') + '</select></label><label><span>Share</span><input name="shareAmount" inputmode="decimal" value="' + escapeAttr(amount || '') + '"></label><button class="secondary" type="button">Remove</button>'
+  row.innerHTML = '<label><span>Participant</span><select name="shareParticipantId">' + snapshot.participants.map(optionForParticipant).join('') + '</select></label><label><span>Share</span><input type="text" name="shareAmount" inputmode="decimal" value="' + escapeAttr(amount || '') + '"></label><button class="secondary" type="button">Remove</button>'
   row.querySelector('select').value = participantId || currentParticipantId || snapshot.participants[0]?.id || ''
-  row.querySelector('button').addEventListener('click', () => row.remove())
+  row.querySelector('input').addEventListener('input', updateShareSummary)
+  row.querySelector('button').addEventListener('click', () => {
+    row.remove()
+    updateShareSummary()
+  })
   list.append(row)
+  updateShareSummary()
+}
+
+function updateShareSummary() {
+  const form = app.querySelector('[data-expense-form]')
+  const summary = app.querySelector('[data-share-summary]')
+  if (!form || !summary || !snapshot) return
+
+  const totalMinor = parseAmountMinor(form.amount.value)
+  const assignedMinor = Array.from(app.querySelectorAll('[name="shareAmount"]')).reduce(
+    (total, input) => total + parseAmountMinor(input.value),
+    0
+  )
+  const remainingMinor = totalMinor - assignedMinor
+
+  text('[data-share-total]', money(totalMinor))
+  text('[data-share-assigned]', money(assignedMinor))
+  text('[data-share-remaining]', money(remainingMinor))
+  summary.classList.toggle('error-state', remainingMinor !== 0)
+}
+
+function parseAmountMinor(value) {
+  const amount = Number(String(value || '').trim())
+  if (!Number.isFinite(amount)) {
+    return 0
+  }
+  return Math.round(amount * 100)
 }
 
 async function post(path, body) {
