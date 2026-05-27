@@ -2,7 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "settleup",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-27"
+  "compatibility_date": "2026-05-27",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "settleup",
+      "database_id": "local-settleup-dev",
+      "migrations_dir": "migrations"
+    }
+  ]
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

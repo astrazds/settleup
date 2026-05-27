@@ -1,0 +1,298 @@
+export type Result<T> =
+  | { ok: true; value: T }
+  | { ok: false; message: string }
+
+export interface EventSummary {
+  id: string
+  token: string
+  title: string
+  currency: string
+  eventLinkPath: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Participant {
+  id: string
+  displayName: string
+  order: number
+  createdAt: string
+}
+
+export interface Share {
+  participantId: string
+  amountMinor: number
+}
+
+export interface Expense {
+  id: string
+  description: string
+  amountMinor: number
+  payerParticipantId: string
+  shares: Share[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SettlementPayment {
+  id: string
+  senderParticipantId: string
+  recipientParticipantId: string
+  amountMinor: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Balance {
+  participantId: string
+  amountMinor: number
+}
+
+export interface SuggestedSettlement {
+  senderParticipantId: string
+  recipientParticipantId: string
+  amountMinor: number
+}
+
+export interface EventSnapshot {
+  event: EventSummary
+  participants: Participant[]
+  expenses: Expense[]
+  settlementPayments: SettlementPayment[]
+  balances: Balance[]
+  suggestedSettlements: SuggestedSettlement[]
+}
+
+export interface ExpenseInput {
+  description: string
+  amountMinor: number
+  payerParticipantId: string
+  shares: Share[]
+}
+
+export interface SettlementPaymentInput {
+  senderParticipantId: string
+  recipientParticipantId: string
+  amountMinor: number
+}
+
+const tokenAlphabet = 'abcdefghjkmnpqrstuvwxyz23456789'
+const currencyPattern = /^[A-Z]{3}$/
+
+export function trimRequired(value: unknown, fieldName: string): Result<string> {
+  if (typeof value !== 'string') {
+    return { ok: false, message: `${fieldName} is required` }
+  }
+
+  const trimmed = value.trim()
+  if (trimmed.length === 0) {
+    return { ok: false, message: `${fieldName} is required` }
+  }
+
+  return { ok: true, value: trimmed }
+}
+
+export function parseCurrency(value: unknown): Result<string> {
+  if (typeof value !== 'string') {
+    return { ok: false, message: 'Currency is required' }
+  }
+
+  const currency = value.trim().toUpperCase()
+  if (!currencyPattern.test(currency)) {
+    return { ok: false, message: 'Currency must be a three-letter code' }
+  }
+
+  return { ok: true, value: currency }
+}
+
+export function parseMoney(value: unknown, currency: string): Result<number> {
+  void currency
+
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return { ok: false, message: 'Amount is required' }
+  }
+
+  const text = String(value).trim()
+  if (!/^\d+(?:\.\d{1,2})?$/.test(text)) {
+    return { ok: false, message: 'Amount must be a positive decimal amount' }
+  }
+
+  const [wholePart, decimalPart = ''] = text.split('.')
+  const amountMinor = Number(wholePart) * 100 + Number(decimalPart.padEnd(2, '0'))
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
+    return { ok: false, message: 'Amount must be positive' }
+  }
+
+  return { ok: true, value: amountMinor }
+}
+
+export function formatMoney(amountMinor: number, currency: string, locale = 'en'): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency
+  }).format(amountMinor / 100)
+}
+
+export function createEventToken(random = Math.random, length = 18): string {
+  let token = ''
+  for (let index = 0; index < length; index += 1) {
+    token += tokenAlphabet[Math.floor(random() * tokenAlphabet.length)] ?? tokenAlphabet[0]
+  }
+  return token
+}
+
+export function calculateBalances(
+  participants: Participant[],
+  expenses: Expense[],
+  settlementPayments: SettlementPayment[]
+): Balance[] {
+  const balances = new Map(participants.map((participant) => [participant.id, 0]))
+
+  for (const expense of expenses) {
+    balances.set(
+      expense.payerParticipantId,
+      (balances.get(expense.payerParticipantId) ?? 0) + expense.amountMinor
+    )
+
+    for (const share of expense.shares) {
+      balances.set(share.participantId, (balances.get(share.participantId) ?? 0) - share.amountMinor)
+    }
+  }
+
+  for (const settlementPayment of settlementPayments) {
+    balances.set(
+      settlementPayment.senderParticipantId,
+      (balances.get(settlementPayment.senderParticipantId) ?? 0) + settlementPayment.amountMinor
+    )
+    balances.set(
+      settlementPayment.recipientParticipantId,
+      (balances.get(settlementPayment.recipientParticipantId) ?? 0) - settlementPayment.amountMinor
+    )
+  }
+
+  return participants.map((participant) => ({
+    participantId: participant.id,
+    amountMinor: balances.get(participant.id) ?? 0
+  }))
+}
+
+export function suggestSettlements(participants: Participant[], balances: Balance[]): SuggestedSettlement[] {
+  const orderByParticipantId = new Map(participants.map((participant) => [participant.id, participant.order]))
+  const debtors = balances
+    .filter((balance) => balance.amountMinor < 0)
+    .map((balance) => ({ participantId: balance.participantId, amountMinor: -balance.amountMinor }))
+    .sort((left, right) => sortByAmountThenOrder(right, left, orderByParticipantId))
+  const creditors = balances
+    .filter((balance) => balance.amountMinor > 0)
+    .map((balance) => ({ participantId: balance.participantId, amountMinor: balance.amountMinor }))
+    .sort((left, right) => sortByAmountThenOrder(right, left, orderByParticipantId))
+
+  const suggestions: SuggestedSettlement[] = []
+  let debtorIndex = 0
+  let creditorIndex = 0
+
+  while (debtorIndex < debtors.length && creditorIndex < creditors.length) {
+    const debtor = debtors[debtorIndex]
+    const creditor = creditors[creditorIndex]
+    if (!debtor || !creditor) {
+      break
+    }
+
+    const amountMinor = Math.min(debtor.amountMinor, creditor.amountMinor)
+    suggestions.push({
+      senderParticipantId: debtor.participantId,
+      recipientParticipantId: creditor.participantId,
+      amountMinor
+    })
+
+    debtor.amountMinor -= amountMinor
+    creditor.amountMinor -= amountMinor
+
+    if (debtor.amountMinor === 0) {
+      debtorIndex += 1
+    }
+    if (creditor.amountMinor === 0) {
+      creditorIndex += 1
+    }
+  }
+
+  return suggestions
+}
+
+export function validateExpenseInput(input: ExpenseInput, participants: Participant[]): Result<ExpenseInput> {
+  const participantIds = new Set(participants.map((participant) => participant.id))
+
+  if (!participantIds.has(input.payerParticipantId)) {
+    return { ok: false, message: 'Payer must be an existing Participant' }
+  }
+  if (input.amountMinor <= 0) {
+    return { ok: false, message: 'Expense amount must be positive' }
+  }
+  if (input.shares.length === 0) {
+    return { ok: false, message: 'Expense requires at least one Share' }
+  }
+
+  const seen = new Set<string>()
+  let shareTotal = 0
+  for (const share of input.shares) {
+    if (!participantIds.has(share.participantId)) {
+      return { ok: false, message: 'Each Share must reference an existing Participant' }
+    }
+    if (seen.has(share.participantId)) {
+      return { ok: false, message: 'Each Participant can have one Share per Expense' }
+    }
+    if (share.amountMinor <= 0) {
+      return { ok: false, message: 'Shares must be positive' }
+    }
+    seen.add(share.participantId)
+    shareTotal += share.amountMinor
+  }
+
+  if (shareTotal !== input.amountMinor) {
+    return { ok: false, message: 'Shares must sum to the Expense amount' }
+  }
+
+  return { ok: true, value: input }
+}
+
+export function validateSettlementPaymentInput(
+  input: SettlementPaymentInput,
+  participants: Participant[]
+): Result<SettlementPaymentInput> {
+  const participantIds = new Set(participants.map((participant) => participant.id))
+
+  if (!participantIds.has(input.senderParticipantId)) {
+    return { ok: false, message: 'Sender must be an existing Participant' }
+  }
+  if (!participantIds.has(input.recipientParticipantId)) {
+    return { ok: false, message: 'Recipient must be an existing Participant' }
+  }
+  if (input.senderParticipantId === input.recipientParticipantId) {
+    return { ok: false, message: 'Sender and Recipient must be different Participants' }
+  }
+  if (input.amountMinor <= 0) {
+    return { ok: false, message: 'Settlement Payment amount must be positive' }
+  }
+
+  return { ok: true, value: input }
+}
+
+export function withDerived(snapshot: Omit<EventSnapshot, 'balances' | 'suggestedSettlements'>): EventSnapshot {
+  const balances = calculateBalances(snapshot.participants, snapshot.expenses, snapshot.settlementPayments)
+  return {
+    ...snapshot,
+    balances,
+    suggestedSettlements: suggestSettlements(snapshot.participants, balances)
+  }
+}
+
+function sortByAmountThenOrder(
+  left: { participantId: string; amountMinor: number },
+  right: { participantId: string; amountMinor: number },
+  orderByParticipantId: Map<string, number>
+): number {
+  if (left.amountMinor !== right.amountMinor) {
+    return left.amountMinor - right.amountMinor
+  }
+  return (orderByParticipantId.get(left.participantId) ?? 0) - (orderByParticipantId.get(right.participantId) ?? 0)
+}
