@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SettleUp Mockups</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: oklch(97.5% 0.008 82);
+      --sheet: oklch(99% 0.005 82);
+      --wash: oklch(94.5% 0.012 82);
+      --ink: oklch(22% 0.018 70);
+      --muted: oklch(49% 0.02 70);
+      --rule: oklch(84.5% 0.014 82);
+      --ledger: oklch(46% 0.12 157);
+      --ledger-deep: oklch(35% 0.11 157);
+      --clay: oklch(49% 0.13 31);
+      --amber: oklch(67% 0.12 78);
+      --focus: oklch(62% 0.16 157);
+      --shadow: 0 18px 50px color-mix(in oklch, var(--ink), transparent 91%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: 28px; line-height: 1.15; margin-bottom: 10px; letter-spacing: 0; }
+    h2 { font-size: 17px; line-height: 1.2; margin-bottom: 12px; letter-spacing: 0; }
+    h3 { font-size: 15px; line-height: 1.2; margin-bottom: 4px; letter-spacing: 0; }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--ledger);
+      border-radius: 8px;
+      background: var(--ledger);
+      color: oklch(98% 0.006 157);
+      padding: 0 14px;
+      font-weight: 720;
+    }
+
+    button.secondary {
+      background: var(--sheet);
+      color: var(--ink);
+      border-color: var(--rule);
+    }
+
+    button.danger {
+      background: var(--sheet);
+      color: var(--clay);
+      border-color: color-mix(in oklch, var(--clay), var(--rule) 70%);
+    }
+
+    button[disabled] {
+      background: var(--wash);
+      border-color: var(--rule);
+      color: color-mix(in oklch, var(--muted), transparent 18%);
+      cursor: not-allowed;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: var(--sheet);
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+
+    input:focus, select:focus, button:focus {
+      outline: 3px solid color-mix(in oklch, var(--focus), transparent 68%);
+      outline-offset: 2px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 720;
+      line-height: 1.2;
+    }
+
+    .mockups {
+      display: grid;
+      gap: 28px;
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .mockup {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mockup-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--wash);
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .mockup-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .screen {
+      padding: 18px;
+      background: var(--paper);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--ink);
+      font-weight: 760;
+    }
+
+    .mark {
+      display: grid;
+      gap: 4px;
+      width: 24px;
+    }
+
+    .mark span {
+      display: block;
+      height: 5px;
+      border-radius: 4px;
+      background: var(--ledger);
+    }
+
+    .mark span:first-child {
+      width: 18px;
+      margin-left: 6px;
+    }
+
+    .mark span:last-child {
+      width: 18px;
+    }
+
+    .eyebrow {
+      margin-bottom: 8px;
+      color: var(--ledger-deep);
+      font-size: 12px;
+      font-weight: 780;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .muted { color: var(--muted); }
+    .amount { font-variant-numeric: tabular-nums; font-weight: 760; white-space: nowrap; }
+    .positive { color: var(--ledger-deep); }
+    .negative { color: var(--clay); }
+    .zero { color: var(--muted); }
+
+    .create-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.88fr) minmax(320px, 1fr);
+      gap: 24px;
+      align-items: start;
+      min-height: 520px;
+    }
+
+    .brand-note {
+      max-width: 52ch;
+      padding-top: 6px;
+    }
+
+    .panel {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .privacy-note {
+      border-top: 1px solid var(--rule);
+      background: color-mix(in oklch, var(--wash), var(--sheet) 45%);
+      padding: 12px 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .app-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .identity {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--wash);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
+      gap: 14px;
+    }
+
+    .section {
+      background: var(--sheet);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--rule);
+      background: color-mix(in oklch, var(--wash), var(--sheet) 50%);
+    }
+
+    .section-head h2 {
+      margin: 0;
+    }
+
+    .ledger-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 11px 14px;
+      border-top: 1px solid color-mix(in oklch, var(--rule), transparent 28%);
+    }
+
+    .ledger-row:first-child {
+      border-top: 0;
+    }
+
+    .ledger-row strong {
+      font-weight: 720;
+    }
+
+    .subline {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .subtotal {
+      background: color-mix(in oklch, var(--ledger), var(--sheet) 88%);
+    }
+
+    .suggestion {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+
+    .empty-state {
+      padding: 18px 14px;
+      color: var(--muted);
+    }
+
+    .share-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .share-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 4px;
+      padding: 2px 7px;
+      background: var(--wash);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .state-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .state-box {
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--sheet);
+    }
+
+    .mobile-frame {
+      width: 390px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 1px solid var(--rule);
+      border-radius: 24px;
+      background: var(--paper);
+      padding: 12px;
+    }
+
+    .mobile-frame .app-grid,
+    .mobile-frame .create-layout,
+    .mobile-frame .form-grid {
+      display: block;
+    }
+
+    .mobile-frame .app-top {
+      display: block;
+    }
+
+    .mobile-frame .section,
+    .mobile-frame .identity {
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 820px) {
+      .mockups { padding: 14px; }
+      .create-layout, .app-grid, .form-grid, .state-strip { display: block; }
+      .state-box { margin-bottom: 10px; }
+      .app-top { display: block; }
+      .suggestion { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="mockups">
+    <header>
+      <div class="brand">
+        <span class="mark" aria-hidden="true"><span></span><span></span></span>
+        <span>SettleUp</span>
+      </div>
+      <h1>Product Brandkit Mockups</h1>
+      <p class="muted">One canonical direction using receipt-grid structure, warm paper neutrals, ledger green, and low-drama copy.</p>
+    </header>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Create Event</strong>
+        <p>Form-first, no marketing hero</p>
+      </div>
+      <div class="screen">
+        <div class="create-layout">
+          <div class="brand-note">
+            <div class="brand">
+              <span class="mark" aria-hidden="true"><span></span><span></span></span>
+              <span>SettleUp</span>
+            </div>
+            <p class="eyebrow" style="margin-top: 34px;">Private-by-Link</p>
+            <h1>Settle the shared cost without turning it into admin.</h1>
+            <p class="muted">Create one Event, send the Event Link, and keep the money state clear while everyone gets on with the night.</p>
+          </div>
+          <div class="panel">
+            <div class="panel-body">
+              <h2>Create an Event</h2>
+              <div class="form">
+                <label>Event Title<input value="Sydney weekend"></label>
+                <div class="form-grid">
+                  <label>Currency<select><option>AUD</option></select></label>
+                  <label>Your name<input value="Sarah"></label>
+                </div>
+                <button>Create Event</button>
+              </div>
+            </div>
+            <div class="privacy-note">Anyone with this link can view and edit.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Empty Event</strong>
+        <p>Balances first, next action clear</p>
+      </div>
+      <div class="screen">
+        <div class="app-top">
+          <div>
+            <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
+            <h1>Sydney weekend</h1>
+            <p class="muted">AUD, Anyone with this link can view and edit.</p>
+          </div>
+          <button class="secondary">Copy Event Link</button>
+        </div>
+        <div class="identity"><strong>Viewing as</strong><span class="chip">Sarah</span><button class="secondary">Switch</button></div>
+        <div class="app-grid">
+          <div>
+            <section class="section">
+              <div class="section-head"><h2>Balances</h2><span class="chip">0 Expenses</span></div>
+              <div class="ledger-row"><strong>Sarah</strong><span class="amount zero">is settled</span></div>
+            </section>
+            <section class="section">
+              <div class="section-head"><h2>Add Expense</h2></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <label>Description<input placeholder="Dinner"></label>
+                  <label>Amount<input placeholder="80.00"></label>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div>
+            <section class="section">
+              <div class="section-head"><h2>Suggested Settlements</h2></div>
+              <div class="empty-state">Everyone is settled.</div>
+            </section>
+            <section class="section">
+              <div class="section-head"><h2>Participants</h2></div>
+              <div class="ledger-row"><strong>Sarah</strong><span class="chip">current</span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Populated Event</strong>
+        <p>Receipt-grid records and aligned amounts</p>
+      </div>
+      <div class="screen">
+        <div class="app-top">
+          <div>
+            <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
+            <h1>Sydney weekend</h1>
+            <p class="muted">AUD, 4 Participants, 4 Expenses</p>
+          </div>
+          <button class="secondary">Copy Event Link</button>
+        </div>
+        <div class="app-grid">
+          <div>
+            <section class="section">
+              <div class="section-head"><h2>Balances</h2><span class="amount positive">Outstanding $137.40</span></div>
+              <div class="ledger-row subtotal"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
+              <div class="ledger-row"><strong>Marco</strong><span class="amount positive">is owed $52.70</span></div>
+              <div class="ledger-row"><strong>Alex</strong><span class="amount negative">owes $91.20</span></div>
+              <div class="ledger-row"><strong>Priya</strong><span class="amount negative">owes $46.20</span></div>
+            </section>
+            <section class="section">
+              <div class="section-head"><h2>Expenses</h2></div>
+              <div class="ledger-row"><div><h3>Dinner</h3><p class="subline">Sarah paid $180.00, Sarah $52.50, Alex $61.20, Priya $46.20, Marco $20.10</p></div><span class="amount">$180.00</span></div>
+              <div class="ledger-row"><div><h3>Ferry tickets</h3><p class="subline">Marco paid $86.40, Equal split</p></div><span class="amount">$86.40</span></div>
+              <div class="ledger-row"><div><h3>Groceries</h3><p class="subline">Sarah paid $74.80, Weekend breakfast</p></div><span class="amount">$74.80</span></div>
+              <div class="ledger-row"><div><h3>Petrol</h3><p class="subline">Marco paid $54.00, Alex and Priya only</p></div><span class="amount">$54.00</span></div>
+            </section>
+          </div>
+          <div>
+            <section class="section">
+              <div class="section-head"><h2>Add Expense</h2></div>
+              <div class="panel-body form">
+                <div class="form-grid">
+                  <label>Description<input value="Parking"></label>
+                  <label>Amount<input value="18.00"></label>
+                  <label>Payer<select><option>Sarah</option></select></label>
+                </div>
+                <div class="share-grid">
+                  <div class="share-row"><label>Participant<select><option>Sarah</option></select></label><label>Share<input value="4.50"></label></div>
+                  <div class="share-row"><label>Participant<select><option>Alex</option></select></label><label>Share<input value="4.50"></label></div>
+                  <div class="share-row"><label>Participant<select><option>Priya</option></select></label><label>Share<input value="4.50"></label></div>
+                  <div class="share-row"><label>Participant<select><option>Marco</option></select></label><label>Share<input value="4.50"></label></div>
+                </div>
+                <button>Save Expense</button>
+              </div>
+            </section>
+            <section class="section">
+              <div class="section-head"><h2>Participants</h2></div>
+              <div class="ledger-row"><strong>Sarah</strong><span class="chip">current</span></div>
+              <div class="ledger-row"><strong>Alex</strong><span></span></div>
+              <div class="ledger-row"><strong>Priya</strong><span></span></div>
+              <div class="ledger-row"><strong>Marco</strong><span></span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Settle Up State</strong>
+        <p>Suggested Settlements become prominent</p>
+      </div>
+      <div class="screen">
+        <div class="app-grid">
+          <section class="section">
+            <div class="section-head"><h2>Suggested Settlements</h2><span class="chip">2 payments</span></div>
+            <div class="ledger-row suggestion subtotal"><div><strong>Alex sends Sarah</strong><p class="subline">Clears most of Alex's Balance</p></div><span class="amount">$84.70</span><button>Record</button></div>
+            <div class="ledger-row suggestion"><div><strong>Priya sends Marco</strong><p class="subline">Finishes the remaining Balance</p></div><span class="amount">$52.70</span><button>Record</button></div>
+          </section>
+          <section class="section">
+            <div class="section-head"><h2>Settlement Payments</h2></div>
+            <div class="ledger-row"><div><strong>Alex sent Sarah</strong><p class="subline">Recorded just now</p></div><span class="amount positive">$42.50</span></div>
+            <div class="empty-state">Record a Suggested Settlement when money moves.</div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Mobile Event Page</strong>
+        <p>Single column with tap-safe density</p>
+      </div>
+      <div class="screen">
+        <div class="mobile-frame">
+          <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
+          <h1>Sydney weekend</h1>
+          <p class="muted">Viewing as Sarah, AUD</p>
+          <section class="section">
+            <div class="section-head"><h2>Balances</h2></div>
+            <div class="ledger-row"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
+            <div class="ledger-row"><strong>Alex</strong><span class="amount negative">owes $91.20</span></div>
+            <div class="ledger-row"><strong>Priya</strong><span class="amount negative">owes $46.20</span></div>
+          </section>
+          <section class="section">
+            <div class="section-head"><h2>Add Expense</h2></div>
+            <div class="panel-body form">
+              <label>Description<input value="Parking"></label>
+              <label>Amount<input value="18.00"></label>
+              <button>Save Expense</button>
+            </div>
+          </section>
+          <section class="section">
+            <div class="section-head"><h2>Suggested Settlements</h2></div>
+            <div class="ledger-row"><span>Alex sends Sarah</span><span class="amount">$84.70</span></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup">
+      <div class="mockup-title">
+        <strong>Interaction States</strong>
+        <p>Controls and money states</p>
+      </div>
+      <div class="screen">
+        <div class="state-strip">
+          <div class="state-box"><h3>Buttons</h3><p><button>Primary</button></p><p><button class="secondary">Secondary</button></p><p><button disabled>Disabled</button></p></div>
+          <div class="state-box"><h3>Validation</h3><p class="error">Shares must sum to the Expense amount.</p><label>Amount<input value="1.234"></label></div>
+          <div class="state-box"><h3>Rows</h3><div class="ledger-row"><span>Sarah</span><span class="amount positive">is owed $24.00</span></div><div class="ledger-row"><span>Alex</span><span class="amount negative">owes $24.00</span></div></div>
+          <div class="state-box"><h3>Feedback</h3><p class="chip">Event Link copied</p><p class="muted">Anyone with this link can view and edit.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
