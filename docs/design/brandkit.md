@@ -55,8 +55,16 @@ Use OKLCH tokens.
 | `rule` | `oklch(84.5% 0.014 82)` | Dividers and borders |
 | `ledger` | `oklch(46% 0.12 157)` | Primary action, positive state |
 | `ledgerDeep` | `oklch(35% 0.11 157)` | Action hover, strong positive text |
+| `ledgerWash` | `oklch(94.5% 0.035 157)` | Positive row tint and current Participant tint |
+| `ledgerRule` | `oklch(78% 0.055 157)` | Positive/current hairline border |
 | `clay` | `oklch(49% 0.13 31)` | Error and owes state |
+| `clayDeep` | `oklch(38% 0.12 31)` | Strong error and owes text |
+| `clayWash` | `oklch(95% 0.028 31)` | Error and owes row tint |
+| `clayRule` | `oklch(78% 0.055 31)` | Error hairline border |
 | `amber` | `oklch(67% 0.12 78)` | Pending or warning state |
+| `amberDeep` | `oklch(43% 0.095 78)` | Strong warning and pending text |
+| `amberWash` | `oklch(94.5% 0.035 78)` | Privacy note and Suggested Settlement tint |
+| `amberRule` | `oklch(80% 0.065 78)` | Warning hairline border |
 | `focus` | `oklch(62% 0.16 157)` | Focus ring |
 
 Avoid blue/purple gradients, neon money cues, beige SaaS wash, and finance-app navy.
@@ -152,6 +160,10 @@ Avoid:
 - Primary buttons use ledger green.
 - Secondary buttons are neutral with full borders.
 - Destructive buttons use clay text and quiet clay border.
+- Current Participant indicators use ledger wash and ledger text.
+- Owed rows use ledger wash; owes rows use clay wash and clay text.
+- Suggested Settlement rows use amber wash until a Settlement Payment is recorded.
+- Private-by-link notes use amber wash because they are cautionary, not decorative.
 - Form controls have visible labels and stable 40px minimum height.
 - Validation errors appear near the relevant form.
 - Focus rings are visible and use the focus token.
