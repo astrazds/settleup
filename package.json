@@ -1,5 +1,23 @@
 {
-  "name": "SettleUp",
+  "name": "settleup",
+  "description": "No-login, private-by-link group expense splitter for one shared-cost event.",
+  "homepage": "https://repos.astrazds.net/astrazds/settleup",
+  "bugs": {
+    "url": "https://repos.astrazds.net/astrazds/settleup/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://repos.astrazds.net/astrazds/settleup.git"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "d1",
+    "expense-splitting",
+    "hono",
+    "settlement",
+    "typescript"
+  ],
+  "author": "Andrejs Strazds <andrejs@astrazds.com>",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
