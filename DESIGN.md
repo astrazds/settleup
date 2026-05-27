@@ -101,3 +101,6 @@ Use realistic sample data in mockups. Default scenario: Event Title "Sydney week
 - User-provided text is rendered as plain text.
 - Validation errors appear near the relevant form.
 - Current Participant selection controls defaults only; it must not imply permissions.
+- Current Participant UI should use defaults language such as "Expense defaults" or "defaults" rather than account, owner, or permission language.
+- Custom Share entry should show total, assigned, and remaining amounts near the share inputs. Equal split should remain available as a recovery action.
+- Interaction state mockups should include saving/loading, validation recovery, edit mode, delete confirmation, copied feedback, and refresh feedback.

@@ -164,6 +164,9 @@ Avoid:
 - Owed rows use ledger wash; owes rows use clay wash and clay text.
 - Suggested Settlement rows use amber wash until a Settlement Payment is recorded.
 - Private-by-link notes use amber wash because they are cautionary, not decorative.
+- Current Participant copy should say `Expense defaults` or `defaults`, not account or permission language.
+- Share forms should include a summary for total, assigned, and remaining amounts, plus an Equal split recovery action.
+- Interaction state mockups should include saving, active, hover, disabled with reason, validation recovery, edit, delete confirmation, copied feedback, and refresh feedback.
 - Form controls have visible labels and stable 40px minimum height.
 - Validation errors appear near the relevant form.
 - Focus rings are visible and use the focus token.

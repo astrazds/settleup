@@ -93,6 +93,18 @@
       color: oklch(98% 0.006 157);
       padding: 0 14px;
       font-weight: var(--weight-strong);
+      transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, transform 120ms ease-out;
+    }
+
+    button:hover,
+    button.is-hovered {
+      background: var(--ledger-deep);
+      border-color: var(--ledger-deep);
+    }
+
+    button:active,
+    button.is-active {
+      transform: translateY(1px);
     }
 
     button.secondary {
@@ -101,10 +113,35 @@
       border-color: var(--rule);
     }
 
+    button.secondary:hover,
+    button.secondary.is-hovered {
+      background: var(--wash);
+      border-color: color-mix(in oklch, var(--rule), var(--ink) 18%);
+    }
+
+    button.is-loading {
+      background: var(--ledger-deep);
+      border-color: var(--ledger-deep);
+      color: color-mix(in oklch, oklch(98% 0.006 157), transparent 10%);
+    }
+
+    button.small {
+      min-height: 32px;
+      padding-inline: 10px;
+      font-size: var(--text-small);
+    }
+
     button.danger {
       background: var(--sheet);
       color: var(--clay);
       border-color: color-mix(in oklch, var(--clay), var(--rule) 70%);
+    }
+
+    button.danger:hover,
+    button.danger.is-hovered {
+      background: var(--clay-wash);
+      border-color: var(--clay-rule);
+      color: var(--clay-deep);
     }
 
     button[disabled] {
@@ -136,6 +173,13 @@
       font-size: var(--text-caption);
       font-weight: var(--weight-strong);
       line-height: 1.2;
+    }
+
+    .control-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--text-caption);
+      line-height: 1.35;
     }
 
     .mockups {
@@ -338,6 +382,15 @@
       line-height: 1.35;
     }
 
+    .row-actions,
+    .mobile-actions,
+    .state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: center;
+    }
+
     .app-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
@@ -398,6 +451,10 @@
       border-top: 1px solid color-mix(in oklch, var(--rule), transparent 28%);
     }
 
+    .ledger-row > div {
+      min-width: 0;
+    }
+
     .ledger-row:first-child {
       border-top: 0;
     }
@@ -425,6 +482,16 @@
       color: var(--amber-deep);
     }
 
+    .refresh-note {
+      border: 1px solid var(--amber-rule);
+      border-radius: 8px;
+      background: var(--amber-wash);
+      color: var(--amber-deep);
+      padding: 10px 12px;
+      font-size: var(--text-small);
+      line-height: 1.35;
+    }
+
     .empty-state {
       padding: 18px 14px;
       color: var(--muted);
@@ -442,6 +509,60 @@
       grid-template-columns: minmax(0, 1fr) 112px;
       gap: 8px;
       align-items: end;
+    }
+
+    .share-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+      gap: var(--space-sm);
+      align-items: end;
+      margin-top: var(--space-sm);
+      padding: 10px;
+      border: 1px solid var(--ledger-rule);
+      border-radius: 8px;
+      background: var(--ledger-wash);
+    }
+
+    .share-summary.error-state {
+      border-color: var(--clay-rule);
+      background: var(--clay-wash);
+    }
+
+    .share-summary span {
+      display: block;
+      color: var(--muted);
+      font-size: var(--text-caption);
+      font-weight: var(--weight-strong);
+      line-height: 1.2;
+    }
+
+    .share-summary strong {
+      display: block;
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2px;
+      padding: 3px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: var(--wash);
+    }
+
+    .segment {
+      min-height: 34px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .segment[aria-pressed="true"] {
+      background: var(--sheet);
+      border-color: var(--ledger-rule);
+      color: var(--ledger-deep);
     }
 
     .chip {
@@ -478,6 +599,16 @@
       line-height: 1.35;
     }
 
+    .success-note {
+      border: 1px solid var(--ledger-rule);
+      border-radius: 8px;
+      background: var(--ledger-wash);
+      color: var(--ledger-deep);
+      padding: 8px 10px;
+      font-size: var(--text-small);
+      line-height: 1.35;
+    }
+
     .state-strip {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -490,6 +621,14 @@
       border-radius: 8px;
       padding: 12px;
       background: var(--sheet);
+    }
+
+    .state-box h3 {
+      margin-bottom: var(--space-sm);
+    }
+
+    .state-box p:last-child {
+      margin-bottom: 0;
     }
 
     .mobile-frame {
@@ -517,6 +656,22 @@
       margin-bottom: 12px;
     }
 
+    .mobile-frame .mobile-actions {
+      margin-bottom: 12px;
+    }
+
+    .mobile-frame .share-row {
+      grid-template-columns: minmax(0, 1fr) 96px;
+    }
+
+    .mobile-frame .share-summary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .mobile-frame .share-summary button {
+      grid-column: 1 / -1;
+    }
+
     @media (max-width: 820px) {
       .mockups { padding: 14px; gap: var(--space-xl); }
       .mockup-stack { gap: var(--space-lg); }
@@ -525,7 +680,16 @@
       .state-box { margin-bottom: 10px; }
       .app-top { display: block; }
       .suggestion { grid-template-columns: minmax(0, 1fr); }
+      .share-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .share-summary button { grid-column: 1 / -1; }
       .featured .screen, .screen { padding: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -590,7 +754,11 @@
           </div>
           <button class="secondary">Copy Event Link</button>
         </div>
-        <div class="identity"><strong>Viewing as</strong><span class="chip chip-current">Sarah</span><button class="secondary">Switch</button></div>
+        <div class="identity">
+          <strong>Expense defaults</strong>
+          <span class="chip chip-current">Sarah</span>
+          <button class="secondary">Switch</button>
+        </div>
         <div class="app-grid">
           <div class="column-stack">
             <section class="section">
@@ -614,7 +782,10 @@
             </section>
             <section class="section">
               <div class="section-head"><h2>Participants</h2></div>
-              <div class="ledger-row"><strong>Sarah</strong><span class="chip chip-current">current</span></div>
+              <div class="ledger-row">
+                <strong>Sarah</strong>
+                <span class="chip chip-current">defaults</span>
+              </div>
             </section>
           </div>
         </div>
@@ -630,12 +801,32 @@
         <div class="app-grid">
           <section class="section">
             <div class="section-head"><h2>Suggested Settlements</h2><span class="chip chip-pending">2 payments</span></div>
-            <div class="ledger-row suggestion subtotal"><div><strong>Alex sends Sarah</strong><p class="subline">Clears most of Alex's Balance</p></div><span class="amount">$84.70</span><button>Record</button></div>
-            <div class="ledger-row suggestion"><div><strong>Priya sends Marco</strong><p class="subline">Finishes the remaining Balance</p></div><span class="amount">$52.70</span><button>Record</button></div>
+            <div class="ledger-row suggestion subtotal">
+              <div>
+                <strong>Alex sends Sarah</strong>
+                <p class="subline">Clears most of Alex's Balance</p>
+              </div>
+              <span class="amount">$84.70</span>
+              <button>Record</button>
+            </div>
+            <div class="ledger-row suggestion">
+              <div>
+                <strong>Priya sends Marco</strong>
+                <p class="subline">Finishes the remaining Balance</p>
+              </div>
+              <span class="amount">$52.70</span>
+              <button>Record</button>
+            </div>
           </section>
           <section class="section">
             <div class="section-head"><h2>Settlement Payments</h2></div>
-            <div class="ledger-row"><div><strong>Alex sent Sarah</strong><p class="subline">Recorded just now</p></div><span class="amount positive">$42.50</span></div>
+            <div class="ledger-row">
+              <div>
+                <strong>Alex sent Sarah</strong>
+                <p class="subline">Recorded just now</p>
+              </div>
+              <span class="amount positive">$42.50</span>
+            </div>
             <div class="empty-state">Record a Suggested Settlement when money moves.</div>
           </section>
         </div>
@@ -661,17 +852,53 @@
           <div class="column-stack">
             <section class="section">
               <div class="section-head"><h2>Balances</h2><span class="amount positive">Outstanding $137.40</span></div>
-              <div class="ledger-row subtotal"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
-              <div class="ledger-row"><strong>Marco</strong><span class="amount positive">is owed $52.70</span></div>
-              <div class="ledger-row"><strong>Alex</strong><span class="amount negative">owes $91.20</span></div>
-              <div class="ledger-row"><strong>Priya</strong><span class="amount negative">owes $46.20</span></div>
+              <div class="ledger-row subtotal">
+                <strong>Sarah</strong>
+                <span class="amount positive">is owed $84.70</span>
+              </div>
+              <div class="ledger-row">
+                <strong>Marco</strong>
+                <span class="amount positive">is owed $52.70</span>
+              </div>
+              <div class="ledger-row">
+                <strong>Alex</strong>
+                <span class="amount negative">owes $91.20</span>
+              </div>
+              <div class="ledger-row">
+                <strong>Priya</strong>
+                <span class="amount negative">owes $46.20</span>
+              </div>
             </section>
             <section class="section">
               <div class="section-head"><h2>Expenses</h2></div>
-              <div class="ledger-row"><div><h3>Dinner</h3><p class="subline">Sarah paid $180.00, Sarah $52.50, Alex $61.20, Priya $46.20, Marco $20.10</p></div><span class="amount">$180.00</span></div>
-              <div class="ledger-row"><div><h3>Ferry tickets</h3><p class="subline">Marco paid $86.40, Equal split</p></div><span class="amount">$86.40</span></div>
-              <div class="ledger-row"><div><h3>Groceries</h3><p class="subline">Sarah paid $74.80, Weekend breakfast</p></div><span class="amount">$74.80</span></div>
-              <div class="ledger-row"><div><h3>Petrol</h3><p class="subline">Marco paid $54.00, Alex and Priya only</p></div><span class="amount">$54.00</span></div>
+              <div class="ledger-row">
+                <div>
+                  <h3>Dinner</h3>
+                  <p class="subline">Sarah paid $180.00, Sarah $52.50, Alex $61.20, Priya $46.20, Marco $20.10</p>
+                </div>
+                <span class="amount">$180.00</span>
+              </div>
+              <div class="ledger-row">
+                <div>
+                  <h3>Ferry tickets</h3>
+                  <p class="subline">Marco paid $86.40, Equal split</p>
+                </div>
+                <span class="amount">$86.40</span>
+              </div>
+              <div class="ledger-row">
+                <div>
+                  <h3>Groceries</h3>
+                  <p class="subline">Sarah paid $74.80, Weekend breakfast</p>
+                </div>
+                <span class="amount">$74.80</span>
+              </div>
+              <div class="ledger-row">
+                <div>
+                  <h3>Petrol</h3>
+                  <p class="subline">Marco paid $54.00, Alex and Priya only</p>
+                </div>
+                <span class="amount">$54.00</span>
+              </div>
             </section>
           </div>
           <div class="column-stack">
@@ -684,20 +911,50 @@
                   <label>Payer<select><option>Sarah</option></select></label>
                 </div>
                 <div class="share-grid">
-                  <div class="share-row"><label>Participant<select><option>Sarah</option></select></label><label>Share<input value="4.50"></label></div>
-                  <div class="share-row"><label>Participant<select><option>Alex</option></select></label><label>Share<input value="4.50"></label></div>
-                  <div class="share-row"><label>Participant<select><option>Priya</option></select></label><label>Share<input value="4.50"></label></div>
-                  <div class="share-row"><label>Participant<select><option>Marco</option></select></label><label>Share<input value="4.50"></label></div>
+                  <div class="share-row">
+                    <label>Participant<select><option>Sarah</option></select></label>
+                    <label>Share<input value="4.50"></label>
+                  </div>
+                  <div class="share-row">
+                    <label>Participant<select><option>Alex</option></select></label>
+                    <label>Share<input value="4.50"></label>
+                  </div>
+                  <div class="share-row">
+                    <label>Participant<select><option>Priya</option></select></label>
+                    <label>Share<input value="4.50"></label>
+                  </div>
+                  <div class="share-row">
+                    <label>Participant<select><option>Marco</option></select></label>
+                    <label>Share<input value="4.50"></label>
+                  </div>
+                </div>
+                <div class="share-summary">
+                  <div><span>Expense total</span><strong>$18.00</strong></div>
+                  <div><span>Assigned</span><strong>$18.00</strong></div>
+                  <div><span>Remaining</span><strong>$0.00</strong></div>
+                  <button class="secondary small">Equal split</button>
                 </div>
                 <button>Save Expense</button>
               </div>
             </section>
             <section class="section">
               <div class="section-head"><h2>Participants</h2></div>
-              <div class="ledger-row"><strong>Sarah</strong><span class="chip chip-current">current</span></div>
-              <div class="ledger-row"><strong>Alex</strong><span></span></div>
-              <div class="ledger-row"><strong>Priya</strong><span></span></div>
-              <div class="ledger-row"><strong>Marco</strong><span></span></div>
+              <div class="ledger-row">
+                <strong>Sarah</strong>
+                <span class="chip chip-current">defaults</span>
+              </div>
+              <div class="ledger-row">
+                <strong>Alex</strong>
+                <span></span>
+              </div>
+              <div class="ledger-row">
+                <strong>Priya</strong>
+                <span></span>
+              </div>
+              <div class="ledger-row">
+                <strong>Marco</strong>
+                <span></span>
+              </div>
             </section>
           </div>
         </div>
@@ -714,7 +971,16 @@
         <div class="mobile-frame">
           <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
           <h1>Sydney weekend</h1>
-          <p class="muted">Viewing as Sarah, AUD</p>
+          <p class="muted">AUD, 4 Participants</p>
+          <div class="identity">
+            <strong>Expense defaults</strong>
+            <span class="chip chip-current">Sarah</span>
+            <button class="secondary">Switch</button>
+          </div>
+          <div class="mobile-actions">
+            <button class="secondary">Copy Event Link</button>
+            <span class="control-note">Anyone with this link can view and edit.</span>
+          </div>
           <section class="section">
             <div class="section-head"><h2>Balances</h2></div>
             <div class="ledger-row"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
@@ -726,6 +992,35 @@
             <div class="panel-body form">
               <label>Description<input value="Parking"></label>
               <label>Amount<input value="18.00"></label>
+              <label>Payer<select><option>Sarah</option></select></label>
+              <div class="segmented" aria-label="Split mode">
+                <button class="segment" aria-pressed="false">Equal</button>
+                <button class="segment" aria-pressed="true">Custom</button>
+              </div>
+              <div class="share-grid">
+                <div class="share-row">
+                  <label>Participant<select><option>Sarah</option></select></label>
+                  <label>Share<input value="4.50"></label>
+                </div>
+                <div class="share-row">
+                  <label>Participant<select><option>Alex</option></select></label>
+                  <label>Share<input value="4.50"></label>
+                </div>
+                <div class="share-row">
+                  <label>Participant<select><option>Priya</option></select></label>
+                  <label>Share<input value="4.50"></label>
+                </div>
+                <div class="share-row">
+                  <label>Participant<select><option>Marco</option></select></label>
+                  <label>Share<input value="4.50"></label>
+                </div>
+              </div>
+              <div class="share-summary">
+                <div><span>Total</span><strong>$18.00</strong></div>
+                <div><span>Assigned</span><strong>$18.00</strong></div>
+                <div><span>Remaining</span><strong>$0.00</strong></div>
+                <button class="secondary small">Equal split</button>
+              </div>
               <button>Save Expense</button>
             </div>
           </section>
@@ -744,10 +1039,70 @@
       </div>
       <div class="screen">
         <div class="state-strip">
-          <div class="state-box"><h3>Buttons</h3><p><button>Primary</button></p><p><button class="secondary">Secondary</button></p><p><button disabled>Disabled</button></p></div>
-          <div class="state-box"><h3>Validation</h3><p class="error">Shares must sum to the Expense amount.</p><label>Amount<input value="1.234"></label></div>
-          <div class="state-box"><h3>Rows</h3><div class="ledger-row"><span>Sarah</span><span class="amount positive">is owed $24.00</span></div><div class="ledger-row"><span>Alex</span><span class="amount negative">owes $24.00</span></div></div>
-          <div class="state-box"><h3>Feedback</h3><p class="chip chip-success">Event Link copied</p><p class="muted">Anyone with this link can view and edit.</p></div>
+          <div class="state-box">
+            <h3>Buttons</h3>
+            <div class="state-actions">
+              <button>Primary</button>
+              <button class="is-hovered">Hover</button>
+              <button class="is-active">Active</button>
+              <button class="is-loading">Saving...</button>
+              <button disabled>Save Expense</button>
+            </div>
+            <p class="control-note">Save Expense is disabled until Shares match the Expense amount.</p>
+          </div>
+          <div class="state-box">
+            <h3>Focus And Validation</h3>
+            <p class="error">Shares are $2.00 short. Adjust one Share or use Equal split.</p>
+            <label>Amount<input value="18.00"></label>
+            <div class="share-summary error-state">
+              <div><span>Total</span><strong>$18.00</strong></div>
+              <div><span>Assigned</span><strong>$16.00</strong></div>
+              <div><span>Remaining</span><strong>$2.00</strong></div>
+              <button class="secondary small">Equal split</button>
+            </div>
+          </div>
+          <div class="state-box">
+            <h3>Rows</h3>
+            <div class="ledger-row">
+              <span>Sarah</span>
+              <span class="amount positive">is owed $24.00</span>
+            </div>
+            <div class="ledger-row">
+              <span>Alex</span>
+              <span class="amount negative">owes $24.00</span>
+            </div>
+          </div>
+          <div class="state-box">
+            <h3>Edit And Delete</h3>
+            <div class="ledger-row">
+              <div>
+                <strong>Dinner</strong>
+                <p class="subline">Editing amount and Shares</p>
+              </div>
+              <div class="row-actions">
+                <button class="secondary small">Cancel</button>
+                <button class="small">Save</button>
+              </div>
+            </div>
+            <div class="ledger-row">
+              <div>
+                <strong>Delete Dinner?</strong>
+                <p class="subline">This removes the Expense from Balances.</p>
+              </div>
+              <button class="danger small">Delete</button>
+            </div>
+          </div>
+          <div class="state-box">
+            <h3>Feedback</h3>
+            <p class="chip chip-success">Event Link copied</p>
+            <p class="success-note">Expense saved. Balances refreshed.</p>
+            <p class="control-note">Copied feedback clears after a moment.</p>
+          </div>
+          <div class="state-box">
+            <h3>Refresh</h3>
+            <p class="refresh-note">Refreshing Event data...</p>
+            <p class="control-note">Draft fields stay unchanged while new rows arrive.</p>
+          </div>
         </div>
       </div>
     </section>
