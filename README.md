@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Local development uses the `DB` D1 binding declared in `wrangler.jsonc`. Apply local migrations before exercising database-backed routes:
+Local development uses the `DB` D1 binding declared in `wrangler.jsonc`. D1-backed multi-record Event mutations use D1 batch transactions so a failed write does not leave partial Event state. Apply local migrations before exercising database-backed routes:
 
 ```txt
 npx wrangler d1 migrations apply settleup --local

@@ -6,7 +6,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost occasi
 
 ## MVP Scope
 
-- Create an Event with an Event Title, Currency, and first Participant.
+- Create an Event with an Event Title, supported Currency, and first Participant.
 - Share an opaque Event Link for Private-by-Link access.
 - Let anyone with the Event Link view and edit Event data.
 - Let visitors choose or create their local Participant identity, and switch it later.
@@ -36,7 +36,9 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost occasi
 - User-provided text is plain text only.
 - Participant display names, Event Titles, and Expense descriptions are trimmed and non-blank.
 - Participant display names and Expense descriptions do not need to be unique.
-- Money amounts use whole minor units for the Event Currency.
+- MVP Currencies are AUD, USD, EUR, GBP, and NZD.
+- Money amounts use whole minor units for the Event Currency, with two decimal places for every MVP Currency.
+- D1-backed Event mutations that write multiple records should save as one all-or-nothing action.
 - Balances reflect only saved Expenses and Settlement Payments.
 - Draft forms must not be overwritten by polling refreshes.
 - Concurrent edits use last-write-wins in the MVP.

@@ -11,6 +11,14 @@ function jsonRequest(path: string, body: unknown): Request {
   })
 }
 
+function formRequest(path: string, body: Record<string, string>): Request {
+  return new Request(`https://settleup.test${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(body)
+  })
+}
+
 describe('Event creation and access', () => {
   it('creates an Event with a first Participant and opens it by Event Link', async () => {
     const store = new MemoryStore()
@@ -61,6 +69,56 @@ describe('Event creation and access', () => {
         message: expect.stringContaining('Event Title')
       }
     })
+  })
+
+  it('rejects unsupported JSON Event creation currencies', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request(jsonRequest('/api/events', {
+      title: 'Toronto weekend',
+      currency: 'CAD',
+      displayName: 'Sarah'
+    }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Currency must be AUD, USD, EUR, GBP, or NZD'
+      }
+    })
+  })
+
+  it('rejects malformed JSON Event creation with the standard validation error shape', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request('/api/events', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"title":'
+    })
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Request body must be JSON'
+      }
+    })
+  })
+
+  it('rejects unsupported HTML Event creation currencies', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request(formRequest('/events', {
+      title: 'Toronto weekend',
+      currency: 'CAD',
+      displayName: 'Sarah'
+    }))
+    const html = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(html).toContain('Currency must be AUD, USD, EUR, GBP, or NZD')
   })
 })
 
@@ -163,6 +221,8 @@ describe('Frontend design contract', () => {
     expect(html).toContain('class="brand"')
     expect(html).toContain('class="privacy-note"')
     expect(html).toContain('<input type="text" name="title"')
+    expect(html).toContain('<option value="AUD">AUD</option>')
+    expect(html).toContain('<option value="NZD">NZD</option>')
   })
 
   it('serves frontend assets aligned to the documented visual system', async () => {

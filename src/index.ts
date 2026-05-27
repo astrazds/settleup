@@ -4,7 +4,7 @@ import {
   parseMoney,
   trimRequired
 } from './domain'
-import type { ExpenseInput, Result, SettlementPaymentInput, Share } from './domain'
+import type { ExpenseInput, Result, SettlementPaymentInput, Share, SupportedCurrency } from './domain'
 import { D1Store, StoreError } from './store'
 import type { AppStore } from './store'
 import { clientScript } from './ui/client'
@@ -69,7 +69,17 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   })
 
   app.post('/api/events', async (c) => {
-    const input = parseCreateEventInput(await readJson(c.req.raw))
+    let body: unknown
+    try {
+      body = await readJson(c.req.raw)
+    } catch (error: unknown) {
+      if (error instanceof StoreError) {
+        return validationError(error.message)
+      }
+      throw error
+    }
+
+    const input = parseCreateEventInput(body)
     if (!input.ok) {
       return validationError(input.message)
     }
@@ -179,7 +189,7 @@ const app = createApp()
 
 export default app
 
-function parseCreateEventInput(raw: unknown): Result<{ title: string; currency: string; displayName: string }> {
+function parseCreateEventInput(raw: unknown): Result<{ title: string; currency: SupportedCurrency; displayName: string }> {
   const title = trimRequired(field(raw, 'title'), 'Event Title')
   if (!title.ok) {
     return title

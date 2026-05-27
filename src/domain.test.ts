@@ -1,8 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { calculateBalances, createEventToken, parseMoney } from './domain'
+import { calculateBalances, createEventToken, parseCurrency, parseMoney, supportedCurrencies } from './domain'
 import type { Expense, Participant, SettlementPayment } from './domain'
 
 describe('money parsing', () => {
+  it('accepts only the MVP supported currency codes', () => {
+    expect(supportedCurrencies).toEqual(['AUD', 'USD', 'EUR', 'GBP', 'NZD'])
+
+    for (const currency of supportedCurrencies) {
+      expect(parseCurrency(currency)).toEqual({ ok: true, value: currency })
+      expect(parseMoney('12.30', currency)).toEqual({ ok: true, value: 1230 })
+    }
+  })
+
+  it('rejects unsupported three-letter currency codes', () => {
+    expect(parseCurrency('CAD')).toEqual({
+      ok: false,
+      message: 'Currency must be AUD, USD, EUR, GBP, or NZD'
+    })
+  })
+
   it('accepts explicit decimal amounts as whole minor units', () => {
     expect(parseMoney('12', 'AUD')).toEqual({ ok: true, value: 1200 })
     expect(parseMoney('12.30', 'AUD')).toEqual({ ok: true, value: 1230 })

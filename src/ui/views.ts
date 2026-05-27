@@ -1,8 +1,12 @@
+import { supportedCurrencies } from '../domain'
 import type { EventSummary } from '../domain'
 
 export function renderCreatePage(error = ''): string {
   const errorMarkup = error ? `              <p class="error" role="alert">${escapeHtml(error)}</p>
 ` : ''
+  const currencyOptions = supportedCurrencies
+    .map((currency) => `                      <option value="${currency}">${currency}</option>`)
+    .join('\n')
 
   return documentPage({
     title: 'SettleUp',
@@ -26,11 +30,7 @@ ${errorMarkup}
                   <label>
                     <span>Currency</span>
                     <select name="currency" required>
-                      <option value="AUD">AUD</option>
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="NZD">NZD</option>
+${currencyOptions}
                     </select>
                   </label>
                   <label>

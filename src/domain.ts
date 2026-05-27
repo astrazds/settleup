@@ -2,6 +2,9 @@ export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; message: string }
 
+export const supportedCurrencies = ['AUD', 'USD', 'EUR', 'GBP', 'NZD'] as const
+export type SupportedCurrency = (typeof supportedCurrencies)[number]
+
 export interface EventSummary {
   id: string
   token: string
@@ -92,7 +95,7 @@ export function trimRequired(value: unknown, fieldName: string): Result<string> 
   return { ok: true, value: trimmed }
 }
 
-export function parseCurrency(value: unknown): Result<string> {
+export function parseCurrency(value: unknown): Result<SupportedCurrency> {
   if (typeof value !== 'string') {
     return { ok: false, message: 'Currency is required' }
   }
@@ -101,8 +104,15 @@ export function parseCurrency(value: unknown): Result<string> {
   if (!currencyPattern.test(currency)) {
     return { ok: false, message: 'Currency must be a three-letter code' }
   }
+  if (!isSupportedCurrency(currency)) {
+    return { ok: false, message: 'Currency must be AUD, USD, EUR, GBP, or NZD' }
+  }
 
   return { ok: true, value: currency }
+}
+
+function isSupportedCurrency(currency: string): currency is SupportedCurrency {
+  return supportedCurrencies.includes(currency as SupportedCurrency)
 }
 
 export function parseMoney(value: unknown, currency: string): Result<number> {

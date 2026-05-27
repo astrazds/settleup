@@ -12,11 +12,13 @@ import type {
   Participant,
   SettlementPayment,
   SettlementPaymentInput,
-  Share
+  Share,
+  SupportedCurrency
 } from './domain'
 
 export interface D1DatabaseLike {
   prepare(query: string): D1PreparedStatementLike
+  batch(statements: D1PreparedStatementLike[]): Promise<unknown[]>
 }
 
 export interface D1PreparedStatementLike {
@@ -28,7 +30,7 @@ export interface D1PreparedStatementLike {
 
 export interface CreateEventInput {
   title: string
-  currency: string
+  currency: SupportedCurrency
   displayName: string
 }
 
@@ -249,18 +251,18 @@ export class D1Store implements AppStore {
       token = createEventToken()
     }
 
-    await this.db
-      .prepare(
-        'insert into events (id, token, title, currency, created_at, updated_at) values (?, ?, ?, ?, ?, ?)'
-      )
-      .bind(eventId, token, input.title, input.currency, now, now)
-      .run()
-    await this.db
-      .prepare(
-        'insert into participants (id, event_id, display_name, sort_order, created_at) values (?, ?, ?, ?, ?)'
-      )
-      .bind(participantId, eventId, input.displayName, 1, now)
-      .run()
+    await this.db.batch([
+      this.db
+        .prepare(
+          'insert into events (id, token, title, currency, created_at, updated_at) values (?, ?, ?, ?, ?, ?)'
+        )
+        .bind(eventId, token, input.title, input.currency, now, now),
+      this.db
+        .prepare(
+          'insert into participants (id, event_id, display_name, sort_order, created_at) values (?, ?, ?, ?, ?)'
+        )
+        .bind(participantId, eventId, input.displayName, 1, now)
+    ])
 
     return this.snapshotByToken(token)
   }
@@ -276,24 +278,27 @@ export class D1Store implements AppStore {
   async addParticipant(token: string, displayName: string): Promise<EventSnapshot> {
     const stored = await this.rawSnapshot(token)
     const nextOrder = nextParticipantOrder(stored.participants)
-    await this.db
-      .prepare(
-        'insert into participants (id, event_id, display_name, sort_order, created_at) values (?, ?, ?, ?, ?)'
-      )
-      .bind(crypto.randomUUID(), stored.event.id, displayName, nextOrder, new Date().toISOString())
-      .run()
-    await this.touchEvent(stored.event.id)
+    const now = new Date().toISOString()
+    await this.db.batch([
+      this.db
+        .prepare(
+          'insert into participants (id, event_id, display_name, sort_order, created_at) values (?, ?, ?, ?, ?)'
+        )
+        .bind(crypto.randomUUID(), stored.event.id, displayName, nextOrder, now),
+      this.touchEventStatement(stored.event.id, now)
+    ])
     return this.snapshotByToken(token)
   }
 
   async renameParticipant(token: string, participantId: string, displayName: string): Promise<EventSnapshot> {
     const stored = await this.rawSnapshot(token)
     requireParticipant(stored.participants, participantId)
-    await this.db
-      .prepare('update participants set display_name = ? where event_id = ? and id = ?')
-      .bind(displayName, stored.event.id, participantId)
-      .run()
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db
+        .prepare('update participants set display_name = ? where event_id = ? and id = ?')
+        .bind(displayName, stored.event.id, participantId),
+      this.touchEventStatement(stored.event.id)
+    ])
     return this.snapshotByToken(token)
   }
 
@@ -303,8 +308,10 @@ export class D1Store implements AppStore {
     if (isParticipantReferenced(stored, participantId)) {
       throw new StoreError('Referenced Participants cannot be deleted')
     }
-    await this.db.prepare('delete from participants where event_id = ? and id = ?').bind(stored.event.id, participantId).run()
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db.prepare('delete from participants where event_id = ? and id = ?').bind(stored.event.id, participantId),
+      this.touchEventStatement(stored.event.id)
+    ])
     return this.snapshotByToken(token)
   }
 
@@ -313,14 +320,15 @@ export class D1Store implements AppStore {
     assertValidExpense(input, stored.participants)
     const expenseId = crypto.randomUUID()
     const now = new Date().toISOString()
-    await this.db
-      .prepare(
-        'insert into expenses (id, event_id, description, amount_minor, payer_participant_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)'
-      )
-      .bind(expenseId, stored.event.id, input.description, input.amountMinor, input.payerParticipantId, now, now)
-      .run()
-    await this.replaceShares(expenseId, input.shares)
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db
+        .prepare(
+          'insert into expenses (id, event_id, description, amount_minor, payer_participant_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)'
+        )
+        .bind(expenseId, stored.event.id, input.description, input.amountMinor, input.payerParticipantId, now, now),
+      ...this.insertShareStatements(expenseId, input.shares),
+      this.touchEventStatement(stored.event.id, now)
+    ])
     return this.snapshotByToken(token)
   }
 
@@ -328,23 +336,28 @@ export class D1Store implements AppStore {
     const stored = await this.rawSnapshot(token)
     assertValidExpense(input, stored.participants)
     requireExpense(stored.expenses, expenseId)
-    await this.db
-      .prepare(
-        'update expenses set description = ?, amount_minor = ?, payer_participant_id = ?, updated_at = ? where event_id = ? and id = ?'
-      )
-      .bind(input.description, input.amountMinor, input.payerParticipantId, new Date().toISOString(), stored.event.id, expenseId)
-      .run()
-    await this.replaceShares(expenseId, input.shares)
-    await this.touchEvent(stored.event.id)
+    const now = new Date().toISOString()
+    await this.db.batch([
+      this.db
+        .prepare(
+          'update expenses set description = ?, amount_minor = ?, payer_participant_id = ?, updated_at = ? where event_id = ? and id = ?'
+        )
+        .bind(input.description, input.amountMinor, input.payerParticipantId, now, stored.event.id, expenseId),
+      this.db.prepare('delete from shares where expense_id = ?').bind(expenseId),
+      ...this.insertShareStatements(expenseId, input.shares),
+      this.touchEventStatement(stored.event.id, now)
+    ])
     return this.snapshotByToken(token)
   }
 
   async deleteExpense(token: string, expenseId: string): Promise<EventSnapshot> {
     const stored = await this.rawSnapshot(token)
     requireExpense(stored.expenses, expenseId)
-    await this.db.prepare('delete from shares where expense_id = ?').bind(expenseId).run()
-    await this.db.prepare('delete from expenses where event_id = ? and id = ?').bind(stored.event.id, expenseId).run()
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db.prepare('delete from shares where expense_id = ?').bind(expenseId),
+      this.db.prepare('delete from expenses where event_id = ? and id = ?').bind(stored.event.id, expenseId),
+      this.touchEventStatement(stored.event.id)
+    ])
     return this.snapshotByToken(token)
   }
 
@@ -352,21 +365,22 @@ export class D1Store implements AppStore {
     const stored = await this.rawSnapshot(token)
     assertValidSettlementPayment(input, stored.participants)
     const now = new Date().toISOString()
-    await this.db
-      .prepare(
-        'insert into settlement_payments (id, event_id, sender_participant_id, recipient_participant_id, amount_minor, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)'
-      )
-      .bind(
-        crypto.randomUUID(),
-        stored.event.id,
-        input.senderParticipantId,
-        input.recipientParticipantId,
-        input.amountMinor,
-        now,
-        now
-      )
-      .run()
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db
+        .prepare(
+          'insert into settlement_payments (id, event_id, sender_participant_id, recipient_participant_id, amount_minor, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)'
+        )
+        .bind(
+          crypto.randomUUID(),
+          stored.event.id,
+          input.senderParticipantId,
+          input.recipientParticipantId,
+          input.amountMinor,
+          now,
+          now
+        ),
+      this.touchEventStatement(stored.event.id, now)
+    ])
     return this.snapshotByToken(token)
   }
 
@@ -378,42 +392,43 @@ export class D1Store implements AppStore {
     const stored = await this.rawSnapshot(token)
     assertValidSettlementPayment(input, stored.participants)
     requireSettlementPayment(stored.settlementPayments, settlementPaymentId)
-    await this.db
-      .prepare(
-        'update settlement_payments set sender_participant_id = ?, recipient_participant_id = ?, amount_minor = ?, updated_at = ? where event_id = ? and id = ?'
-      )
-      .bind(
-        input.senderParticipantId,
-        input.recipientParticipantId,
-        input.amountMinor,
-        new Date().toISOString(),
-        stored.event.id,
-        settlementPaymentId
-      )
-      .run()
-    await this.touchEvent(stored.event.id)
+    const now = new Date().toISOString()
+    await this.db.batch([
+      this.db
+        .prepare(
+          'update settlement_payments set sender_participant_id = ?, recipient_participant_id = ?, amount_minor = ?, updated_at = ? where event_id = ? and id = ?'
+        )
+        .bind(
+          input.senderParticipantId,
+          input.recipientParticipantId,
+          input.amountMinor,
+          now,
+          stored.event.id,
+          settlementPaymentId
+        ),
+      this.touchEventStatement(stored.event.id, now)
+    ])
     return this.snapshotByToken(token)
   }
 
   async deleteSettlementPayment(token: string, settlementPaymentId: string): Promise<EventSnapshot> {
     const stored = await this.rawSnapshot(token)
     requireSettlementPayment(stored.settlementPayments, settlementPaymentId)
-    await this.db
-      .prepare('delete from settlement_payments where event_id = ? and id = ?')
-      .bind(stored.event.id, settlementPaymentId)
-      .run()
-    await this.touchEvent(stored.event.id)
+    await this.db.batch([
+      this.db
+        .prepare('delete from settlement_payments where event_id = ? and id = ?')
+        .bind(stored.event.id, settlementPaymentId),
+      this.touchEventStatement(stored.event.id)
+    ])
     return this.snapshotByToken(token)
   }
 
-  private async replaceShares(expenseId: string, shares: Share[]): Promise<void> {
-    await this.db.prepare('delete from shares where expense_id = ?').bind(expenseId).run()
-    for (const share of shares) {
-      await this.db
+  private insertShareStatements(expenseId: string, shares: Share[]): D1PreparedStatementLike[] {
+    return shares.map((share) =>
+      this.db
         .prepare('insert into shares (id, expense_id, participant_id, amount_minor) values (?, ?, ?, ?)')
         .bind(crypto.randomUUID(), expenseId, share.participantId, share.amountMinor)
-        .run()
-    }
+    )
   }
 
   private async snapshotByToken(token: string): Promise<EventSnapshot> {
@@ -478,8 +493,8 @@ export class D1Store implements AppStore {
     return (rows.results ?? []).map(settlementPaymentFromRow)
   }
 
-  private async touchEvent(eventId: string): Promise<void> {
-    await this.db.prepare('update events set updated_at = ? where id = ?').bind(new Date().toISOString(), eventId).run()
+  private touchEventStatement(eventId: string, now = new Date().toISOString()): D1PreparedStatementLike {
+    return this.db.prepare('update events set updated_at = ? where id = ?').bind(now, eventId)
   }
 }
 
