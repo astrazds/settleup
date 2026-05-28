@@ -9,7 +9,6 @@ import {
 import { parseMoney } from '../money'
 import { clientScript } from './client'
 import {
-  assignRemainingToDraftShare,
   composeExpenseDraft,
   formatDraftMoneyMinor,
   parseDraftMoneyMinor
@@ -37,7 +36,7 @@ describe('client script contract', () => {
     ])
   })
 
-  it('composes Expense Draft Shares without relying on browser DOM state', () => {
+  it('composes equal Expense Draft Shares without relying on browser DOM state', () => {
     const participants = [
       participant('participant-3', 'Priya', 3),
       participant('participant-1', 'Sarah', 1),
@@ -48,8 +47,7 @@ describe('client script contract', () => {
       amount: '10.00',
       payerParticipantId: 'participant-3',
       participants,
-      includedParticipantIds: ['participant-3', 'participant-1', 'participant-2'],
-      exactShares: []
+      includedParticipantIds: ['participant-3', 'participant-1', 'participant-2']
     })
 
     expect(equalDraft.equalShares).toEqual([
@@ -63,40 +61,18 @@ describe('client script contract', () => {
       { participantId: 'participant-3', amount: '3.33' }
     ])
 
-    const exactDraft = composeExpenseDraft({
+    const excludedPayerDraft = composeExpenseDraft({
       amount: '10.00',
       payerParticipantId: 'participant-3',
       participants,
-      includedParticipantIds: ['participant-1', 'participant-2'],
-      exactShares: [
-        { participantId: 'participant-1', amount: '4.00' },
-        { participantId: 'participant-3', amount: '9.99' }
-      ]
+      includedParticipantIds: ['participant-1', 'participant-2']
     })
 
-    expect(exactDraft.exactShares).toEqual([
-      { participantId: 'participant-1', amount: '4.00' },
+    expect(excludedPayerDraft.equalPayload).toEqual([
+      { participantId: 'participant-1', amount: '5.00' },
       { participantId: 'participant-2', amount: '5.00' }
     ])
-    expect(exactDraft.summary).toEqual({
-      totalMinor: 1000,
-      assignedMinor: 900,
-      remainingMinor: 100,
-      hasInvalidDraftMoney: false
-    })
-    expect(exactDraft.payerWarning).toBe('Priya paid but is not included.')
-
-    expect(assignRemainingToDraftShare(exactDraft.exactShares, 'participant-2', exactDraft.summary.remainingMinor)).toEqual({
-      ok: true,
-      shares: [
-        { participantId: 'participant-1', amount: '4.00' },
-        { participantId: 'participant-2', amount: '6.00' }
-      ]
-    })
-    expect(assignRemainingToDraftShare(exactDraft.exactShares, 'participant-1', -400)).toEqual({
-      ok: false,
-      message: 'Remaining amount would make that Share non-positive'
-    })
+    expect(excludedPayerDraft.payerWarning).toBe('Priya paid but is not included.')
 
     const savedMoney = parseMoney('12.30', 'AUD')
     expect(savedMoney).toEqual({ ok: true, value: 1230 })
@@ -137,7 +113,7 @@ describe('client script contract', () => {
   it('keeps utility actions and histories in the task-region policy', () => {
     const policy = composeEventPagePolicy(snapshot({
       participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
-    }), false)
+    }))
 
     expect(policy.taskRegions).toEqual({
       balances: {
@@ -148,8 +124,7 @@ describe('client script contract', () => {
         participantPlacement: 'addExpense'
       },
       recordSettlementPayment: {
-        visible: true,
-        suggestedSettlementPlacement: 'settlementPayment'
+        visible: true
       },
       eventHistory: {
         visible: true,
@@ -165,9 +140,6 @@ describe('client script contract', () => {
     expect(policy.layout).toMatchObject({
       showParticipantsPanel: false,
       showEventLinkPanel: false,
-      showSuggestedSettlementsPanel: false,
-      showExpensesPanel: false,
-      showSettlementPaymentsPanel: false,
       showHistoryPanel: true
     })
   })
@@ -226,7 +198,7 @@ describe('client script contract', () => {
   it('composes Event page UI policy without rendering HTML', () => {
     const oneParticipantEmpty = composeEventPagePolicy(snapshot({
       participants: [participant('sarah', 'Sarah', 1)]
-    }), false)
+    }))
     expect(oneParticipantEmpty.startGuidance).toEqual({
       visible: true,
       target: '[data-participant-form]',
@@ -276,7 +248,7 @@ describe('client script contract', () => {
         createdAt: '2026-05-28T10:00:00.000Z'
       }],
       suggestedSettlements: [{ senderParticipantId: 'alex', recipientParticipantId: 'sarah', amountMinor: 4000 }]
-    }), true)
+    }))
 
     expect(populatedPolicy.startGuidance).toEqual({
       visible: false,
@@ -284,12 +256,6 @@ describe('client script contract', () => {
       title: '',
       copy: '',
       action: ''
-    })
-    expect(populatedPolicy.suggestedSettlements).toMatchObject({
-      inFocus: true,
-      showCopySummary: true,
-      showSuggestionCount: true,
-      recordButtonClass: ''
     })
     expect(populatedPolicy.participants.deleteById).toMatchObject({
       sarah: { canDelete: false, reason: 'Referenced Participants cannot be deleted.' },
@@ -303,7 +269,7 @@ describe('client script contract', () => {
 
     const multiParticipantEmpty = composeEventPagePolicy(snapshot({
       participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
-    }), false)
+    }))
     expect(multiParticipantEmpty.startGuidance).toMatchObject({
       visible: true,
       target: '[data-expense-form]',
@@ -312,7 +278,7 @@ describe('client script contract', () => {
     })
   })
 
-  it('normalizes panel action visibility for empty, populated, focused, and settled Events', () => {
+  it('normalizes panel action visibility for empty, populated, and settled Events', () => {
     const client = loadClientHarness()
     const empty = snapshot({
       participants: [participant('sarah', 'Sarah', 1)]
@@ -351,13 +317,7 @@ describe('client script contract', () => {
       }]
     })
 
-    expect(client.panelActionState(empty, false)).toMatchObject({
-      suggestedSettlements: {
-        showSettlementFocus: false,
-        showCopySummary: false,
-        showSuggestionCount: false,
-        recordButtonClass: 'secondary'
-      },
+    expect(client.panelActionState(empty)).toMatchObject({
       settlementPaymentForm: {
         canRecord: false,
         disabledReason: 'Add another Participant before recording a Settlement Payment.'
@@ -371,13 +331,7 @@ describe('client script contract', () => {
         }
       }
     })
-    expect(client.panelActionState(populated, false)).toMatchObject({
-      suggestedSettlements: {
-        showSettlementFocus: true,
-        showCopySummary: false,
-        settlementFocusButtonClass: '',
-        recordButtonClass: 'secondary'
-      },
+    expect(client.panelActionState(populated)).toMatchObject({
       settlementPaymentForm: {
         canRecord: true,
         disabledReason: ''
@@ -389,18 +343,10 @@ describe('client script contract', () => {
         }
       }
     })
-    expect(client.panelActionState(populated, true)).toMatchObject({
-      suggestedSettlements: {
-        showCopySummary: true,
-        settlementFocusButtonClass: 'secondary',
-        recordButtonClass: ''
-      }
-    })
-    expect(client.panelActionState(settled, true)).toMatchObject({
-      suggestedSettlements: {
-        showSettlementFocus: false,
-        showCopySummary: false,
-        showSuggestionCount: false
+    expect(client.panelActionState(settled)).toMatchObject({
+      settlementPaymentForm: {
+        canRecord: true,
+        disabledReason: ''
       }
     })
   })
@@ -408,7 +354,7 @@ describe('client script contract', () => {
   it('documents the compressed Event-page layout state', () => {
     const state = composeEventPagePolicy(snapshot({
       participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
-    }), false)
+    }))
 
     expect(state).toMatchObject({
       eventLink: {
@@ -421,11 +367,7 @@ describe('client script contract', () => {
         showParticipantsPanel: false,
         eventLinkPlacement: 'expenseDefaults',
         showEventLinkPanel: false,
-        suggestedSettlementPlacement: 'settlementPayment',
-        showSuggestedSettlementsPanel: false,
         showHistoryPanel: true,
-        showExpensesPanel: false,
-        showSettlementPaymentsPanel: false,
         historyOrder: 'newest-first'
       }
     })
@@ -517,7 +459,7 @@ interface ClientHarness {
   setSnapshot: (value: unknown) => void
   showToast: (message: string) => void
   renderStartGuidance: () => void
-  panelActionState: (value: unknown, settlementFocus: boolean) => unknown
+  panelActionState: (value: unknown) => unknown
   historyItems: (value: unknown) => Array<{ kind: string, record: { id: string } }>
   newParticipantId: (previousSnapshot: unknown, nextSnapshot: unknown) => string | null
   shouldShowDraftUpdateWarning: (preserveDrafts: boolean, previousEventUpdatedAt: string | null) => boolean

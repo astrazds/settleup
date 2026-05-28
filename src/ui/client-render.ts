@@ -9,23 +9,6 @@ function renderIdentity() {
   }
 }
 
-function renderParticipants(preserveDrafts) {
-  const list = app.querySelector('[data-participants]')
-  list.innerHTML = snapshot.participants.map((participant) =>
-    '<div class="ledger-row"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="row-actions">' +
-    (participant.id === currentParticipantId ? '<span class="chip chip-current">defaults</span>' : '') +
-    (isParticipantReferenced(participant.id) ? '<span class="chip">in use</span>' : '') +
-    '<button class="secondary" type="button" data-rename-participant="' + participant.id + '">Rename</button>' +
-    (participantCanBeDeleted(participant.id) ? '<button class="danger" type="button" data-delete-participant="' + participant.id + '">Delete</button>' : '') +
-    '</span></div>'
-  ).join('')
-  list.querySelectorAll('[data-rename-participant]').forEach((button) => button.addEventListener('click', renameParticipant))
-  list.querySelectorAll('[data-delete-participant]').forEach((button) => button.addEventListener('click', deleteParticipant))
-  if (!preserveDrafts && app.querySelector('[data-share-list]').children.length === 0) {
-    renderIncludedParticipants(false)
-  }
-}
-
 function renderBalances() {
   const balances = app.querySelector('[data-balances]')
   const outstanding = snapshot.balances.reduce((total, balance) => total + Math.max(balance.amountMinor, 0), 0)
@@ -36,38 +19,10 @@ function renderBalances() {
     const cls = balance.amountMinor > 0 ? 'amount-positive' : balance.amountMinor < 0 ? 'amount-negative' : 'amount-zero'
     const rowClass = balance.amountMinor > 0 ? ' row-positive' : balance.amountMinor < 0 ? ' row-negative' : ''
     const phrase = balance.amountMinor > 0 ? 'is owed ' + money(balance.amountMinor) : balance.amountMinor < 0 ? 'owes ' + money(Math.abs(balance.amountMinor)) : 'is settled'
-    return '<div class="ledger-row' + rowClass + '"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="amount ' + cls + '">' + phrase + '</span></div>'
+    const paymentAction = balance.amountMinor < 0 ? '<button class="secondary" type="button" data-pay-balance="' + escapeAttr(participant.id) + '">Pay</button>' : ''
+    return '<div class="ledger-row' + rowClass + '"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="row-actions balance-actions">' + paymentAction + '<span class="amount ' + cls + '">' + phrase + '</span></span></div>'
   }).join('')
-}
-
-function renderSuggestedSettlements() {
-  const list = app.querySelector('[data-suggestions]')
-  const count = app.querySelector('[data-suggestion-count]')
-  const copySummary = app.querySelector('[data-copy-summary]')
-  const actionState = composeEventPagePolicy(snapshot, settlementFocus).suggestedSettlements
-  count.textContent = snapshot.suggestedSettlements.length > 0 ? snapshot.suggestedSettlements.length + ' payments' : ''
-  count.hidden = !actionState.showSuggestionCount
-  if (copySummary) {
-    copySummary.hidden = !actionState.showCopySummary
-  }
-  if (snapshot.suggestedSettlements.length === 0) {
-    list.innerHTML = '<p class="empty">Everyone is settled.</p>'
-    return
-  }
-  list.innerHTML = snapshot.suggestedSettlements.map((suggestion) => {
-    const sender = findParticipant(suggestion.senderParticipantId)
-    const recipient = findParticipant(suggestion.recipientParticipantId)
-    const key = suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor
-    const isConfirming = activeSuggestionKey === key
-    const confirmation = isConfirming
-      ? '<div class="suggestion-confirmation"><p class="subtle">Suggested amount ' + money(suggestion.amountMinor) + '</p><label><span>Recorded amount</span><input type="text" inputmode="decimal" data-suggestion-amount value="' + escapeAttr(formatDraftMoneyMinor(suggestion.amountMinor)) + '"></label><span class="row-actions"><button type="button" data-confirm-suggestion="' + key + '">Record Settlement Payment</button><button class="secondary" type="button" data-cancel-suggestion>Cancel</button></span><p class="error" data-suggestion-error hidden></p></div>'
-      : ''
-    const recordClass = actionState.recordButtonClass ? ' class="' + actionState.recordButtonClass + '"' : ''
-    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p>' + confirmation + '</div><span class="amount">' + money(suggestion.amountMinor) + '</span>' + (isConfirming ? '' : '<button' + recordClass + ' type="button" data-record-suggestion="' + key + '">Record</button>') + '</div>'
-  }).join('')
-  list.querySelectorAll('[data-record-suggestion]').forEach((button) => button.addEventListener('click', recordSuggestion))
-  list.querySelectorAll('[data-confirm-suggestion]').forEach((button) => button.addEventListener('click', confirmSuggestion))
-  list.querySelectorAll('[data-cancel-suggestion]').forEach((button) => button.addEventListener('click', cancelSuggestion))
+  balances.querySelectorAll('[data-pay-balance]').forEach((button) => button.addEventListener('click', payBalance))
 }
 
 function renderHistory() {
@@ -96,13 +51,22 @@ function renderHistory() {
 }
 
 function renderPanelStates() {
-  const actionState = composeEventPagePolicy(snapshot, settlementFocus)
+  const actionState = composeEventPagePolicy(snapshot)
   const settlementSection = app.querySelector('[data-settlement-form-section]')
   if (settlementSection) {
     settlementSection.hidden = false
   }
+  const settlementForm = app.querySelector('[data-settlement-form]')
+  const manualSettlementButton = app.querySelector('[data-manual-settlement]')
   const settlementSubmit = app.querySelector('[data-settlement-form] button[type="submit"]')
   const settlementUnavailable = app.querySelector('[data-settlement-unavailable]')
+  if (settlementForm) {
+    settlementForm.hidden = !(manualSettlementOpen || settlementDraftDirty || settlementForm.settlementPaymentId.value)
+  }
+  if (manualSettlementButton) {
+    manualSettlementButton.disabled = !actionState.settlementPaymentForm.canRecord
+    manualSettlementButton.hidden = !settlementForm?.hidden
+  }
   if (settlementSubmit) {
     settlementSubmit.disabled = !actionState.settlementPaymentForm.canRecord
   }
@@ -116,7 +80,7 @@ function renderStartGuidance() {
   const panel = app.querySelector('[data-start-guidance]')
   if (!panel) return
 
-  const guidance = composeEventPagePolicy(snapshot, settlementFocus).startGuidance
+  const guidance = composeEventPagePolicy(snapshot).startGuidance
 
   panel.hidden = !guidance.visible
   panel.dataset.startTarget = guidance.target
@@ -134,11 +98,12 @@ function fillParticipantSelects(preserve) {
     select.innerHTML = snapshot.participants.map(optionForParticipant).join('')
     select.value = currentValue || select.querySelector('option[value="' + currentParticipantId + '"]')?.value || snapshot.participants[0]?.id || ''
   })
+  setExpensePayerFromDefault(preserve)
   const sender = app.querySelector('[name="suggestedSender"]')
   const recipient = app.querySelector('[name="suggestedRecipient"]')
   if (sender?.value) app.querySelector('[name="senderParticipantId"]').value = sender.value
   if (recipient?.value) app.querySelector('[name="recipientParticipantId"]').value = recipient.value
-  if (!preserve && app.querySelector('[data-share-list]').children.length === 0) renderIncludedParticipants(false)
+  if (!preserve) renderIncludedParticipants(false)
 }
 
 function renderIncludedParticipants(preserve) {
@@ -150,26 +115,32 @@ function renderIncludedParticipants(preserve) {
       ? Array.from(list.querySelectorAll('[name="includedParticipantId"]:checked')).map((input) => input.value)
       : []
   )
-  const payerId = app.querySelector('[data-expense-form]')?.payerParticipantId?.value || currentParticipantId || snapshot.participants[0]?.id || ''
+  const payerId = expensePayerParticipantId()
   const shouldUsePrevious = preserve && list.children.length > 0
   const defaultIncluded = new Set(shouldUsePrevious ? previous : snapshot.participants.map((participant) => participant.id))
   if (payerId && !shouldUsePrevious) {
     defaultIncluded.add(payerId)
   }
 
-  list.innerHTML = snapshot.participants.map((participant) =>
-    '<label class="included-option"><input type="checkbox" name="includedParticipantId" value="' + escapeAttr(participant.id) + '"' + (defaultIncluded.has(participant.id) ? ' checked' : '') + '><span>' + escapeHtml(participant.displayName) + '</span></label>'
-  ).join('')
+  list.innerHTML = snapshot.participants.map((participant) => {
+    const participantNameId = 'participant-name-' + escapeAttr(participant.id)
+    const status = isParticipantReferenced(participant.id) ? '<span class="chip">in use</span>' : ''
+    const deleteButton = participantCanBeDeleted(participant.id) ? '<button class="danger" type="button" data-delete-participant="' + participant.id + '">Delete</button>' : ''
+    return '<div class="ledger-row participant-row">' +
+      '<label class="participant-split"><input type="checkbox" name="includedParticipantId" aria-label="Split with ' + escapeAttr(participant.displayName) + '" value="' + escapeAttr(participant.id) + '"' + (defaultIncluded.has(participant.id) ? ' checked' : '') + '></label>' +
+      '<strong id="' + participantNameId + '">' + escapeHtml(participant.displayName) + '</strong>' +
+      '<span class="row-actions participant-actions">' + status + '<button class="secondary" type="button" data-rename-participant="' + participant.id + '">Rename</button>' + deleteButton + '</span>' +
+      '</div>'
+  }).join('')
   list.querySelectorAll('[name="includedParticipantId"]').forEach((input) => {
     input.addEventListener('change', () => {
       markExpenseDirty()
-      syncExactSharesFromIncluded()
-      updateShareSummary()
+      updateExpenseDraftState()
     })
   })
-  syncAssignRemainingOptions()
-  syncExactSharesFromIncluded()
-  updateShareSummary()
+  list.querySelectorAll('[data-rename-participant]').forEach((button) => button.addEventListener('click', renameParticipant))
+  list.querySelectorAll('[data-delete-participant]').forEach((button) => button.addEventListener('click', deleteParticipant))
+  updateExpenseDraftState()
 }
 
 function findParticipant(id) {
@@ -198,29 +169,6 @@ function money(amountMinor) {
 function text(selector, value) {
   const element = app.querySelector(selector)
   if (element) element.textContent = value
-}
-
-function updateSettlementFocus() {
-  const section = app.querySelector('[data-settlement-section]')
-  const button = app.querySelector('[data-settlement-focus]')
-  const actionState = composeEventPagePolicy(snapshot, settlementFocus).suggestedSettlements
-  if (!actionState.showSettlementFocus) {
-    settlementFocus = false
-  }
-  if (section) section.classList.toggle('settlement-focus', settlementFocus)
-  if (button) {
-    button.hidden = !actionState.showSettlementFocus
-    button.className = actionState.settlementFocusButtonClass
-    button.textContent = actionState.settlementFocusLabel
-  }
-  const count = app.querySelector('[data-suggestion-count]')
-  if (count) {
-    count.hidden = !actionState.showSuggestionCount
-  }
-  const copySummary = app.querySelector('[data-copy-summary]')
-  if (copySummary) {
-    copySummary.hidden = !actionState.showCopySummary
-  }
 }
 
 function newParticipantId(previousSnapshot, nextSnapshot) {

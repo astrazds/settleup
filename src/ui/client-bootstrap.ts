@@ -10,8 +10,7 @@ let fallbackPollingId = null
 let realtimeSocket = null
 let realtimeReconnectId = null
 let realtimeReconnectAttempt = 0
-let settlementFocus = false
-let activeSuggestionKey = null
+let manualSettlementOpen = false
 let expenseDraftDirty = false
 let settlementDraftDirty = false
 let toastHideId = null
@@ -60,16 +59,13 @@ function render(preserveDrafts) {
   text('[data-event-title]', snapshot.event.title)
   text('[data-event-currency]', snapshot.event.currency)
   renderIdentity()
-  renderParticipants(preserveDrafts)
   renderBalances()
-  renderSuggestedSettlements()
   renderHistory()
   renderStartGuidance()
   renderPanelStates()
   fillParticipantSelects(preserveDrafts)
   renderIncludedParticipants(preserveDrafts)
-  updateShareSummary()
-  updateSettlementFocus()
+  updateExpenseDraftState()
 }
 
 function startRealtime() {

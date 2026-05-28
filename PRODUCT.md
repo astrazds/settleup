@@ -11,12 +11,12 @@ Shipped MVP behavior:
 - Let anyone with the Event Link view and edit Event data.
 - Let visitors choose, remember, and switch their local Participant default.
 - Add, rename, and delete unreferenced Participants.
-- Add, edit, and delete Expenses with Included Participants and explicit Shares.
-- Equal-split Expenses by default, with exact Share overrides and assign-remaining helpers.
+- Add, edit, and delete Expenses with Included Participants.
+- Equal-split Expenses across the selected Included Participants.
 - Add, edit, and delete Settlement Payments.
-- Show Balances and deterministic Suggested Settlements.
-- Record a Suggested Settlement through inline confirmation.
-- Copy a concise settlement summary.
+- Show Balances.
+- Record owed Balances directly from a Participant row.
+- Record manual Settlement Payments.
 - Refresh saved Event state through realtime notifications, with polling fallback.
 - Preserve active draft forms when saved Event state changes.
 
@@ -35,9 +35,10 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - MVP Currencies are AUD, USD, EUR, GBP, and NZD.
 - Money amounts use whole minor units with two decimal places.
 - One Event has exactly one Currency.
+- Saved Expense commands accept Included Participants and derive equal Shares before persistence.
 - D1-backed multi-record Event mutations must be all-or-nothing.
 - Balances reflect only saved Expenses and Settlement Payments.
-- Suggested Settlements are derived recommendations, not recorded history.
+- Suggested Settlements are derived data used to power Balance-row Pay actions, not recorded history.
 - Settlement Payments may overpay.
 - Draft forms must not be overwritten by realtime or polling refreshes.
 - Realtime messages announce saved Event changes only; D1 remains the source of truth.

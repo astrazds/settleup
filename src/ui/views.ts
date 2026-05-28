@@ -14,35 +14,31 @@ export function renderCreatePage(error = ''): string {
       <main class="create-shell">
         <section class="create-card" aria-labelledby="create-title">
           <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
-          <h1 id="create-title">Settle the shared cost without turning it into admin.</h1>
-          <p class="muted">Create one Event, send the Event Link, and keep the money state clear while everyone gets on with the night.</p>
-          <div class="panel">
-            <div class="panel-body">
-              <p class="eyebrow">Private-by-Link</p>
-              <h2>Create an Event</h2>
-${errorMarkup}
-              <form class="form" method="post" action="/events">
-                <label>
-                  <span>Event Title</span>
-                  <input type="text" name="title" required autocomplete="off" placeholder="Sydney weekend">
-                </label>
-                <div class="form-grid">
-                  <label>
-                    <span>Currency</span>
-                    <select name="currency" required>
-${currencyOptions}
-                    </select>
-                  </label>
-                  <label>
-                    <span>Your name</span>
-                    <input type="text" name="displayName" required autocomplete="name" placeholder="Sarah">
-                  </label>
-                </div>
-                <button type="submit">Create Event</button>
-              </form>
-            </div>
-            <p class="privacy-note">Anyone with this link can view and edit.</p>
+          <div class="create-copy">
+            <h1 id="create-title">Split costs, easy...done...</h1>
+            <p class="muted">Share the link. Add people and expenses. Pay them.</p>
           </div>
+          <form class="form create-form" method="post" action="/events">
+${errorMarkup}
+            <label>
+              <span>Event Title</span>
+              <input type="text" name="title" required autocomplete="off" placeholder="Sydney weekend">
+            </label>
+            <div class="form-grid">
+              <label>
+                <span>Currency</span>
+                <select name="currency" required>
+${currencyOptions}
+                </select>
+              </label>
+              <label>
+                <span>Your name</span>
+                <input type="text" name="displayName" required autocomplete="name" placeholder="Sarah">
+              </label>
+            </div>
+            <button type="submit">Create Event</button>
+          </form>
+          <p class="privacy-note">Anyone with the Event Link can view and edit.</p>
         </section>
       </main>
     `
@@ -207,6 +203,17 @@ label {
   font-weight: var(--weight-strong);
 }
 label span { color: var(--muted); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
 h1, h2, h3, p { margin-top: 0; }
 h1 {
   font-size: var(--text-heading);
@@ -233,20 +240,32 @@ h3 {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: var(--space-lg);
+  padding: var(--space-xl) var(--space-lg);
 }
 .create-card {
   display: grid;
-  gap: var(--space-lg);
-  width: min(540px, 100%);
+  gap: 16px;
+  width: min(460px, 100%);
 }
-.create-card > h1 {
-  max-width: 21ch;
+.create-card h1 {
+  max-width: 16ch;
   font-size: var(--text-display);
   line-height: 1.12;
+  margin-bottom: 8px;
 }
-.create-card > .muted {
-  max-width: 58ch;
+.create-copy {
+  display: grid;
+  gap: 0;
+}
+.create-copy .muted {
+  max-width: 34ch;
+  margin: 0;
+}
+.create-form {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--sheet);
+  padding: 16px;
 }
 .panel, .loading-panel {
   background: var(--sheet);
@@ -300,10 +319,7 @@ h3 {
 }
 .privacy-note {
   margin: 0;
-  border-top: 1px solid var(--amber-rule);
-  background: var(--amber-wash);
-  padding: 12px 16px;
-  color: var(--amber-deep);
+  color: var(--muted);
   font-size: var(--text-small);
   line-height: 1.4;
 }
@@ -329,11 +345,64 @@ h3 {
   margin-bottom: var(--space-md);
 }
 .app-top h1 { margin-bottom: 4px; }
+.event-title-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.event-title-line [data-event-title] {
+  min-width: 0;
+}
+.icon-button {
+  flex: 0 0 auto;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-color: var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+}
+.icon-button:hover {
+  background: var(--wash);
+  border-color: color-mix(in oklch, var(--rule), var(--ink) 18%);
+}
+.copy-icon {
+  position: relative;
+  display: block;
+  width: 17px;
+  height: 17px;
+}
+.copy-icon::before,
+.copy-icon::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  background: var(--sheet);
+}
+.copy-icon::before {
+  top: 0;
+  right: 0;
+}
+.copy-icon::after {
+  left: 0;
+  bottom: 0;
+}
+.top-tools {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
 .app-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
   gap: var(--space-md);
   align-items: start;
+}
+.app-grid > [data-testid="event-history-panel"] {
+  grid-column: 1 / -1;
 }
 .column-stack {
   display: grid;
@@ -385,10 +454,6 @@ h3 {
 }
 .ledger-row.row-positive { background: color-mix(in oklch, var(--ledger-wash), var(--sheet) 35%); }
 .ledger-row.row-negative { background: color-mix(in oklch, var(--clay-wash), var(--sheet) 30%); }
-.ledger-row.suggestion {
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  background: var(--amber-wash);
-}
 .amount {
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-heavy);
@@ -407,14 +472,17 @@ h3 {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
 }
-.share-list {
-  display: grid;
-  gap: 8px;
-}
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+.expense-entry-row {
+  grid-template-columns: minmax(0, 1fr) minmax(96px, 120px) auto;
+  align-items: end;
+}
+.expense-entry-row button[type="submit"] {
+  min-width: 76px;
 }
 .row-actions,
 .mobile-actions,
@@ -424,73 +492,73 @@ h3 {
   gap: 8px;
   align-items: center;
 }
-.share-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px auto;
-  gap: 8px;
-  align-items: end;
+.balance-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
 }
-.share-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: var(--space-sm);
-  align-items: end;
-  padding: 10px;
-  border: 1px solid var(--ledger-rule);
-  border-radius: 8px;
-  background: var(--ledger-wash);
-}
-.share-summary.error-state {
-  border-color: var(--clay-rule);
-  background: var(--clay-wash);
-}
-.share-summary span {
-  display: block;
-  color: var(--muted);
-  font-size: var(--text-caption);
-  font-weight: var(--weight-strong);
-  line-height: 1.2;
-}
-.share-summary strong {
-  display: block;
-  margin-top: 2px;
-  font-variant-numeric: tabular-nums;
+.balance-actions button {
+  min-height: 36px;
+  padding-inline: 12px;
 }
 .included-panel {
   display: grid;
-  gap: 8px;
+  gap: 0;
+  min-inline-size: 0;
   margin: 0;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--wash);
+  border: 0;
+  border-top: 1px solid var(--rule);
+  border-radius: 0;
+  padding: 10px 0 0;
+  background: transparent;
 }
 .included-panel legend {
-  padding: 0 4px;
-  font-weight: var(--weight-heavy);
-}
-.included-panel .subtle {
-  margin: 0;
+  padding: 0 6px 0 0;
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-weight: var(--weight-strong);
 }
 .included-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0;
 }
-.included-option {
+.participant-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 0;
+}
+.participant-row:first-child {
+  border-top: 0;
+}
+.participant-split {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  padding: 8px 10px;
-  background: var(--sheet);
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  margin: 0;
 }
-.included-option input {
+.participant-split input {
   width: 18px;
   height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   accent-color: var(--ledger);
+}
+.participant-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.participant-actions {
+  justify-content: flex-end;
+}
+.participant-actions button {
+  min-height: 36px;
+  padding-inline: 10px;
 }
 .embedded-block {
   display: grid;
@@ -510,8 +578,21 @@ h3 {
   font-size: var(--text-small);
 }
 .participant-manager {
+  margin-top: 4px;
+  padding: 10px 0 0;
   border-top: 1px solid var(--rule);
   border-bottom: 0;
+}
+.participant-manager > .inline-form {
+  margin-top: 0;
+}
+.participant-add-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.participant-add-row button {
+  min-width: 76px;
 }
 .history-kind {
   display: inline-block;
@@ -522,49 +603,78 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
-.assign-remaining label {
-  min-width: min(100%, 220px);
-}
-.settlement-focus {
-  border-color: var(--amber-rule);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--amber-rule), transparent 72%);
-}
-.settlement-focus .section-head {
-  background: var(--amber-wash);
-}
-.suggestion-confirmation {
-  display: grid;
-  gap: 8px;
-  margin-top: 10px;
-  max-width: 320px;
-}
-.suggestion-confirmation label {
-  display: grid;
-  gap: 4px;
-}
 .empty {
   color: var(--muted);
   padding: 18px 14px;
   font-size: var(--text-small);
 }
-.identity-bar {
+.expense-defaults {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
-  width: fit-content;
+  justify-content: flex-end;
+  gap: 8px;
   max-width: 100%;
-  margin-bottom: var(--space-md);
-  padding: 10px 12px;
-  background: var(--ledger-wash);
-  border: 1px solid var(--ledger-rule);
-  border-radius: 8px;
   font-size: var(--text-small);
   line-height: 1.35;
 }
-.identity-bar select {
+.expense-defaults > span {
+  color: var(--muted);
+  font-weight: var(--weight-strong);
+}
+.expense-defaults select {
   width: auto;
-  min-width: 150px;
+  min-width: 136px;
+  min-height: 36px;
+}
+.expense-defaults button {
+  min-height: 36px;
+}
+.settlement-dock {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  background: color-mix(in oklch, var(--amber-wash), var(--sheet) 58%);
+}
+.settlement-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.settlement-dock-head p {
+  margin: 2px 0 0;
+  font-size: var(--text-small);
+}
+.manual-settlement {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.settlement-form {
+  border-top: 1px solid var(--amber-rule);
+  background: color-mix(in oklch, var(--sheet), var(--amber-wash) 42%);
+}
+.settlement-form[hidden] {
+  display: none;
+}
+.settlement-party-row,
+.settlement-action-row {
+  display: grid;
+  gap: 10px;
+  align-items: end;
+}
+.settlement-party-row {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.settlement-action-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+.settlement-action-row button {
+  min-width: 76px;
 }
 .toast-region {
   position: fixed;
@@ -648,13 +758,45 @@ h3 {
   line-height: 1.35;
 }
 .draft-warning {
-  min-height: calc(var(--text-small) * 1.35);
   margin: 0;
   color: var(--amber-deep);
 }
 @media (max-width: 820px) {
   .app-shell { padding: 14px; }
   .app-top, .app-grid { display: block; }
+  .top-tools {
+    justify-items: start;
+    margin-top: var(--space-sm);
+  }
+  .section-head {
+    flex-wrap: wrap;
+  }
+  .expense-defaults {
+    flex: 1 1 100%;
+    justify-content: stretch;
+  }
+  .expense-defaults > span {
+    width: 100%;
+  }
+  .expense-defaults select {
+    flex: 1 1 140px;
+  }
+  .manual-settlement {
+    display: grid;
+  }
+  .manual-settlement button {
+    width: 100%;
+  }
+  .settlement-party-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settlement-action-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .settlement-action-row button {
+    min-width: 68px;
+    padding-inline: 12px;
+  }
   .toast-region {
     top: auto;
     right: 14px;
@@ -670,46 +812,17 @@ h3 {
     width: 100%;
   }
   .form-grid { grid-template-columns: 1fr; }
+  .app-shell .form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app-shell .expense-entry-row {
+    grid-template-columns: minmax(0, 1fr) minmax(88px, 108px) auto;
+  }
   .compact-form {
     grid-template-columns: minmax(0, 1fr);
   }
-  .share-row { grid-template-columns: minmax(0, 1fr) 112px; }
-  .share-row button { grid-column: 1 / -1; }
-  .share-summary {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    padding: 12px;
-  }
-  .share-summary > div {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 16px;
-    padding-block: 8px;
-    border-top: 1px solid color-mix(in oklch, var(--ledger-rule), transparent 55%);
-  }
-  .share-summary.error-state > div {
-    border-top-color: color-mix(in oklch, var(--clay-rule), transparent 55%);
-  }
-  .share-summary > div:first-child {
-    padding-top: 0;
-    border-top: 0;
-  }
-  .share-summary > div:nth-of-type(3) {
-    padding-bottom: 12px;
-  }
-  .share-summary span,
-  .share-summary strong {
-    margin-top: 0;
-  }
-  .share-summary button {
-    grid-column: 1 / -1;
-  }
-  .included-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .ledger-row.suggestion {
-    grid-template-columns: minmax(0, 1fr);
+  .participant-add-row {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
   .record-row {
     grid-template-columns: minmax(0, 1fr);

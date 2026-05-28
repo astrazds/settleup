@@ -1,9 +1,10 @@
 import {
+  equalExpenseShares,
   parseCurrency,
   parseMoney,
   trimRequired
 } from './domain'
-import type { ExpenseInput, Result, SettlementPaymentInput, Share, SupportedCurrency } from './domain'
+import type { ExpenseInput, Participant, Result, SettlementPaymentInput, SupportedCurrency } from './domain'
 
 export class CommandInputError extends Error {
   constructor(public readonly message: string) {
@@ -35,16 +36,17 @@ export function parseParticipantDisplayName(raw: unknown): string {
   return parseRequiredText(raw, 'displayName', 'Participant display name')
 }
 
-export function parseExpenseInput(raw: unknown, currency: string): ExpenseInput {
+export function parseExpenseInput(raw: unknown, currency: string, participants: Participant[]): ExpenseInput {
   const description = parseRequiredText(raw, 'description', 'Expense description')
   const amount = parseRequiredMoney(raw, 'amount', currency)
   const payerParticipantId = parseRequiredText(raw, 'payerParticipantId', 'Payer')
+  const includedParticipantIds = parseIncludedParticipantIds(field(raw, 'includedParticipantIds'), participants)
 
   return {
     description,
     amountMinor: amount,
     payerParticipantId,
-    shares: parseShares(field(raw, 'shares'), currency)
+    shares: equalExpenseShares(amount, participants, includedParticipantIds)
   }
 }
 
@@ -60,19 +62,33 @@ export function parseSettlementPaymentInput(raw: unknown, currency: string): Set
   }
 }
 
-function parseShares(raw: unknown, currency: string): Share[] {
+function parseIncludedParticipantIds(raw: unknown, participants: Participant[]): string[] {
   if (!Array.isArray(raw)) {
-    throw new CommandInputError('Shares are required')
+    throw new CommandInputError('Included Participants are required')
   }
 
-  return raw.map((item) => {
-    const participantId = parseRequiredText(item, 'participantId', 'Share Participant')
-    const amountMinor = parseRequiredMoney(item, 'amount', currency)
-    return {
-      participantId,
-      amountMinor
+  const participantIds = new Set(participants.map((participant) => participant.id))
+  const seen = new Set<string>()
+  const includedParticipantIds = raw.map((item) => {
+    const participantId = trimRequired(item, 'Included Participant')
+    if (!participantId.ok) {
+      throw new CommandInputError(participantId.message)
     }
+    if (!participantIds.has(participantId.value)) {
+      throw new CommandInputError('Each Included Participant must be an existing Participant')
+    }
+    if (seen.has(participantId.value)) {
+      throw new CommandInputError('Each Included Participant can only be selected once')
+    }
+    seen.add(participantId.value)
+    return participantId.value
   })
+
+  if (includedParticipantIds.length === 0) {
+    throw new CommandInputError('Choose at least one Participant to split between')
+  }
+
+  return includedParticipantIds
 }
 
 function parseRequiredText(raw: unknown, key: string, label: string): string {

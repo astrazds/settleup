@@ -19,7 +19,7 @@ test.describe('Event realtime flow', () => {
 
       await addParticipantFromExpense(page, 'Alex')
 
-      await expect(participantManager(otherPage)).toContainText('Alex')
+      await expect(participantRows(otherPage)).toContainText('Alex')
       await expect(addExpensePanel(otherPage).getByRole('checkbox', { name: 'Alex' })).toBeVisible()
     } finally {
       await otherContext.close()
@@ -40,11 +40,12 @@ test.describe('Event realtime flow', () => {
       const editingExpense = addExpensePanel(editingPage)
       await editingExpense.getByLabel('Description').fill('Unsent dinner')
       await editingExpense.getByLabel('Amount').fill('42.50')
+      await recordSettlementPanel(editingPage).getByRole('button', { name: 'Manual Payment' }).click()
       await recordSettlementPanel(editingPage).getByLabel('Amount').fill('5.00')
 
       await addParticipantFromExpense(page, 'Priya')
 
-      await expect(participantManager(editingPage)).toContainText('Priya')
+      await expect(participantRows(editingPage)).toContainText('Priya')
       await expect(editingExpense.getByLabel('Description')).toHaveValue('Unsent dinner')
       await expect(editingExpense.getByLabel('Amount')).toHaveValue('42.50')
       await expect(recordSettlementPanel(editingPage).getByLabel('Amount')).toHaveValue('5.00')
@@ -75,8 +76,8 @@ test.describe('Event realtime flow', () => {
 
       await addParticipantFromExpense(page, 'First Event Only')
 
-      await expect(participantManager(sameEventPage)).toContainText('First Event Only')
-      await expect(participantManager(unrelatedPage)).not.toContainText('First Event Only')
+      await expect(participantRows(sameEventPage)).toContainText('First Event Only')
+      await expect(participantRows(unrelatedPage)).not.toContainText('First Event Only')
       await expect(unrelatedPage.getByRole('heading', { name: unrelatedTitle })).toBeVisible()
     } finally {
       await sameEventContext.close()
@@ -108,7 +109,7 @@ test.describe('Event realtime flow', () => {
         await window.__settleupTriggerFallbackPoll()
       })
 
-      await expect(participantManager(fallbackPage)).toContainText('Fallback Only')
+      await expect(participantRows(fallbackPage)).toContainText('Fallback Only')
       await expect(expense.getByLabel('Description')).toHaveValue('Offline draft')
       await expect(expense.getByLabel('Amount')).toHaveValue('18.75')
       await expect(expenseDraftWarning(fallbackPage)).toHaveText('Event updated while you were editing. Review before saving.')
@@ -136,7 +137,7 @@ async function addParticipantFromExpense(page: Page, displayName: string): Promi
   const participantForm = participantManager(page)
   await participantForm.getByLabel('Display name').fill(displayName)
   await participantForm.getByRole('button', { name: 'Add Participant' }).click()
-  await expect(participantForm).toContainText(displayName)
+  await expect(addExpensePanel(page).getByRole('checkbox', { name: displayName })).toBeVisible()
 }
 
 function addExpensePanel(page: Page): Locator {
@@ -149,6 +150,10 @@ function recordSettlementPanel(page: Page): Locator {
 
 function participantManager(page: Page): Locator {
   return addExpensePanel(page).locator('[data-participant-form]')
+}
+
+function participantRows(page: Page): Locator {
+  return addExpensePanel(page).locator('[data-participants]')
 }
 
 function expenseDraftWarning(page: Page): Locator {

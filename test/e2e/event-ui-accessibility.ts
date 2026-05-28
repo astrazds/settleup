@@ -13,8 +13,8 @@ export async function expectFormControlNames(scope: Locator, names: string[]): P
 }
 
 export async function expectIncludedParticipantsGroup(addExpense: Locator, participants: string[]): Promise<void> {
-  await expect(addExpense.locator('fieldset').filter({ hasText: 'Included Participants' })).toBeVisible()
-  await expect(addExpense.locator('legend').filter({ hasText: 'Included Participants' })).toBeVisible()
+  await expect(addExpense.locator('fieldset').filter({ hasText: 'Participants' })).toBeVisible()
+  await expect(addExpense.locator('legend').filter({ hasText: 'Participants' })).toBeVisible()
   for (const participant of participants) {
     await expect(addExpense.getByRole('checkbox', { name: participant })).toBeVisible()
   }

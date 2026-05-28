@@ -17,7 +17,7 @@ The saved state of an **Event** before derived **Balances** and **Suggested Sett
 _Avoid_: Raw event, database row bundle, store payload
 
 **Saved Event Command**:
-An authenticated-by-link mutation against an existing **Event**, such as adding a Participant, updating an Expense, or recording a Settlement Payment. A Saved Event Command validates input, changes the saved Event Record, returns a fresh Event Snapshot, and only then announces an Event change.
+An authenticated-by-link mutation against an existing **Event**, such as adding a Participant, updating an Expense, or recording a Settlement Payment. Saved Expense Commands accept selected **Included Participants** and derive equal **Shares** before changing the saved Event Record. A Saved Event Command validates input, changes the saved Event Record, returns a fresh Event Snapshot, and only then announces an Event change.
 _Avoid_: RPC, action blob, endpoint case
 
 **Event Snapshot**:
@@ -41,7 +41,7 @@ A cost recorded in an **Event** because one **Participant** paid money on behalf
 _Avoid_: Payment, entry, transaction, bill
 
 **Expense Draft**:
-Unsaved browser state for composing an Expense, including Included Participants, equal Share defaults, exact Share overrides, and remaining amount helpers. An Expense Draft is not part of the saved Event Record until submitted.
+Unsaved browser state for composing an Expense, including Description, Amount, the current Participant default as payer, and selected Included Participants. In the current MVP UI, selected Included Participants receive equal Share defaults when the Expense is submitted. An Expense Draft is not part of the saved Event Record until submitted.
 _Avoid_: Temporary Expense, local record, staged transaction
 
 **Included Participant**:
@@ -69,7 +69,7 @@ A **Participant**'s portion of an **Expense**, expressed as a specific amount fo
 _Avoid_: Split, allocation, weight, line item
 
 **Suggested Settlement**:
-A recommended Participant-to-Participant payment, with a suggested Sender and Recipient, that would reduce outstanding **Balances** in an **Event**. A **Suggested Settlement** is not recorded history unless someone records a **Settlement Payment**.
+A derived Participant-to-Participant payment plan, with a suggested Sender and Recipient, that would reduce outstanding **Balances** in an **Event**. The current MVP UI uses Suggested Settlements behind Balance-row Pay actions. A **Suggested Settlement** is not recorded history unless someone records a **Settlement Payment**.
 _Avoid_: Balance, debt, invoice
 
 ## Example Dialogue
@@ -94,9 +94,9 @@ _Avoid_: Balance, debt, invoice
 
 **Domain Expert**: No, it is an **Expense**. The Payment language is only used for **Settlement Payments** between Participants.
 
-**Developer**: Can the browser send a partial Expense while someone is still adjusting Shares?
+**Developer**: Can the browser send a partial Expense while someone is still choosing Included Participants?
 
-**Domain Expert**: Keep that as an **Expense Draft**. Only a submitted Expense becomes part of the **Event Record**.
+**Domain Expert**: Keep that as an **Expense Draft**. Only a submitted Expense becomes part of the **Event Record**, and the Saved Event Command derives equal **Shares** from the selected **Included Participants**.
 
 **Developer**: Alex later pays Sarah back. Is that another Expense?
 
@@ -104,11 +104,11 @@ _Avoid_: Balance, debt, invoice
 
 **Developer**: Should the app say who owes whom?
 
-**Domain Expert**: Show **Balances** and **Suggested Settlements**. Suggested Settlements are recommendations, not recorded payments.
+**Domain Expert**: Show **Balances**. For a Participant who owes money, a row-level Pay action may record the derived **Suggested Settlement** needed to clear that Participant's Balance.
 
 **Developer**: Everyone ate different amounts. Is the Expense still equal?
 
-**Domain Expert**: Not necessarily. Record each person's **Share** as a specific amount.
+**Domain Expert**: The domain stores specific **Shares**, but the current MVP UI equal-splits an Expense across the selected **Included Participants**. Custom Share editing is later product work.
 
 **Developer**: Five people are in the Event, but only three took the taxi. Are all five Participants part of that Expense?
 

@@ -22,17 +22,10 @@ export interface EventPageSettlementPayment {
   updatedAt?: string
 }
 
-export interface EventPageSuggestedSettlement {
-  senderParticipantId: string
-  recipientParticipantId: string
-  amountMinor: number
-}
-
 export interface EventPageSnapshot {
   participants: readonly EventPageParticipant[]
   expenses: readonly EventPageExpense[]
   settlementPayments: readonly EventPageSettlementPayment[]
-  suggestedSettlements: readonly EventPageSuggestedSettlement[]
 }
 
 export interface EventPageStartGuidance {
@@ -64,15 +57,6 @@ export type EventHistoryItem = EventHistoryExpenseItem | EventHistorySettlementP
 
 export interface EventPagePolicy {
   startGuidance: EventPageStartGuidance
-  suggestedSettlements: {
-    inFocus: boolean
-    showSettlementFocus: boolean
-    showCopySummary: boolean
-    showSuggestionCount: boolean
-    settlementFocusLabel: string
-    settlementFocusButtonClass: string
-    recordButtonClass: string
-  }
   settlementPaymentForm: {
     canRecord: boolean
     disabledReason: string
@@ -102,7 +86,6 @@ export interface EventPagePolicy {
     }
     recordSettlementPayment: {
       visible: boolean
-      suggestedSettlementPlacement: string
     }
     eventHistory: {
       visible: boolean
@@ -120,11 +103,7 @@ export interface EventPagePolicy {
     showParticipantsPanel: boolean
     eventLinkPlacement: string
     showEventLinkPanel: boolean
-    suggestedSettlementPlacement: string
-    showSuggestedSettlementsPanel: boolean
     showHistoryPanel: boolean
-    showExpensesPanel: boolean
-    showSettlementPaymentsPanel: boolean
     historyOrder: string
   }
 }
@@ -134,11 +113,7 @@ const eventPageLayoutPolicy = {
   showParticipantsPanel: false,
   eventLinkPlacement: 'expenseDefaults',
   showEventLinkPanel: false,
-  suggestedSettlementPlacement: 'settlementPayment',
-  showSuggestedSettlementsPanel: false,
   showHistoryPanel: true,
-  showExpensesPanel: false,
-  showSettlementPaymentsPanel: false,
   historyOrder: 'newest-first'
 } as const
 
@@ -151,28 +126,15 @@ const currentParticipantDefaultsPolicy = {
 } as const
 
 export function composeEventPagePolicy(
-  eventSnapshot: EventPageSnapshot,
-  isSettlementFocus: boolean
+  eventSnapshot: EventPageSnapshot
 ): EventPagePolicy {
-  const suggestedSettlements = eventSnapshot.suggestedSettlements || []
   const expenses = eventSnapshot.expenses || []
   const settlementPayments = eventSnapshot.settlementPayments || []
-  const hasSuggestedSettlements = suggestedSettlements.length > 0
-  const inFocus = Boolean(isSettlementFocus && hasSuggestedSettlements)
   const canRecordSettlementPayment = eventSnapshot.participants.length >= 2
   const historyItems = eventHistoryItems({ ...eventSnapshot, expenses, settlementPayments })
 
   return {
     startGuidance: eventStartGuidance({ ...eventSnapshot, expenses }),
-    suggestedSettlements: {
-      inFocus,
-      showSettlementFocus: hasSuggestedSettlements,
-      showCopySummary: inFocus,
-      showSuggestionCount: hasSuggestedSettlements,
-      settlementFocusLabel: inFocus ? 'Exit settle up' : 'Settle up',
-      settlementFocusButtonClass: inFocus ? 'secondary' : '',
-      recordButtonClass: inFocus ? '' : 'secondary'
-    },
     settlementPaymentForm: {
       canRecord: canRecordSettlementPayment,
       disabledReason: canRecordSettlementPayment ? '' : 'Add another Participant before recording a Settlement Payment.'
@@ -198,8 +160,7 @@ export function composeEventPagePolicy(
         participantPlacement: eventPageLayoutPolicy.participantPlacement
       },
       recordSettlementPayment: {
-        visible: true,
-        suggestedSettlementPlacement: eventPageLayoutPolicy.suggestedSettlementPlacement
+        visible: true
       },
       eventHistory: {
         visible: eventPageLayoutPolicy.showHistoryPanel,
@@ -303,8 +264,8 @@ export const clientEventPagePolicyScript = [
   participantDeleteState.toString(),
   isParticipantReferencedInSnapshot.toString(),
   String.raw`
-function panelActionState(eventSnapshot, isSettlementFocus) {
-  return composeEventPagePolicy(eventSnapshot, isSettlementFocus)
+function panelActionState(eventSnapshot) {
+  return composeEventPagePolicy(eventSnapshot)
 }
 
 function historyItems(eventSnapshot) {

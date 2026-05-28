@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { calculateBalances, createEventToken, parseCurrency, parseMoney, supportedCurrencies } from './domain'
+import {
+  calculateBalances,
+  createEventToken,
+  equalExpenseShares,
+  parseCurrency,
+  parseMoney,
+  supportedCurrencies
+} from './domain'
 import type { Expense, Participant, SettlementPayment } from './domain'
 
 afterEach(() => {
@@ -90,6 +97,22 @@ describe('Balance calculation', () => {
       { participantId: 'p1', amountMinor: 5000 },
       { participantId: 'p2', amountMinor: -1500 },
       { participantId: 'p3', amountMinor: -3500 }
+    ])
+  })
+})
+
+describe('equal Expense Shares', () => {
+  it('splits by Participant order and assigns rounding deterministically', () => {
+    const participants: Participant[] = [
+      { id: 'p3', displayName: 'Priya', createdAt: '2026-05-27T00:00:02.000Z', order: 3 },
+      { id: 'p1', displayName: 'Sarah', createdAt: '2026-05-27T00:00:00.000Z', order: 1 },
+      { id: 'p2', displayName: 'Alex', createdAt: '2026-05-27T00:00:01.000Z', order: 2 }
+    ]
+
+    expect(equalExpenseShares(1000, participants, ['p3', 'p1', 'p2'])).toEqual([
+      { participantId: 'p1', amountMinor: 334 },
+      { participantId: 'p2', amountMinor: 333 },
+      { participantId: 'p3', amountMinor: 333 }
     ])
   })
 })

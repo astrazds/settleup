@@ -31,10 +31,10 @@ rm -rf dist-dry-run
 
 ## Current Coverage
 
-- Domain and routes: Event creation/access, saved command execution, Participant mutations, Expense mutations, Settlement Payment mutations, malformed input, Currency handling, Balances, and Suggested Settlements.
+- Domain and routes: Event creation/access, saved command execution, Participant mutations, Expense mutations with Included Participant equal Share derivation, Settlement Payment mutations, malformed input, Currency handling, Balances, and derived Suggested Settlements behind Balance Pay actions.
 - Storage: migration-backed D1 setup, D1 Event Record persistence mapping, Event Record round trips through `D1Store`, and rollback coverage for multi-record Event mutations.
 - Realtime: shared protocol parsing, Durable Object room broadcast, Event token isolation, connection routing, success-only mutation notifications, draft preservation, stale-draft warnings, and fallback polling.
-- Browser: Event creation, Expense Draft Share composition, Event page policy, capture, correction, settlement, Event Link copy feedback, mobile layout, and focused accessibility coverage.
+- Browser: Event creation, Add Expense with Participant selection and equal split behavior, Balance-row Pay actions, Manual Payment, correction flows, Event Link copy feedback, mobile layout, and focused accessibility coverage.
 
 ## Cloudflare Workflow
 

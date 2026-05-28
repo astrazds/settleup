@@ -7,10 +7,10 @@ SettleUp is a Cloudflare Workers project using Hono, Cloudflare D1, Durable Obje
 Key files:
 
 - `src/index.ts`: Worker entrypoint and Hono routes.
-- `src/event-command-runtime.ts`: saved Event command execution and success-only realtime notification.
+- `src/event-command-runtime.ts`: saved Event command execution, Included Participant equal Share derivation, and success-only realtime notification.
 - `src/d1-event-record-persistence.ts`: D1 Event Record row mapping and persistence.
 - `src/event-realtime-protocol.ts`: shared realtime protocol constants and browser helpers.
-- `src/ui/client-expense-draft.ts`, `src/ui/client-event-page-policy.ts`: DOM-free browser behavior policy/composition modules.
+- `src/ui/client-expense-draft.ts`, `src/ui/client-event-page-policy.ts`: DOM-free browser behavior policy/composition modules for equal split draft behavior and Event page state.
 - `wrangler.jsonc`: Worker name `settleup`, D1 binding `DB`, Durable Object binding `EVENT_REALTIME`, compatibility flags, and Durable Object migrations.
 - `migrations/`: D1 migrations.
 - `worker-configuration.d.ts`: generated Cloudflare binding types.

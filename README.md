@@ -1,4 +1,4 @@
-SettleUp is a no-login expense splitter for one bounded shared-cost Event. People create an Event, share its Event Link, record Expenses and Settlement Payments, then use Balances and Suggested Settlements to settle up.
+SettleUp is a no-login expense splitter for one bounded shared-cost Event. People create an Event, share its Event Link, add people and Expenses, then use Balances to pay back what is owed.
 
 Core docs:
 
@@ -12,18 +12,31 @@ Core docs:
 ## Architecture
 
 - `src/index.ts`: Hono Worker routes and response shapes.
-- `src/event-command-input.ts`: form and JSON command parsing.
+- `src/event-command-input.ts`: form and JSON command parsing, including Included Participant to equal Share derivation for Expense commands.
 - `src/event-command-runtime.ts`: saved Event mutation lifecycle, validation mapping, and success-only realtime notification.
-- `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
+- `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, stored Shares, and Settlement Payments.
 - `src/d1-event-record-persistence.ts`: D1 row mapping and all-or-nothing Event Record persistence.
 - `src/store.ts`: `MemoryStore` for tests and `D1Store` for Cloudflare D1.
 - `src/event-realtime-protocol.ts`: shared Event realtime message shape, route path, fallback interval, and reconnect policy.
 - `src/event-realtime.ts`: Durable Object WebSocket notifications scoped by Event token.
 - `src/money.ts`: two-decimal Currency parsing and formatting.
-- `src/ui/client-expense-draft.ts`: DOM-free Expense Draft Share composition.
+- `src/ui/client-expense-draft.ts`: DOM-free Expense Draft equal split composition.
 - `src/ui/client-event-page-policy.ts`: DOM-free Event page state policy.
 - `src/ui/client*.ts`: plain TypeScript browser client modules, bundled into `/static/client.js`.
 - `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
+
+## Current UI
+
+- Create page copy: "Split costs, easy...done..." and "Share the link. Add people and expenses. Pay them."
+- Event header: Event Title, copy-link icon, Currency note, and realtime status.
+- Balances: net Balance rows, with a `Pay` action on rows where a Participant owes money.
+- Add Expense: header defaults selector, Description, Amount, Save, compact Participant rows, and a one-row Add Participant form. The payer is the current Participant default; selected Participants split the Expense equally.
+- Manual Payment: folded form inside Balances for Sender, Recipient, Amount, Record, and Cancel.
+- Event History: newest-first Expenses and Settlement Payments with Edit and Delete controls.
+
+## Runtime Scope
+
+The UI and saved Event HTTP commands expose Expense capture as Description, Amount, Payer, and Included Participants. The Worker derives equal Shares from those Included Participants before saving the Event Record. D1 still stores explicit Share rows so Balances, history, and future custom Share work have a durable model.
 
 ## Commands
 

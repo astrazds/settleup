@@ -166,6 +166,30 @@ export function calculateBalances(
   }))
 }
 
+export function equalExpenseShares(
+  amountMinor: number,
+  participants: readonly Pick<Participant, 'id' | 'order'>[],
+  includedParticipantIds: readonly string[]
+): Share[] {
+  const includedIds = new Set(includedParticipantIds)
+  const includedParticipants = participants
+    .filter((participant) => includedIds.has(participant.id))
+    .slice()
+    .sort((left, right) => left.order - right.order)
+  if (includedParticipants.length === 0) return []
+
+  const base = Math.floor(amountMinor / includedParticipants.length)
+  let remainder = amountMinor - base * includedParticipants.length
+  return includedParticipants.map((participant) => {
+    const amountMinorForParticipant = base + (remainder > 0 ? 1 : 0)
+    remainder -= 1
+    return {
+      participantId: participant.id,
+      amountMinor: amountMinorForParticipant
+    }
+  })
+}
+
 export function suggestSettlements(participants: Participant[], balances: Balance[]): SuggestedSettlement[] {
   const orderByParticipantId = new Map(participants.map((participant) => [participant.id, participant.order]))
   const debtors = balances

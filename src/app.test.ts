@@ -231,10 +231,7 @@ describe('Event workflows', () => {
       description: 'Dinner',
       amount: '80.00',
       payerParticipantId: sarah.id,
-      shares: [
-        { participantId: sarah.id, amount: '30.00' },
-        { participantId: alex.id, amount: '50.00' }
-      ]
+      includedParticipantIds: [sarah.id, alex.id]
     }))
     expect(expenseResponse.status).toBe(200)
     const withExpense = await responseJson<EventSnapshot>(expenseResponse)
@@ -242,17 +239,17 @@ describe('Event workflows', () => {
       expect.objectContaining({ description: 'Dinner', amountMinor: 8000 })
     ])
     expect(withExpense.balances).toEqual([
-      { participantId: sarah.id, amountMinor: 5000 },
-      { participantId: alex.id, amountMinor: -5000 }
+      { participantId: sarah.id, amountMinor: 4000 },
+      { participantId: alex.id, amountMinor: -4000 }
     ])
     expect(withExpense.suggestedSettlements).toEqual([
-      { senderParticipantId: alex.id, recipientParticipantId: sarah.id, amountMinor: 5000 }
+      { senderParticipantId: alex.id, recipientParticipantId: sarah.id, amountMinor: 4000 }
     ])
 
     const paymentResponse = await app.request(jsonRequest(`/api/events/${token}/settlement-payments`, {
       senderParticipantId: alex.id,
       recipientParticipantId: sarah.id,
-      amount: '50.00'
+      amount: '40.00'
     }))
     expect(paymentResponse.status).toBe(200)
     const settled = await responseJson<EventSnapshot>(paymentResponse)
@@ -280,9 +277,7 @@ describe('Event workflows', () => {
       description: 'Fuel',
       amount: '20.00',
       payerParticipantId: sarah.id,
-      shares: [
-        { participantId: alex.id, amount: '20.00' }
-      ]
+      includedParticipantIds: [alex.id]
     }))
 
     const deleteResponse = await app.request(`/api/events/${token}/participants/${alex.id}`, {
@@ -298,7 +293,7 @@ describe('Event workflows', () => {
     })
   })
 
-  it('rejects Expense commands without Shares using the route validation error shape', async () => {
+  it('rejects Expense commands without Included Participants using the route validation error shape', async () => {
     const store = new MemoryStore()
     const app = createApp({ storeFactory: () => store })
     const created = await createEvent(app)
@@ -315,7 +310,7 @@ describe('Event workflows', () => {
     expect(await response.json()).toEqual({
       error: {
         code: 'validation_error',
-        message: 'Shares are required'
+        message: 'Included Participants are required'
       }
     })
   })
@@ -369,10 +364,7 @@ describe('Saved Event command execution', () => {
         description: 'Dinner',
         amount: '80.00',
         payerParticipantId: sarah.id,
-        shares: [
-          { participantId: sarah.id, amount: '30.00' },
-          { participantId: alex.id, amount: '50.00' }
-        ]
+        includedParticipantIds: [sarah.id, alex.id]
       }
     })
 
@@ -384,7 +376,7 @@ describe('Saved Event command execution', () => {
       expect.objectContaining({ description: 'Dinner', amountMinor: 8000 })
     ])
     expect(result.snapshot.suggestedSettlements).toEqual([
-      { senderParticipantId: alex.id, recipientParticipantId: sarah.id, amountMinor: 5000 }
+      { senderParticipantId: alex.id, recipientParticipantId: sarah.id, amountMinor: 4000 }
     ])
     expect(notifier.changedTokens).toEqual([created.event.token])
   })
@@ -402,10 +394,7 @@ describe('Saved Event command execution', () => {
         description: 'Groceries',
         amount: '60.00',
         payerParticipantId: fixture.sarah.id,
-        shares: [
-          { participantId: fixture.sarah.id, amount: '10.00' },
-          { participantId: fixture.alex.id, amount: '50.00' }
-        ]
+        includedParticipantIds: [fixture.sarah.id, fixture.alex.id]
       }
     })
 
@@ -504,10 +493,7 @@ describe('Saved Event command execution', () => {
         description: 'Groceries',
         amount: '60.00',
         payerParticipantId: fixture.sarah.id,
-        shares: [
-          { participantId: fixture.sarah.id, amount: '15.00' },
-          { participantId: fixture.alex.id, amount: '15.00' }
-        ]
+        includedParticipantIds: ['missing-participant']
       }
     })
     const notFoundResult = await executeSavedEventCommand(store, notifier, {
@@ -520,7 +506,7 @@ describe('Saved Event command execution', () => {
       ok: false,
       error: {
         code: 'validation_error',
-        message: 'Shares must sum to the Expense amount',
+        message: 'Each Included Participant must be an existing Participant',
         status: 400
       }
     })
@@ -654,9 +640,7 @@ describe('Participant mutation route contracts', () => {
       description: 'Fuel',
       amount: '20.00',
       payerParticipantId: sarah.id,
-      shares: [
-        { participantId: alex.id, amount: '20.00' }
-      ]
+      includedParticipantIds: [alex.id]
     })
     notifier.reset()
 
@@ -715,10 +699,7 @@ describe('Expense mutation route contracts', () => {
       description: 'Groceries',
       amount: '60.00',
       payerParticipantId: fixture.sarah.id,
-      shares: [
-        { participantId: fixture.sarah.id, amount: '10.00' },
-        { participantId: fixture.alex.id, amount: '50.00' }
-      ]
+      includedParticipantIds: [fixture.sarah.id, fixture.alex.id]
     }, 'PATCH'))
 
     expect(response.status).toBe(200)
@@ -728,16 +709,16 @@ describe('Expense mutation route contracts', () => {
       amountMinor: 6000,
       payerParticipantId: fixture.sarah.id,
       shares: [
-        { participantId: fixture.sarah.id, amountMinor: 1000 },
-        { participantId: fixture.alex.id, amountMinor: 5000 }
+        { participantId: fixture.sarah.id, amountMinor: 3000 },
+        { participantId: fixture.alex.id, amountMinor: 3000 }
       ]
     }))
     expect(snapshot.balances).toEqual([
-      { participantId: fixture.sarah.id, amountMinor: 5000 },
-      { participantId: fixture.alex.id, amountMinor: -5000 }
+      { participantId: fixture.sarah.id, amountMinor: 3000 },
+      { participantId: fixture.alex.id, amountMinor: -3000 }
     ])
     expect(snapshot.suggestedSettlements).toEqual([
-      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 5000 }
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 3000 }
     ])
     expect(notifier.changedTokens).toEqual([fixture.token])
   })
@@ -771,17 +752,14 @@ describe('Expense mutation route contracts', () => {
       description: 'Groceries',
       amount: '60.00',
       payerParticipantId: fixture.sarah.id,
-      shares: [
-        { participantId: fixture.sarah.id, amount: '15.00' },
-        { participantId: fixture.alex.id, amount: '15.00' }
-      ]
+      includedParticipantIds: []
     }, 'PATCH'))
 
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({
       error: {
         code: 'validation_error',
-        message: 'Shares must sum to the Expense amount'
+        message: 'Choose at least one Participant to split between'
       }
     })
     expect(notifier.changedTokens).toEqual([])
@@ -796,10 +774,7 @@ describe('Expense mutation route contracts', () => {
       description: 'Groceries',
       amount: '60.00',
       payerParticipantId: fixture.sarah.id,
-      shares: [
-        { participantId: fixture.sarah.id, amount: '10.00' },
-        { participantId: fixture.alex.id, amount: '50.00' }
-      ]
+      includedParticipantIds: [fixture.sarah.id, fixture.alex.id]
     }, 'PATCH'))
     const deleteResponse = await app.request(`/api/events/${fixture.token}/expenses/missing-expense`, {
       method: 'DELETE'
@@ -847,11 +822,11 @@ describe('Settlement Payment mutation route contracts', () => {
       amountMinor: 2500
     }))
     expect(snapshot.balances).toEqual([
-      { participantId: fixture.sarah.id, amountMinor: 2500 },
-      { participantId: fixture.alex.id, amountMinor: -2500 }
+      { participantId: fixture.sarah.id, amountMinor: 1500 },
+      { participantId: fixture.alex.id, amountMinor: -1500 }
     ])
     expect(snapshot.suggestedSettlements).toEqual([
-      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 2500 }
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 1500 }
     ])
     expect(notifier.changedTokens).toEqual([fixture.token])
   })
@@ -869,11 +844,11 @@ describe('Settlement Payment mutation route contracts', () => {
     const snapshot = await responseJson<EventSnapshot>(response)
     expect(snapshot.settlementPayments).toEqual([])
     expect(snapshot.balances).toEqual([
-      { participantId: fixture.sarah.id, amountMinor: 5000 },
-      { participantId: fixture.alex.id, amountMinor: -5000 }
+      { participantId: fixture.sarah.id, amountMinor: 4000 },
+      { participantId: fixture.alex.id, amountMinor: -4000 }
     ])
     expect(snapshot.suggestedSettlements).toEqual([
-      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 5000 }
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 4000 }
     ])
     expect(notifier.changedTokens).toEqual([fixture.token])
   })
@@ -947,9 +922,11 @@ describe('Frontend design contract', () => {
     const html = await response.text()
 
     expect(response.status).toBe(200)
-    expect(html).toContain('Settle the shared cost without turning it into admin.')
+    expect(html).toContain('Split costs, easy...done...')
+    expect(html).toContain('Share the link. Add people and expenses. Pay them.')
     expect(html).toContain('class="brand"')
     expect(html).toContain('class="privacy-note"')
+    expect(html).not.toContain('Private-by-Link')
     expect(html).toContain('<input type="text" name="title"')
     expect(html).toContain('<option value="AUD">AUD</option>')
     expect(html).toContain('<option value="NZD">NZD</option>')
@@ -965,7 +942,7 @@ describe('Frontend design contract', () => {
     expect(styles).toContain('.ledger-row.row-positive')
     expect(styles).toContain('@media (max-width: 820px)')
     expect(client).toContain('Expense defaults')
-    expect(client).toContain('data-share-summary')
+    expect(client).toContain('data-included-participants')
     expect(client).toContain('Event Link copied')
   })
 })
@@ -1006,7 +983,7 @@ async function createExpense(
     description: string
     amount: string
     payerParticipantId: string
-    shares: Array<{ participantId: string; amount: string }>
+    includedParticipantIds: string[]
   }
 ): Promise<EventSnapshot> {
   const response = await app.request(jsonRequest(`/api/events/${token}/expenses`, input))
@@ -1043,10 +1020,7 @@ async function expenseFixture(app: ReturnType<typeof createApp>): Promise<{
     description: 'Dinner',
     amount: '80.00',
     payerParticipantId: sarah.id,
-    shares: [
-      { participantId: sarah.id, amount: '30.00' },
-      { participantId: alex.id, amount: '50.00' }
-    ]
+    includedParticipantIds: [sarah.id, alex.id]
   })
   return { token, sarah, alex, expense: requireExpense(withExpense, 'Dinner') }
 }
@@ -1062,7 +1036,7 @@ async function settlementPaymentFixture(app: ReturnType<typeof createApp>): Prom
   const withPayment = await createSettlementPayment(app, fixture.token, {
     senderParticipantId: fixture.alex.id,
     recipientParticipantId: fixture.sarah.id,
-    amount: '50.00'
+    amount: '40.00'
   })
   return {
     ...fixture,

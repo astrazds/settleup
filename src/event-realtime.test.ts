@@ -93,7 +93,7 @@ describe('Event realtime route notifications', () => {
     expect(await response.json()).toEqual({
       error: {
         code: 'validation_error',
-        message: 'Shares are required'
+        message: 'Included Participants are required'
       }
     })
     expect(notifier.changedTokens).toEqual([])

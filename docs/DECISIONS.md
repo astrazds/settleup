@@ -10,8 +10,9 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 
 ## Data
 
-- Use Cloudflare D1 as the durable database for Events, Participants, Expenses, Shares, Settlement Payments, Balances inputs, and Suggested Settlement inputs.
-- Keep Balances and Suggested Settlements derived from saved records.
+- Use Cloudflare D1 as the durable database for Events, Participants, Expenses, Shares, and Settlement Payments.
+- Keep Balances and Suggested Settlements derived from saved records; Suggested Settlements may power UI actions but are not persisted as history.
+- Keep the UI and Saved Event command surface limited to Included Participants for Expenses; derive equal Shares server-side before persisting the Event Record.
 - Keep Event mutation rules centralized in `src/event-record.ts`; storage adapters load and persist Event Records.
 - Keep D1 row mapping and all-or-nothing Event Record replacement behind `src/d1-event-record-persistence.ts`.
 - D1 adapter tests use Miniflare with checked-in migrations rather than a handwritten SQL fake.

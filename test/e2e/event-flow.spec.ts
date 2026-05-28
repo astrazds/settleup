@@ -4,7 +4,6 @@ import {
   expectMobilePanel,
   expectNoHorizontalOverflow,
   optionValueForLabel,
-  participantBefore,
   requiredBox
 } from './event-ui-builders'
 import { describeEventAccessibility } from './event-accessibility'
@@ -35,41 +34,40 @@ test.describe('Event UI smoke flow', () => {
     await expect(addExpense.getByRole('checkbox', { name: 'Alex' })).toBeChecked()
     await expect(addExpense.getByRole('checkbox', { name: 'Priya' })).toBeChecked()
 
-    await addExpense.getByRole('button', { name: 'Save Expense' }).click()
+    await event.saveExpense()
 
     const balances = event.balancesPanel()
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*60\.00/)
+    await expect(balances.locator('.ledger-row').filter({ hasText: 'Sarah' }).getByRole('button', { name: 'Pay' })).toHaveCount(0)
     await expect(balances).toContainText(/Alex/)
     await expect(balances).toContainText(/owes.*30\.00/)
     await expect(balances).toContainText(/Priya/)
     await expect(balances).toContainText(/owes.*30\.00/)
 
-    const history = event.historyPanel()
     const expenseRow = event.expenseRecord('Dinner')
     await expect(expenseRow).toContainText('Expense')
     await expect(expenseRow.getByRole('button', { name: 'Edit' })).toBeVisible()
     await expect(expenseRow.getByRole('button', { name: 'Delete' })).toBeVisible()
 
     const settlement = event.settlementPanel()
-    await expect(settlement).toContainText('Suggested Settlements')
-    await expect(settlement).toContainText(/2 payments/)
-    await settlement.getByRole('button', { name: 'Settle up' }).click()
+    await expect(settlement).toContainText('Manual Payment')
+    await expect(settlement.getByRole('button', { name: 'Manual Payment' })).toBeVisible()
 
-    const suggestion = event.firstSuggestedSettlement()
-    await expect(suggestion).toContainText(/sends/)
-    await suggestion.getByRole('button', { name: 'Record' }).click()
-    await expect(suggestion.getByLabel('Recorded amount')).toHaveValue('30.00')
-    await suggestion.getByRole('button', { name: 'Record Settlement Payment' }).click()
+    await balances.locator('.ledger-row').filter({ hasText: 'Alex' }).getByRole('button', { name: 'Pay' }).click()
 
     const paymentRow = event.settlementPaymentRecord()
-    await expect(paymentRow).toContainText(/sent/)
+    await expect(paymentRow).toContainText(/Alex sent Sarah/)
+    await expect(paymentRow).toContainText(/30\.00/)
     await expect(paymentRow.getByRole('button', { name: 'Edit' })).toBeVisible()
     await expect(paymentRow.getByRole('button', { name: 'Delete' })).toBeVisible()
-    await expect(settlement).toContainText(/1 payments/)
+    await expect(balances).toContainText(/Alex/)
+    await expect(balances).toContainText(/is settled/)
+    await expect(balances).toContainText(/Priya/)
+    await expect(balances).toContainText(/owes.*30\.00/)
   })
 
-  test('edits and deletes an Expense from Event History with saved exact Shares', async ({ page }) => {
+  test('edits and deletes an Expense from Event History with included Participants', async ({ page }) => {
     const event = eventUi(page)
     await event.createEvent({ eventTitle: `Expense correction ${Date.now()}` })
     await event.addParticipants(['Alex', 'Priya'])
@@ -77,8 +75,7 @@ test.describe('Event UI smoke flow', () => {
     const addExpense = event.addExpensePanel()
     await event.draftExpense({ description: 'Cab fare', amount: '120.00' })
     await event.excludeParticipant('Priya')
-    await expect(addExpense.getByText('Remaining', { exact: true })).toBeHidden()
-    await addExpense.getByRole('button', { name: 'Save Expense' }).click()
+    await event.saveExpense()
 
     const history = event.historyPanel()
     const savedExpense = event.expenseRecord('Cab fare')
@@ -89,48 +86,40 @@ test.describe('Event UI smoke flow', () => {
     await expect(addExpense.getByRole('checkbox', { name: 'Sarah' })).toBeChecked()
     await expect(addExpense.getByRole('checkbox', { name: 'Alex' })).toBeChecked()
     await expect(addExpense.getByRole('checkbox', { name: 'Priya' })).not.toBeChecked()
-    await event.expectShares([
-      { participant: 'Sarah', amount: '60.00' },
-      { participant: 'Alex', amount: '60.00' }
-    ])
 
     await addExpense.getByLabel('Description').fill('Cab fare corrected')
     await addExpense.getByLabel('Amount').fill('150.00')
-    await event.selectPayer('Alex')
-    await event.fillShare('Sarah', '50.00')
-    await event.fillShare('Alex', '100.00')
-    await addExpense.getByRole('button', { name: 'Save Expense' }).click()
+    await event.switchExpenseDefault('Alex')
+    await event.saveExpense()
 
     const correctedExpense = event.expenseRecord('Cab fare corrected')
     await expect(correctedExpense).toContainText(/Alex paid .*150\.00/)
-    await expect(correctedExpense).toContainText(/Sarah .*50\.00/)
-    await expect(correctedExpense).toContainText(/Alex .*100\.00/)
+    await expect(correctedExpense).toContainText(/Sarah .*75\.00/)
+    await expect(correctedExpense).toContainText(/Alex .*75\.00/)
 
     const balances = event.balancesPanel()
     await expect(balances).toContainText(/Alex/)
-    await expect(balances).toContainText(/is owed.*50\.00/)
+    await expect(balances).toContainText(/is owed.*75\.00/)
     await expect(balances).toContainText(/Sarah/)
-    await expect(balances).toContainText(/owes.*50\.00/)
+    await expect(balances).toContainText(/owes.*75\.00/)
 
     const settlement = event.settlementPanel()
-    await expect(settlement).toContainText(/Sarah sends Alex/)
-    await expect(settlement).toContainText(/50\.00/)
+    await expect(settlement.getByRole('button', { name: 'Manual Payment' })).toBeVisible()
 
     await correctedExpense.getByRole('button', { name: 'Delete' }).click()
     await expect(history).toContainText('No Event history yet')
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is settled/)
-    await expect(settlement).toContainText('Everyone is settled.')
+    await expect(settlement.getByRole('button', { name: 'Manual Payment' })).toBeVisible()
   })
 
-  test('captures advanced Expense Shares with assign remaining and payer warning', async ({ page }) => {
+  test('captures an Expense with participant exclusions and payer warning', async ({ page }) => {
     const event = eventUi(page)
     await event.createEvent({ eventTitle: `Advanced shares ${Date.now()}` })
     await event.addParticipants(['Alex', 'Priya'])
 
     const addExpense = event.addExpensePanel()
     await event.draftExpense({ description: 'Tour passes', amount: '100.00' })
-    await expect(addExpense.getByText('Remaining', { exact: true })).toBeHidden()
 
     await event.excludeParticipant('Sarah')
     await event.excludeParticipant('Alex')
@@ -141,37 +130,25 @@ test.describe('Event UI smoke flow', () => {
     await event.includeParticipant('Priya')
     await expect(addExpense.getByText('Sarah paid but is not included.')).toBeVisible()
 
-    await event.adjustShares()
-    await event.fillShare('Alex', '30.00')
-    await expect(addExpense).toContainText(/Remaining.*20\.00/)
-    await event.assignRemainingTo('Priya')
-    await event.expectShares([
-      { participant: 'Alex', amount: '30.00' },
-      { participant: 'Priya', amount: '70.00' }
-    ])
-    await expect(addExpense).toContainText(/Remaining.*0\.00/)
-    await addExpense.getByRole('button', { name: 'Save Expense' }).click()
+    await event.saveExpense()
 
-    const history = event.historyPanel()
     const savedExpense = event.expenseRecord('Tour passes')
     await expect(savedExpense).toContainText(/Sarah paid .*100\.00/)
-    await expect(savedExpense).toContainText(/Alex .*30\.00/)
-    await expect(savedExpense).toContainText(/Priya .*70\.00/)
+    await expect(savedExpense).toContainText(/Alex .*50\.00/)
+    await expect(savedExpense).toContainText(/Priya .*50\.00/)
 
     const balances = event.balancesPanel()
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*100\.00/)
     await expect(balances).toContainText(/Alex/)
-    await expect(balances).toContainText(/owes.*30\.00/)
+    await expect(balances).toContainText(/owes.*50\.00/)
     await expect(balances).toContainText(/Priya/)
-    await expect(balances).toContainText(/owes.*70\.00/)
+    await expect(balances).toContainText(/owes.*50\.00/)
 
-    const settlement = event.settlementPanel()
-    await expect(settlement).toContainText(/Alex sends Sarah/)
-    await expect(settlement).toContainText(/Priya sends Sarah/)
+    await expect(event.settlementPanel().getByRole('button', { name: 'Manual Payment' })).toBeVisible()
   })
 
-  test('edits and deletes a Settlement Payment and copies settlement summary', async ({ page }) => {
+  test('edits and deletes a Settlement Payment from direct balance settlement', async ({ page }) => {
     const event = eventUi(page)
     await event.createEvent({ eventTitle: `Settlement correction ${Date.now()}` })
     await event.addParticipants(['Alex', 'Priya'])
@@ -179,23 +156,11 @@ test.describe('Event UI smoke flow', () => {
     await event.saveExpense()
 
     const settlement = event.settlementPanel()
-    await expect(settlement).toContainText(/2 payments/)
-    await settlement.getByRole('button', { name: 'Settle up' }).click()
-    const copySummary = settlement.getByRole('button', { name: 'Copy summary' })
-    await expect(copySummary).toBeVisible()
-    const beforeCopy = await requiredBox(settlement)
-    await copySummary.click()
-    await expect(page.getByText('Summary copied')).toBeVisible()
-    await expect(copySummary).toHaveText('Copy summary')
-    await expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/sends Sarah.*40\.00/)
-    const afterCopy = await requiredBox(settlement)
-    expect(Math.abs(afterCopy.y - beforeCopy.y)).toBeLessThan(1)
+    await expect(settlement.getByRole('button', { name: 'Copy summary' })).toHaveCount(0)
 
-    const suggestion = event.firstSuggestedSettlement()
-    const suggestionText = await suggestion.textContent()
-    const sender = participantBefore(suggestionText, ' sends Sarah')
-    await suggestion.getByRole('button', { name: 'Record' }).click()
-    await suggestion.getByRole('button', { name: 'Record Settlement Payment' }).click()
+    const sender = 'Alex'
+    await event.draftSettlementPayment({ sender, recipient: 'Sarah', amount: '40.00' })
+    await event.saveSettlementPayment()
 
     const history = event.historyPanel()
     const paymentRow = event.settlementPaymentRecord()
@@ -213,19 +178,20 @@ test.describe('Event UI smoke flow', () => {
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*60\.00/)
     await expect(balances).toContainText(new RegExp(`${sender}[\\s\\S]*owes[\\s\\S]*20\\.00`))
-    await expect(settlement).toContainText(/2 payments/)
+    await expect(settlement.getByRole('button', { name: 'Manual Payment' })).toBeVisible()
 
     await paymentRow.getByRole('button', { name: 'Delete' }).click()
     await expect(history.locator('.record-row').filter({ hasText: 'Settlement Payment' })).toHaveCount(0)
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*80\.00/)
-    await expect(settlement).toContainText(/2 payments/)
+    await expect(settlement.getByRole('button', { name: 'Manual Payment' })).toBeVisible()
   })
 
   test('renames and deletes Participants while protecting referenced Participants on mobile', async ({ page }) => {
     const event = eventUi(page)
     await event.createEvent({ eventTitle: `Participant correction ${Date.now()}` })
     await event.addParticipants(['Alex', 'Temp'])
+    await event.openParticipantManager()
 
     const addExpense = event.addExpensePanel()
     const alexRow = event.participantRow('Alex')
@@ -237,7 +203,7 @@ test.describe('Event UI smoke flow', () => {
 
     await expect(event.participantRow('Avery')).toBeVisible()
     await expect(addExpense.getByRole('checkbox', { name: 'Avery' })).toBeVisible()
-    await expect(addExpense.getByLabel('Payer')).toContainText('Avery')
+    await expect(event.expenseDefaults().getByLabel('Expense defaults Participant')).toContainText('Avery')
 
     await event.participantRow('Temp').getByRole('button', { name: 'Delete' }).click()
     await expect(event.participantRow('Temp')).toHaveCount(0)
@@ -285,7 +251,7 @@ test.describe('Event UI smoke flow', () => {
     const copyButton = page.getByRole('button', { name: 'Copy Event Link' })
     await copyButton.click()
     await expect(page.getByText('Event Link copied')).toBeVisible()
-    await expect(copyButton).toHaveText('Copy Event Link')
+    await expect(copyButton).toHaveAccessibleName('Copy Event Link')
     const after = await requiredBox(event.addExpensePanel())
 
     expect(Math.abs(after.y - before.y)).toBeLessThan(1)

@@ -119,7 +119,7 @@ async function executeMutation(store: AppStore, command: SavedEventCommand): Pro
       const snapshot = await requireEventSnapshot(store, command.token)
       return store.createExpense(
         command.token,
-        parseExpenseInput(command.body, snapshot.event.currency)
+        parseExpenseInput(command.body, snapshot.event.currency, snapshot.participants)
       )
     }
     case 'updateExpense': {
@@ -127,7 +127,7 @@ async function executeMutation(store: AppStore, command: SavedEventCommand): Pro
       return store.updateExpense(
         command.token,
         command.expenseId,
-        parseExpenseInput(command.body, snapshot.event.currency)
+        parseExpenseInput(command.body, snapshot.event.currency, snapshot.participants)
       )
     }
     case 'deleteExpense':
