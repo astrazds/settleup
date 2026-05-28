@@ -105,7 +105,16 @@ export class EventUi {
   }
 
   async saveExpense(): Promise<void> {
-    await this.saveExpenseButton().click()
+    const responsePromise = this.page.waitForResponse((response) => {
+      const request = response.request()
+      return response.url().includes('/expenses') &&
+        (request.method() === 'POST' || request.method() === 'PATCH')
+    })
+    const [, response] = await Promise.all([
+      this.saveExpenseButton().click(),
+      responsePromise
+    ])
+    expect(response.ok()).toBe(true)
   }
 
   async draftSettlementPayment(input: SettlementPaymentDraftInput): Promise<void> {
@@ -130,7 +139,16 @@ export class EventUi {
   }
 
   async saveSettlementPayment(): Promise<void> {
-    await this.settlementPanel().getByRole('button', { name: 'Record' }).click()
+    const responsePromise = this.page.waitForResponse((response) => {
+      const request = response.request()
+      return response.url().includes('/settlement-payments') &&
+        (request.method() === 'POST' || request.method() === 'PATCH')
+    })
+    const [, response] = await Promise.all([
+      this.settlementPanel().getByRole('button', { name: 'Record' }).click(),
+      responsePromise
+    ])
+    expect(response.ok()).toBe(true)
   }
 
   async openParticipantManager(): Promise<void> {
