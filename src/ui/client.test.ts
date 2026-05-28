@@ -20,6 +20,12 @@ describe('client script contract', () => {
     expect(() => new Function(clientScript)).not.toThrow()
   })
 
+  it('emits stable browser policy helper names without relying on function stringification', () => {
+    expect(clientScript).toContain('function composeEventPagePolicy(eventSnapshot)')
+    expect(clientScript).toContain('function eventHistoryItems(eventSnapshot)')
+    expect(clientScript).toContain('currentParticipantDefaults: currentParticipantDefaultsPolicy')
+  })
+
   it('splits equal Shares by Participant order and assigns rounding deterministically', () => {
     const client = loadClientHarness()
 
