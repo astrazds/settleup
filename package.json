@@ -26,7 +26,11 @@
     "pretest:smoke": "wrangler d1 migrations apply settleup --local",
     "test:smoke": "playwright test",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "validate:html": "html-validate docs/design/mockups.html",
+    "deploy:dry-run": "wrangler deploy --dry-run --minify --outdir dist-dry-run",
+    "verify": "npm test && npm run test:coverage && npm run typecheck && npm run test:smoke && npm run validate:html && sh -c 'trap \"rm -rf dist-dry-run\" EXIT; npm run deploy:dry-run'"
   },
   "dependencies": {
     "hono": "^4.12.23"
@@ -34,6 +38,8 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.7",
+    "html-validate": "^11.4.0",
     "miniflare": "^4.20260526.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7",

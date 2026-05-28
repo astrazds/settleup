@@ -35,13 +35,18 @@ Use Wrangler for local development, migrations, type generation, dry runs, and d
 
 ```txt
 npm test
+npm run test:coverage
 npm run typecheck
 npm run test:smoke
-npx --yes html-validate docs/design/mockups.html
-npx wrangler deploy --dry-run --outdir dist-dry-run
+npm run validate:html
+npm run deploy:dry-run
 ```
 
-The Playwright smoke suite exercises the main Event UI flow against local Wrangler dev and applies local D1 migrations through `pretest:smoke`. Remove `dist-dry-run/` after dry-run checks; it is generated output.
+`npm run verify` runs the full local confidence gate in that order and removes `dist-dry-run/` after the packaging check. The Forgejo Actions workflow in `.forgejo/workflows/verify.yml` runs the same gate on pushes to `main` and pull requests.
+
+The coverage gate uses Vitest's V8 provider over runtime source in `src/**/*.ts`, excluding tests, generated binding declarations, dry-run output, and docs. The initial global thresholds are set to the current behavior-suite baseline: 84% statements, 62% branches, 87% functions, and 84% lines. Treat those thresholds as a regression signal for behavior coverage, not a demand to test implementation details; ratchet them upward when new behavior tests raise the baseline naturally.
+
+The Playwright smoke suite exercises the main Event UI flow against local Wrangler dev and applies local D1 migrations through `pretest:smoke`. HTML validation checks the standalone design mockup. Remove `dist-dry-run/` after direct dry-run checks; it is generated output, and `npm run verify` plus the workflow remove it automatically.
 
 ## Deployment
 

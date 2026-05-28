@@ -36,8 +36,12 @@ Smoke tests should prefer user-facing locators: labels, roles, visible text, and
 Use each command for a distinct layer:
 
 - `npm test`: domain logic, Hono route behavior, store behavior, and generated client syntax.
+- `npm run test:coverage`: behavior-suite coverage over runtime source, with thresholds used as a regression signal rather than a target for implementation-detail tests.
 - `npm run typecheck`: strict TypeScript compatibility.
 - `npm run test:smoke`: integrated Event page behavior through the browser and local Worker, including visible controls, form submission, client-side updates, toasts, responsive layout, and Event History visibility.
-- `npx wrangler deploy --dry-run --outdir dist-dry-run`: Worker packaging and Cloudflare runtime compatibility before deployment; remove `dist-dry-run/` afterwards.
+- `npm run validate:html`: standalone design HTML validation for `docs/design/mockups.html`.
+- `npm run deploy:dry-run`: Worker packaging and Cloudflare runtime compatibility before deployment; remove `dist-dry-run/` afterwards.
 
-For Event-page UI changes, run `npm test`, `npm run typecheck`, `npm run test:smoke`, and the Wrangler dry run before merging or deploying. For non-UI changes, run the smoke suite when the change can affect rendered Event state, Event Snapshot shape, client-side update behavior, or the route responses used by the Event page.
+For Event-page UI changes, run `npm test`, `npm run test:coverage`, `npm run typecheck`, `npm run test:smoke`, `npm run validate:html`, and `npm run deploy:dry-run` before merging or deploying. `npm run verify` runs the full local sequence. For non-UI changes, run the smoke suite when the change can affect rendered Event state, Event Snapshot shape, client-side update behavior, or the route responses used by the Event page.
+
+Coverage thresholds should move upward only when user-facing or domain behavior tests raise the baseline. Do not add brittle tests solely to satisfy a number; prefer assertions through domain functions, Hono requests, or browser-visible Event behavior.

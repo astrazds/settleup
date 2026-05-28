@@ -8,6 +8,24 @@ export default defineConfig({
     }
   },
   test: {
-    include: ['src/**/*.test.ts']
+    include: ['src/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: 'coverage',
+      include: ['src/**/*.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'worker-configuration.d.ts',
+        'dist-dry-run/**',
+        'docs/**'
+      ],
+      thresholds: {
+        statements: 84,
+        branches: 62,
+        functions: 87,
+        lines: 84
+      }
+    }
   }
 })

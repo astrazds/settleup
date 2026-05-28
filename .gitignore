@@ -6,6 +6,7 @@ dist/
 !.yarn/releases
 playwright-report/
 test-results/
+coverage/
 .vscode/*
 !.vscode/launch.json
 !.vscode/*.code-snippets

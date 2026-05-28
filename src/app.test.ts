@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from './index'
-import type { EventSnapshot, Participant } from './domain'
+import type { EventSnapshot, Expense, Participant, SettlementPayment } from './domain'
 import type { EventRealtimeNotifier } from './event-realtime'
 import { MemoryStore } from './store'
 
-function jsonRequest(path: string, body: unknown): Request {
+function jsonRequest(path: string, body: unknown, method = 'POST'): Request {
   return new Request(`https://settleup.test${path}`, {
-    method: 'POST',
+    method,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)
   })
@@ -348,6 +348,346 @@ describe('Event workflows', () => {
   })
 })
 
+describe('Participant mutation route contracts', () => {
+  it('renames a Participant, returns the updated Event Snapshot, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const created = await createEvent(app)
+    const token = created.event.token
+    const withAlex = await addParticipant(app, token, 'Alex')
+    const alex = requireParticipant(withAlex, 'Alex')
+    notifier.reset()
+
+    const response = await app.request(jsonRequest(`/api/events/${token}/participants/${alex.id}`, {
+      displayName: 'Alex Lee'
+    }, 'PATCH'))
+
+    expect(response.status).toBe(200)
+    const renamed = await responseJson<EventSnapshot>(response)
+    expect(requireParticipant(renamed, 'Alex Lee')).toEqual(expect.objectContaining({
+      id: alex.id,
+      order: alex.order
+    }))
+    expect(notifier.changedTokens).toEqual([token])
+  })
+
+  it('deletes an unreferenced Participant, returns the updated Event Snapshot, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const created = await createEvent(app)
+    const token = created.event.token
+    const withAlex = await addParticipant(app, token, 'Alex')
+    const alex = requireParticipant(withAlex, 'Alex')
+    notifier.reset()
+
+    const response = await app.request(`/api/events/${token}/participants/${alex.id}`, {
+      method: 'DELETE'
+    })
+
+    expect(response.status).toBe(200)
+    const snapshot = await responseJson<EventSnapshot>(response)
+    expect(snapshot.participants.map((participant) => participant.id)).not.toContain(alex.id)
+    expect(snapshot.balances).toEqual([
+      { participantId: created.participants[0].id, amountMinor: 0 }
+    ])
+    expect(snapshot.suggestedSettlements).toEqual([])
+    expect(notifier.changedTokens).toEqual([token])
+  })
+
+  it('returns validation errors for referenced Participant deletion and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const created = await createEvent(app)
+    const token = created.event.token
+    const sarah = created.participants[0]
+    const withAlex = await addParticipant(app, token, 'Alex')
+    const alex = requireParticipant(withAlex, 'Alex')
+    await createExpense(app, token, {
+      description: 'Fuel',
+      amount: '20.00',
+      payerParticipantId: sarah.id,
+      shares: [
+        { participantId: alex.id, amount: '20.00' }
+      ]
+    })
+    notifier.reset()
+
+    const response = await app.request(`/api/events/${token}/participants/${alex.id}`, {
+      method: 'DELETE'
+    })
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Referenced Participants cannot be deleted'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+
+  it('returns not-found errors for missing Participant mutations and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const created = await createEvent(app)
+    const token = created.event.token
+    notifier.reset()
+
+    const renameResponse = await app.request(jsonRequest(`/api/events/${token}/participants/missing-participant`, {
+      displayName: 'Alex Lee'
+    }, 'PATCH'))
+    const deleteResponse = await app.request(`/api/events/${token}/participants/missing-participant`, {
+      method: 'DELETE'
+    })
+
+    expect(renameResponse.status).toBe(404)
+    expect(await renameResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Participant not found'
+      }
+    })
+    expect(deleteResponse.status).toBe(404)
+    expect(await deleteResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Participant not found'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+})
+
+describe('Expense mutation route contracts', () => {
+  it('updates an Expense, recomputes derived settlement output, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await expenseFixture(app)
+    notifier.reset()
+
+    const response = await app.request(jsonRequest(`/api/events/${fixture.token}/expenses/${fixture.expense.id}`, {
+      description: 'Groceries',
+      amount: '60.00',
+      payerParticipantId: fixture.sarah.id,
+      shares: [
+        { participantId: fixture.sarah.id, amount: '10.00' },
+        { participantId: fixture.alex.id, amount: '50.00' }
+      ]
+    }, 'PATCH'))
+
+    expect(response.status).toBe(200)
+    const snapshot = await responseJson<EventSnapshot>(response)
+    expect(requireExpense(snapshot, fixture.expense.id)).toEqual(expect.objectContaining({
+      description: 'Groceries',
+      amountMinor: 6000,
+      payerParticipantId: fixture.sarah.id,
+      shares: [
+        { participantId: fixture.sarah.id, amountMinor: 1000 },
+        { participantId: fixture.alex.id, amountMinor: 5000 }
+      ]
+    }))
+    expect(snapshot.balances).toEqual([
+      { participantId: fixture.sarah.id, amountMinor: 5000 },
+      { participantId: fixture.alex.id, amountMinor: -5000 }
+    ])
+    expect(snapshot.suggestedSettlements).toEqual([
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 5000 }
+    ])
+    expect(notifier.changedTokens).toEqual([fixture.token])
+  })
+
+  it('deletes an Expense, recomputes derived settlement output, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await expenseFixture(app)
+    notifier.reset()
+
+    const response = await app.request(`/api/events/${fixture.token}/expenses/${fixture.expense.id}`, {
+      method: 'DELETE'
+    })
+
+    expect(response.status).toBe(200)
+    const snapshot = await responseJson<EventSnapshot>(response)
+    expect(snapshot.expenses).toEqual([])
+    expect(snapshot.balances).toEqual([
+      { participantId: fixture.sarah.id, amountMinor: 0 },
+      { participantId: fixture.alex.id, amountMinor: 0 }
+    ])
+    expect(snapshot.suggestedSettlements).toEqual([])
+    expect(notifier.changedTokens).toEqual([fixture.token])
+  })
+
+  it('returns validation errors for invalid Expense updates and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await expenseFixture(app)
+    notifier.reset()
+
+    const response = await app.request(jsonRequest(`/api/events/${fixture.token}/expenses/${fixture.expense.id}`, {
+      description: 'Groceries',
+      amount: '60.00',
+      payerParticipantId: fixture.sarah.id,
+      shares: [
+        { participantId: fixture.sarah.id, amount: '15.00' },
+        { participantId: fixture.alex.id, amount: '15.00' }
+      ]
+    }, 'PATCH'))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Shares must sum to the Expense amount'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+
+  it('returns not-found errors for missing Expense mutations and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await expenseFixture(app)
+    notifier.reset()
+
+    const updateResponse = await app.request(jsonRequest(`/api/events/${fixture.token}/expenses/missing-expense`, {
+      description: 'Groceries',
+      amount: '60.00',
+      payerParticipantId: fixture.sarah.id,
+      shares: [
+        { participantId: fixture.sarah.id, amount: '10.00' },
+        { participantId: fixture.alex.id, amount: '50.00' }
+      ]
+    }, 'PATCH'))
+    const deleteResponse = await app.request(`/api/events/${fixture.token}/expenses/missing-expense`, {
+      method: 'DELETE'
+    })
+
+    expect(updateResponse.status).toBe(404)
+    expect(await updateResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Expense not found'
+      }
+    })
+    expect(deleteResponse.status).toBe(404)
+    expect(await deleteResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Expense not found'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+})
+
+describe('Settlement Payment mutation route contracts', () => {
+  it('updates a Settlement Payment, recomputes derived settlement output, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await settlementPaymentFixture(app)
+    notifier.reset()
+
+    const response = await app.request(jsonRequest(
+      `/api/events/${fixture.token}/settlement-payments/${fixture.settlementPayment.id}`,
+      {
+        senderParticipantId: fixture.alex.id,
+        recipientParticipantId: fixture.sarah.id,
+        amount: '25.00'
+      },
+      'PATCH'
+    ))
+
+    expect(response.status).toBe(200)
+    const snapshot = await responseJson<EventSnapshot>(response)
+    expect(requireSettlementPayment(snapshot, fixture.settlementPayment.id)).toEqual(expect.objectContaining({
+      senderParticipantId: fixture.alex.id,
+      recipientParticipantId: fixture.sarah.id,
+      amountMinor: 2500
+    }))
+    expect(snapshot.balances).toEqual([
+      { participantId: fixture.sarah.id, amountMinor: 2500 },
+      { participantId: fixture.alex.id, amountMinor: -2500 }
+    ])
+    expect(snapshot.suggestedSettlements).toEqual([
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 2500 }
+    ])
+    expect(notifier.changedTokens).toEqual([fixture.token])
+  })
+
+  it('deletes a Settlement Payment, recomputes derived settlement output, and notifies realtime listeners once', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await settlementPaymentFixture(app)
+    notifier.reset()
+
+    const response = await app.request(`/api/events/${fixture.token}/settlement-payments/${fixture.settlementPayment.id}`, {
+      method: 'DELETE'
+    })
+
+    expect(response.status).toBe(200)
+    const snapshot = await responseJson<EventSnapshot>(response)
+    expect(snapshot.settlementPayments).toEqual([])
+    expect(snapshot.balances).toEqual([
+      { participantId: fixture.sarah.id, amountMinor: 5000 },
+      { participantId: fixture.alex.id, amountMinor: -5000 }
+    ])
+    expect(snapshot.suggestedSettlements).toEqual([
+      { senderParticipantId: fixture.alex.id, recipientParticipantId: fixture.sarah.id, amountMinor: 5000 }
+    ])
+    expect(notifier.changedTokens).toEqual([fixture.token])
+  })
+
+  it('returns validation errors for invalid Settlement Payment updates and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await settlementPaymentFixture(app)
+    notifier.reset()
+
+    const response = await app.request(jsonRequest(
+      `/api/events/${fixture.token}/settlement-payments/${fixture.settlementPayment.id}`,
+      {
+        senderParticipantId: fixture.alex.id,
+        recipientParticipantId: fixture.alex.id,
+        amount: '10.00'
+      },
+      'PATCH'
+    ))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'validation_error',
+        message: 'Sender and Recipient must be different Participants'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+
+  it('returns not-found errors for missing Settlement Payment mutations and does not notify realtime listeners', async () => {
+    const { app, notifier } = testApp()
+    const fixture = await settlementPaymentFixture(app)
+    notifier.reset()
+
+    const updateResponse = await app.request(jsonRequest(
+      `/api/events/${fixture.token}/settlement-payments/missing-payment`,
+      {
+        senderParticipantId: fixture.alex.id,
+        recipientParticipantId: fixture.sarah.id,
+        amount: '10.00'
+      },
+      'PATCH'
+    ))
+    const deleteResponse = await app.request(`/api/events/${fixture.token}/settlement-payments/missing-payment`, {
+      method: 'DELETE'
+    })
+
+    expect(updateResponse.status).toBe(404)
+    expect(await updateResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Settlement Payment not found'
+      }
+    })
+    expect(deleteResponse.status).toBe(404)
+    expect(await deleteResponse.json()).toEqual({
+      error: {
+        code: 'not_found',
+        message: 'Settlement Payment not found'
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+})
+
 describe('Frontend design contract', () => {
   it('serves the create flow with the brandkit layout and copy', async () => {
     const app = createApp({ storeFactory: () => new MemoryStore() })
@@ -388,6 +728,97 @@ async function createEvent(app: ReturnType<typeof createApp>) {
   return responseJson<EventSnapshot>(response)
 }
 
+function testApp(): { app: ReturnType<typeof createApp>; notifier: FakeRealtimeNotifier } {
+  const store = new MemoryStore()
+  const notifier = new FakeRealtimeNotifier()
+  const app = createApp({
+    storeFactory: () => store,
+    realtimeNotifierFactory: () => notifier
+  })
+  return { app, notifier }
+}
+
+async function addParticipant(
+  app: ReturnType<typeof createApp>,
+  token: string,
+  displayName: string
+): Promise<EventSnapshot> {
+  const response = await app.request(jsonRequest(`/api/events/${token}/participants`, { displayName }))
+  expect(response.status).toBe(200)
+  return responseJson<EventSnapshot>(response)
+}
+
+async function createExpense(
+  app: ReturnType<typeof createApp>,
+  token: string,
+  input: {
+    description: string
+    amount: string
+    payerParticipantId: string
+    shares: Array<{ participantId: string; amount: string }>
+  }
+): Promise<EventSnapshot> {
+  const response = await app.request(jsonRequest(`/api/events/${token}/expenses`, input))
+  expect(response.status).toBe(200)
+  return responseJson<EventSnapshot>(response)
+}
+
+async function createSettlementPayment(
+  app: ReturnType<typeof createApp>,
+  token: string,
+  input: {
+    senderParticipantId: string
+    recipientParticipantId: string
+    amount: string
+  }
+): Promise<EventSnapshot> {
+  const response = await app.request(jsonRequest(`/api/events/${token}/settlement-payments`, input))
+  expect(response.status).toBe(200)
+  return responseJson<EventSnapshot>(response)
+}
+
+async function expenseFixture(app: ReturnType<typeof createApp>): Promise<{
+  token: string
+  sarah: Participant
+  alex: Participant
+  expense: Expense
+}> {
+  const created = await createEvent(app)
+  const token = created.event.token
+  const sarah = created.participants[0]
+  const withAlex = await addParticipant(app, token, 'Alex')
+  const alex = requireParticipant(withAlex, 'Alex')
+  const withExpense = await createExpense(app, token, {
+    description: 'Dinner',
+    amount: '80.00',
+    payerParticipantId: sarah.id,
+    shares: [
+      { participantId: sarah.id, amount: '30.00' },
+      { participantId: alex.id, amount: '50.00' }
+    ]
+  })
+  return { token, sarah, alex, expense: requireExpense(withExpense, 'Dinner') }
+}
+
+async function settlementPaymentFixture(app: ReturnType<typeof createApp>): Promise<{
+  token: string
+  sarah: Participant
+  alex: Participant
+  expense: Expense
+  settlementPayment: SettlementPayment
+}> {
+  const fixture = await expenseFixture(app)
+  const withPayment = await createSettlementPayment(app, fixture.token, {
+    senderParticipantId: fixture.alex.id,
+    recipientParticipantId: fixture.sarah.id,
+    amount: '50.00'
+  })
+  return {
+    ...fixture,
+    settlementPayment: requireSettlementPayment(withPayment, fixture.alex.id, fixture.sarah.id)
+  }
+}
+
 async function responseJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
@@ -398,6 +829,34 @@ function requireParticipant(snapshot: EventSnapshot, displayName: string): Parti
     throw new Error(`Expected Participant ${displayName}`)
   }
   return participant
+}
+
+function requireExpense(snapshot: EventSnapshot, idOrDescription: string): Expense {
+  const expense = snapshot.expenses.find((candidate) =>
+    candidate.id === idOrDescription || candidate.description === idOrDescription
+  )
+  if (!expense) {
+    throw new Error(`Expected Expense ${idOrDescription}`)
+  }
+  return expense
+}
+
+function requireSettlementPayment(
+  snapshot: EventSnapshot,
+  idOrSenderParticipantId: string,
+  recipientParticipantId?: string
+): SettlementPayment {
+  const payment = snapshot.settlementPayments.find((candidate) =>
+    candidate.id === idOrSenderParticipantId ||
+    (
+      candidate.senderParticipantId === idOrSenderParticipantId &&
+      candidate.recipientParticipantId === recipientParticipantId
+    )
+  )
+  if (!payment) {
+    throw new Error(`Expected Settlement Payment ${idOrSenderParticipantId}`)
+  }
+  return payment
 }
 
 class FakeRealtimeNotifier implements EventRealtimeNotifier {
@@ -411,5 +870,10 @@ class FakeRealtimeNotifier implements EventRealtimeNotifier {
   async connect(token: string): Promise<Response> {
     this.connectedTokens.push(token)
     return new Response('connected')
+  }
+
+  reset(): void {
+    this.changedTokens.length = 0
+    this.connectedTokens.length = 0
   }
 }
