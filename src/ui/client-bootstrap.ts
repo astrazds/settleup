@@ -3,7 +3,10 @@ const app = document.querySelector('#app')
 const token = app?.dataset.token
 let snapshot = null
 let currentParticipantId = token ? localStorage.getItem('settleup:participant:' + token) : null
-let pollingStarted = false
+let fallbackPollingId = null
+let realtimeSocket = null
+let realtimeReconnectId = null
+let realtimeReconnectAttempt = 0
 
 if (app && token) {
   boot()
@@ -11,13 +14,10 @@ if (app && token) {
 
 async function boot() {
   await refresh(false)
-  if (!pollingStarted) {
-    pollingStarted = true
-    window.setInterval(() => refresh(true), 8000)
-  }
+  startRealtime()
 }
 
-async function refresh(preserveDrafts) {
+async function refresh(preserveDrafts, completeMessage) {
   const refreshNote = app.querySelector('[data-refresh-note]')
   if (preserveDrafts && refreshNote) {
     refreshNote.hidden = false
@@ -35,7 +35,7 @@ async function refresh(preserveDrafts) {
   render(preserveDrafts)
   const renderedRefreshNote = app.querySelector('[data-refresh-note]')
   if (preserveDrafts && renderedRefreshNote) {
-    renderedRefreshNote.textContent = 'Event data refreshed. Draft fields stayed unchanged.'
+    renderedRefreshNote.textContent = completeMessage || 'Event data refreshed. Draft fields stayed unchanged.'
     window.setTimeout(() => {
       renderedRefreshNote.hidden = true
     }, 1800)
@@ -62,4 +62,91 @@ function render(preserveDrafts) {
   fillParticipantSelects(preserveDrafts)
   updateShareSummary()
 }
+
+function startRealtime() {
+  if (!('WebSocket' in window)) {
+    setRealtimeState('Live updates unavailable, polling')
+    startFallbackPolling()
+    return
+  }
+  connectRealtime()
+}
+
+function connectRealtime() {
+  window.clearTimeout(realtimeReconnectId)
+  setRealtimeState('Live updates connecting')
+  const socket = new WebSocket(realtimeUrl())
+  realtimeSocket = socket
+
+  socket.addEventListener('open', () => {
+    if (realtimeSocket !== socket) return
+    realtimeReconnectAttempt = 0
+    stopFallbackPolling()
+    setRealtimeState('Live updates on')
+  })
+
+  socket.addEventListener('message', (event) => {
+    handleRealtimeMessage(event.data)
+  })
+
+  socket.addEventListener('close', () => {
+    if (realtimeSocket !== socket) return
+    setRealtimeState('Live updates reconnecting, polling')
+    startFallbackPolling()
+    scheduleRealtimeReconnect()
+  })
+
+  socket.addEventListener('error', () => {
+    socket.close()
+  })
+}
+
+async function handleRealtimeMessage(data) {
+  if (data === 'pong') return
+  if (typeof data !== 'string') return
+
+  let message = null
+  try {
+    message = JSON.parse(data)
+  } catch {
+    return
+  }
+
+  if (message?.type === 'event_changed') {
+    await refresh(true, 'Event updated. Draft fields stayed unchanged.')
+  }
+}
+
+function realtimeUrl() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return protocol + '//' + window.location.host + '/api/events/' + token + '/realtime'
+}
+
+function scheduleRealtimeReconnect() {
+  realtimeReconnectAttempt += 1
+  const delay = Math.min(1000 * 2 ** (realtimeReconnectAttempt - 1), 30000)
+  realtimeReconnectId = window.setTimeout(connectRealtime, delay)
+}
+
+function startFallbackPolling() {
+  if (fallbackPollingId) return
+  fallbackPollingId = window.setInterval(() => refresh(true), 8000)
+}
+
+function stopFallbackPolling() {
+  if (!fallbackPollingId) return
+  window.clearInterval(fallbackPollingId)
+  fallbackPollingId = null
+}
+
+function setRealtimeState(message) {
+  const state = app.querySelector('[data-realtime-state]')
+  if (state) state.textContent = message
+}
+
+window.addEventListener('beforeunload', () => {
+  if (realtimeSocket) {
+    realtimeSocket.close(1000, 'Page closing')
+  }
+})
 `

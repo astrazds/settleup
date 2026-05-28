@@ -72,6 +72,14 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - Balance wording should say "is owed", "owes", or "is settled" instead of relying on signed numbers.
 - Use medium product density. Desktop should use compact rows, aligned amounts, and fewer large empty panels. Mobile should keep generous tap targets without marketing-scale spacing. Forms should be dense but legible, with progressive sections. Records should be scan-first and row-based, not card-heavy.
 - On the Event page, Balances are visually dominant and Add Expense is the close second. Suggested Settlements become prominent when Balances are non-zero and the group is ready to settle.
+- In an empty Event with only one Participant, make adding Participants the clearest next action before the first shared Expense. Keep this as contextual guidance, not an onboarding wizard.
+- When the group is ready to settle, Suggested Settlements should shift from secondary explanation to primary action. The UI must still make clear that a Suggested Settlement is only recorded history after someone records a Settlement Payment.
+- Settlement focus should be a user-controlled mode or action, not an automatic state. It should emphasize Suggested Settlements without implying the Event is locked or that the current Participant has special permission.
+- Settlement focus should stay on the Event page. Use layout and action emphasis to bring Suggested Settlements forward while keeping Expense capture and Event context reachable.
+- Recording a Suggested Settlement should expand or reveal inline confirmation with sender, recipient, amount, and a final "Record Settlement Payment" action. Avoid one-click saved history and avoid forcing users back through the generic form for the common settlement path.
+- Suggested Settlement confirmation should keep the suggested amount visible and make the recorded amount editable. Partial payments and overpayments should feel deliberate, not hidden behind the generic Settlement Payment form.
+- After recording a Settlement Payment, refresh the visible Balances and Suggested Settlements instead of showing progress on the old suggestion. Suggested Settlements are current recommendations, not checklist items.
+- A future copyable settlement summary should be plain and group-chat-friendly. It should not look like a report, receipt, export center, or print workflow.
 - Use a named spacing scale for product rhythm. Related controls should group tightly, while distinct states and mockup frames should have visibly larger gaps.
 - Touch and narrow-screen controls should use at least 44px hit areas. Desktop controls may stay denser where pointer input and repeated data entry benefit from compactness.
 - In design artifacts, use full-width anchor states for Create Event and Populated Event, then pair smaller state comparisons such as Empty Event with Settle Up and Mobile Event with Interaction States.
@@ -99,13 +107,28 @@ Use realistic sample data in mockups. Default scenario: Event Title "Sydney week
 
 ## Interaction Rules
 
-- Draft forms must survive polling refreshes.
+- Draft forms must survive realtime and fallback polling refreshes.
+- Realtime refreshes should feel quiet and useful: show connection status compactly, refresh saved Event state in place, and preserve draft forms. Polling fallback should use the same refresh feedback rather than a second visual system.
+- Do not show named presence or viewer counts for now. Realtime status should communicate connection and update behavior, not who is currently viewing the Event.
+- If realtime updates arrive while a draft or edit form is open, show a calm review warning near the active form. Do not block saving or introduce lock language.
+- Realtime update copy should be neutral, such as "Event updated." Do not say which Participant made a change.
 - Event Link sharing should be available, but the full token should not be prominent.
 - User-provided text is rendered as plain text.
 - Validation errors appear near the relevant form.
 - Current Participant selection controls defaults only; it must not imply permissions.
 - Current Participant UI should use defaults language such as "Expense defaults" or "defaults" rather than account, owner, or permission language.
+- Return visits should make the remembered current Participant obvious before actions that create Expenses or Settlement Payments. The UI should support fast switching on shared devices without introducing account-like language.
+- Use persistent current Participant context near money-changing forms rather than blocking confirmations. A shared-device user should be able to see and change the defaults quickly before saving.
 - Custom Share entry should show total, assigned, and remaining amounts near the share inputs. Equal split should remain available as a recovery action.
+- Uneven Share entry should start with Included Participants before exact Share amounts. The default flow is: choose who is included, equal-split among them, then override individual Share amounts only when needed.
+- When a payer is selected for an Expense, that payer should be included by default. Removing the payer from Included Participants is an explicit correction, not the normal path.
+- If the payer is not included in an Expense, show a calm warning near the Included Participants or Share summary. Do not block saving solely for this state.
+- Use direct checkbox-style controls for Included Participants. Avoid making inclusion depend on removable Share rows alone; exact Share amount controls should follow the inclusion decision.
+- The Included Participants control may allow a temporary empty draft state, but the form should clearly disable or block saving until at least one Participant is included.
+- When editing an Expense, initialize Included Participants from the saved Shares for that Expense. New-Expense defaults should not overwrite saved inclusion.
+- Keep exact Share amount inputs hidden until the user chooses to adjust Shares. The default included-Participant flow should show the equal Share result and a clear adjustment action instead of exposing per-person amount fields immediately.
+- When exact Share amounts are visible, keep total, assigned, and remaining amounts prominent. Provide explicit helper actions for assigning remaining money to an Included Participant; do not silently redistribute adjusted Shares.
+- Remaining-amount helpers should use generic, literal copy until stronger real-world patterns emerge. Avoid overloaded helper phrases that could blur Expense Shares with Settlement Payments.
 - On mobile and in compact validation states, the total, assigned, and remaining summary should use separated label/value rows with dividers instead of a cramped multi-column grid.
 - Interaction state mockups should include saving/loading, validation recovery, edit mode, delete confirmation, copied feedback, and refresh feedback.
 - Mobile interaction states should stack as a single column. Button state examples may use a two-column grid, but edit and delete rows should stack copy above controls so labels and actions do not crowd each other.

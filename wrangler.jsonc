@@ -11,6 +11,22 @@
       "migrations_dir": "migrations"
     }
   ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "EVENT_REALTIME",
+        "class_name": "EventRealtimeRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1_event_realtime_room",
+      "new_sqlite_classes": [
+        "EventRealtimeRoom"
+      ]
+    }
+  ],
   "compatibility_flags": [
     "nodejs_compat"
   ],

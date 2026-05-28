@@ -5,6 +5,7 @@ How the engineering skills should consume this repo's domain documentation when 
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root.
+- **`docs/prd/`** for approved product requirements and implementation issue groupings.
 - **`docs/adr/`** for architectural decisions that touch the area you're about to work in.
 
 If any of these files don't exist, proceed silently. Don't flag their absence or suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions get resolved.
@@ -16,6 +17,8 @@ This repo uses a single-context layout:
 ```txt
 /
 ├── CONTEXT.md
+├── docs/prd/
+│   └── 0001-example-feature.md
 ├── docs/adr/
 │   ├── 0001-example-decision.md
 │   └── 0002-example-decision.md

@@ -1,4 +1,4 @@
-SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
+SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), product requirements are in [`docs/prd/`](./docs/prd/), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
 
 The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and CSS. The current visual system is documented in [`docs/design/brandkit.md`](./docs/design/brandkit.md), with the standalone review artifact in [`docs/design/mockups.html`](./docs/design/mockups.html).
 
@@ -8,6 +8,7 @@ The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and
 - `src/event-command-input.ts` parses raw form or JSON command input into typed Event commands.
 - `src/event-record.ts` owns Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
 - `src/store.ts` provides storage adapters: `MemoryStore` for route tests and `D1Store` for Cloudflare D1.
+- `src/event-realtime.ts` owns Event-scoped realtime notifications through a Durable Object room per Event token.
 - `src/money.ts` owns two-decimal Currency amount parsing/formatting rules used by server code and browser draft validation.
 - `src/ui/client*.ts` keeps the browser Event screen as plain TypeScript modules that are concatenated into the single `/static/client.js` asset.
 
@@ -26,7 +27,7 @@ npx wrangler d1 migrations apply settleup --local
 
 ## Cloudflare Resources
 
-`wrangler.jsonc` is the source of truth for repo-local Cloudflare configuration. The Worker is named `settleup`, and the current binding is `DB`, a D1 database named `settleup`. The checked-in `database_id` is for local/shared development; verify the live account resource before deploying or applying remote migrations.
+`wrangler.jsonc` is the source of truth for repo-local Cloudflare configuration. The Worker is named `settleup`, and the current bindings are `DB`, a D1 database named `settleup`, and `EVENT_REALTIME`, a Durable Object namespace for Event-scoped WebSocket notifications. The checked-in D1 `database_id` is for local/shared development; verify live account resources before deploying or applying remote migrations.
 
 Use Wrangler for local development, migrations, type generation, dry runs, and deployment. Use the Cloudflare MCP tools for account inventory, current documentation, Worker build diagnostics, and observability before assuming a remote Worker, D1 database, KV namespace, or R2 bucket exists.
 

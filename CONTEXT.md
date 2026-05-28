@@ -36,6 +36,10 @@ _Avoid_: Exchange rate, converted amount, multi-currency
 A cost recorded in an **Event** because one **Participant** paid money on behalf of one or more **Participants**. An **Expense** has exactly one paying Participant and one or more **Shares**, and is not itself a repayment between Participants.
 _Avoid_: Payment, entry, transaction, bill
 
+**Included Participant**:
+A **Participant** who has a **Share** on a specific **Expense**. A Participant may be included in one Expense and not included in another.
+_Avoid_: Attendee, member, selected user
+
 **Participant**:
 A person represented inside an **Event** with a display name and a stable identity for that Event. A **Participant** is not an account, and may be created by anyone with the **Event Link**.
 _Avoid_: User, member, account, contact
@@ -89,6 +93,10 @@ _Avoid_: Balance, debt, invoice
 **Developer**: Everyone ate different amounts. Is the Expense still equal?
 
 **Domain Expert**: Not necessarily. Record each person's **Share** as a specific amount.
+
+**Developer**: Five people are in the Event, but only three took the taxi. Are all five Participants part of that Expense?
+
+**Domain Expert**: No. Only the three taxi riders are **Included Participants** because only they have Shares on that Expense.
 
 **Developer**: Sarah paid for dinner and also ate dinner. Does Sarah get a Share?
 

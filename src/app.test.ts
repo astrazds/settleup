@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from './index'
 import type { EventSnapshot, Participant } from './domain'
+import type { EventRealtimeNotifier } from './event-realtime'
 import { MemoryStore } from './store'
 
 function jsonRequest(path: string, body: unknown): Request {
@@ -123,6 +124,94 @@ describe('Event creation and access', () => {
 })
 
 describe('Event workflows', () => {
+  it('notifies realtime listeners after successful Event mutations', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const app = createApp({
+      storeFactory: () => store,
+      realtimeNotifierFactory: () => notifier
+    })
+    const created = await createEvent(app)
+    const token = created.event.token
+
+    const response = await app.request(jsonRequest(`/api/events/${token}/participants`, {
+      displayName: 'Alex'
+    }))
+
+    expect(response.status).toBe(200)
+    expect(notifier.changedTokens).toEqual([token])
+  })
+
+  it('does not notify realtime listeners when an Event mutation fails validation', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const app = createApp({
+      storeFactory: () => store,
+      realtimeNotifierFactory: () => notifier
+    })
+    const created = await createEvent(app)
+    const token = created.event.token
+
+    const response = await app.request(jsonRequest(`/api/events/${token}/expenses`, {
+      description: 'Dinner',
+      amount: '80.00',
+      payerParticipantId: created.participants[0].id
+    }))
+
+    expect(response.status).toBe(400)
+    expect(notifier.changedTokens).toEqual([])
+  })
+
+  it('rejects realtime connections unless the request upgrades to WebSocket', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const app = createApp({
+      storeFactory: () => store,
+      realtimeNotifierFactory: () => notifier
+    })
+    const created = await createEvent(app)
+
+    const response = await app.request(`/api/events/${created.event.token}/realtime`)
+
+    expect(response.status).toBe(426)
+    expect(await response.text()).toBe('Expected WebSocket')
+    expect(notifier.connectedTokens).toEqual([])
+  })
+
+  it('connects existing Events to the realtime notifier', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const app = createApp({
+      storeFactory: () => store,
+      realtimeNotifierFactory: () => notifier
+    })
+    const created = await createEvent(app)
+
+    const response = await app.request(`/api/events/${created.event.token}/realtime`, {
+      headers: { Upgrade: 'websocket' }
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toBe('connected')
+    expect(notifier.connectedTokens).toEqual([created.event.token])
+  })
+
+  it('does not connect missing Events to the realtime notifier', async () => {
+    const notifier = new FakeRealtimeNotifier()
+    const app = createApp({
+      storeFactory: () => new MemoryStore(),
+      realtimeNotifierFactory: () => notifier
+    })
+
+    const response = await app.request('/api/events/missing/realtime', {
+      headers: { Upgrade: 'websocket' }
+    })
+
+    expect(response.status).toBe(404)
+    expect(await response.text()).toBe('Event not found')
+    expect(notifier.connectedTokens).toEqual([])
+  })
+
   it('manages Participants, Expenses, Balances, Settlement Payments, and Suggested Settlements', async () => {
     const store = new MemoryStore()
     const app = createApp({ storeFactory: () => store })
@@ -309,4 +398,18 @@ function requireParticipant(snapshot: EventSnapshot, displayName: string): Parti
     throw new Error(`Expected Participant ${displayName}`)
   }
   return participant
+}
+
+class FakeRealtimeNotifier implements EventRealtimeNotifier {
+  readonly changedTokens: string[] = []
+  readonly connectedTokens: string[] = []
+
+  async eventChanged(token: string): Promise<void> {
+    this.changedTokens.push(token)
+  }
+
+  async connect(token: string): Promise<Response> {
+    this.connectedTokens.push(token)
+    return new Response('connected')
+  }
 }

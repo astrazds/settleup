@@ -6,7 +6,7 @@ How agents should use Cloudflare resources and MCP tools in this repo.
 
 - `wrangler.jsonc` defines the Worker name, compatibility date, bindings, and resource declarations.
 - The current Worker name is `settleup`.
-- The current binding is `DB`, a D1 database named `settleup`.
+- The current bindings are `DB`, a D1 database named `settleup`, and `EVENT_REALTIME`, a Durable Object namespace for Event-scoped WebSocket notifications.
 - `worker-configuration.d.ts` is generated from Wrangler configuration with `npm run cf-typegen`.
 
 Treat local configuration as intent, not proof of deployed state. Verify remote resources before deployment, remote migrations, debugging production behavior, or changing resource declarations.
@@ -37,3 +37,7 @@ Before creating, deleting, or mutating remote Cloudflare resources, confirm the 
 ## D1 tests
 
 D1 adapter behavior is tested with Miniflare and the checked-in SQL migrations instead of a hand-written SQL fake. When changing D1 schema or queries, update `migrations/`, keep `D1Store` aligned with the migrated schema, and run `npm test` so the migration-backed tests exercise the real D1 binding shape.
+
+## Realtime
+
+Event realtime uses the `EVENT_REALTIME` Durable Object binding. Treat D1 as the saved Event source of truth; the Durable Object only coordinates WebSocket clients and broadcasts Event-change notifications after successful mutations. Use WebSocket hibernation APIs for new realtime code and keep polling as a browser fallback, not the primary collaboration path.

@@ -2,7 +2,7 @@ export const clientTemplateScript = String.raw`
 function shell() {
   return '<header class="app-top">' +
     '<div><div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div><h1 data-event-title></h1><p class="subtle"><span data-event-currency></span>, Anyone with this link can view and edit.</p></div>' +
-    '<div class="actions"><button class="secondary" data-copy-link type="button">Copy Event Link</button></div>' +
+    '<div class="actions"><span class="chip chip-current" data-realtime-state>Live updates connecting</span><button class="secondary" data-copy-link type="button">Copy Event Link</button></div>' +
     '</header>' +
     '<p class="refresh-note" data-refresh-note hidden>Refreshing Event data...</p>' +
     '<div class="identity-bar"><strong>Expense defaults</strong><select data-current-participant aria-label="Expense defaults Participant"></select><button class="secondary" type="button" data-switch-participant>Switch</button></div>' +
