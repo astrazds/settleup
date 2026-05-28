@@ -1,74 +1,52 @@
-SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), shipped product and verification requirements are in [`docs/prd/`](./docs/prd/), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
+SettleUp is a no-login expense splitter for one bounded shared-cost Event. People create an Event, share its Event Link, record Expenses and Settlement Payments, then use Balances and Suggested Settlements to settle up.
 
-The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and CSS. The current visual system is documented in [`docs/design/brandkit.md`](./docs/design/brandkit.md), with the standalone review artifact in [`docs/design/mockups.html`](./docs/design/mockups.html).
+Core docs:
+
+- [PRODUCT.md](./PRODUCT.md): product scope, priorities, and rules.
+- [CONTEXT.md](./CONTEXT.md): domain vocabulary.
+- [DESIGN.md](./DESIGN.md): UI direction and interaction rules.
+- [docs/DECISIONS.md](./docs/DECISIONS.md): durable architecture and product decisions.
+- [docs/VERIFICATION.md](./docs/VERIFICATION.md): test, CI, and Cloudflare verification workflow.
+- [AGENTS.md](./AGENTS.md): repo-local agent instructions.
 
 ## Architecture
 
-- `src/index.ts` owns the Hono routes and response shapes.
-- `src/event-command-input.ts` parses raw form or JSON command input into typed Event commands.
-- `src/event-record.ts` owns Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
-- `src/store.ts` provides storage adapters: `MemoryStore` for route tests and `D1Store` for Cloudflare D1.
-- `src/event-realtime.ts` owns Event-scoped realtime notifications through a Durable Object room per Event token.
-- `src/money.ts` owns two-decimal Currency amount parsing/formatting rules used by server code and browser draft validation.
-- `src/ui/client*.ts` keeps the browser Event screen as plain TypeScript modules that are concatenated into the single `/static/client.js` asset.
-- `test/d1-store.ts` applies checked-in D1 migrations to fresh Miniflare databases for storage behavior tests.
-- `test/e2e/` owns Playwright browser coverage for the critical Event path, realtime fallback behavior, and Event UI accessibility.
+- `src/index.ts`: Hono Worker routes and response shapes.
+- `src/event-command-input.ts`: form and JSON command parsing.
+- `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
+- `src/store.ts`: `MemoryStore` for tests and `D1Store` for Cloudflare D1.
+- `src/event-realtime.ts`: Durable Object WebSocket notifications scoped by Event token.
+- `src/money.ts`: two-decimal Currency parsing and formatting.
+- `src/ui/client*.ts`: plain TypeScript browser client, bundled into `/static/client.js`.
+- `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
 
-## Development
+## Commands
 
-```txt
+```sh
 npm install
 npm run dev
-```
-
-Local development uses the `DB` D1 binding declared in `wrangler.jsonc`. D1-backed multi-record Event mutations use D1 batch transactions so a failed write does not leave partial Event state. Apply local migrations before exercising database-backed routes:
-
-```txt
-npx wrangler d1 migrations apply settleup --local
-```
-
-## Cloudflare Resources
-
-`wrangler.jsonc` is the source of truth for repo-local Cloudflare configuration. The Worker is named `settleup`, and the current bindings are `DB`, a D1 database named `settleup`, and `EVENT_REALTIME`, a Durable Object namespace for Event-scoped WebSocket notifications. The checked-in D1 `database_id` is for local/shared development; verify live account resources before deploying or applying remote migrations.
-
-Use Wrangler for local development, migrations, type generation, dry runs, and deployment. Use the Cloudflare MCP tools for account inventory, current documentation, Worker build diagnostics, and observability before assuming a remote Worker, D1 database, KV namespace, or R2 bucket exists.
-
-## Verification
-
-```txt
 npm test
 npm run test:coverage
 npm run typecheck
 npm run test:smoke
 npm run validate:html
-npm run deploy:dry-run
-```
-
-`npm run verify` runs the full local confidence gate in that order and removes `dist-dry-run/` after the packaging check. The Forgejo Actions workflow in `.forgejo/workflows/verify.yml` runs the same gate on pushes to `main` and pull requests.
-
-The coverage gate uses Vitest's V8 provider over runtime source in `src/**/*.ts`, excluding tests, generated binding declarations, dry-run output, and docs. The initial global thresholds are set to the current behavior-suite baseline: 84% statements, 62% branches, 87% functions, and 84% lines. Treat those thresholds as a regression signal for behavior coverage, not a demand to test implementation details; ratchet them upward when new behavior tests raise the baseline naturally.
-
-The Playwright smoke suite exercises browser behavior against local Wrangler dev and applies local D1 migrations before each browser command. Use `npm run test:smoke:critical` for the core Event UI path, `npm run test:smoke:extended` for realtime browser coverage, and `npm run test:smoke` for the full browser gate. Forgejo Actions uploads `playwright-report/` and `test-results/` when the browser suite fails. HTML validation checks the standalone design mockup. Remove `dist-dry-run/` after direct dry-run checks; it is generated output, and `npm run verify` plus the workflow remove it automatically. `coverage/`, `playwright-report/`, `test-results/`, `.wrangler/`, and `dist-dry-run/` should stay out of commits.
-
-Current confidence coverage includes migration-backed D1 persistence, D1 rollback behavior for multi-record Event mutations, Durable Object realtime room and token isolation tests, success-only mutation notifications, browser fallback polling with draft preservation, and Event UI accessibility checks for core workflows and correction controls.
-
-## Deployment
-
-```txt
+npm run verify
 npm run deploy
 ```
 
-## Cloudflare Types
+Local D1 migrations:
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
-
-```txt
-npm run cf-typegen
+```sh
+npx wrangler d1 migrations apply settleup --local
 ```
 
-Pass the `CloudflareBindings` as generics when instantiating `Hono`:
+`npm run verify` is the full local confidence gate. It runs behavior tests, coverage, typecheck, Playwright smoke tests, HTML validation, and a Wrangler deploy dry run, then cleans `dist-dry-run/`.
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+## Cloudflare
+
+`wrangler.jsonc` is the repo-local configuration source. The Worker is `settleup`; current bindings are:
+
+- `DB`: D1 database named `settleup`.
+- `EVENT_REALTIME`: Durable Object namespace for Event-scoped WebSocket notifications.
+
+Treat local config as intent, not proof of deployed state. Verify live Cloudflare resources before remote migrations, deployments, or production debugging.
