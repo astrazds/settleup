@@ -8,7 +8,7 @@ Use the `fj` CLI for issue operations. Prefer repo-aware commands from the proje
 
 - Search before creating: check for an existing issue that already covers the request.
 - Create one issue per independently shippable change.
-- Keep issue titles imperative and specific, for example `Add trip creation route`.
+- Keep issue titles imperative and specific, for example `Add Event creation route`.
 - Include enough context for an AFK agent to pick up the work: problem, expected behavior, files or modules likely involved, and verification steps.
 - Apply the triage labels documented in `docs/agents/triage-labels.md`.
 
@@ -16,7 +16,7 @@ Use the `fj` CLI for issue operations. Prefer repo-aware commands from the proje
 
 ```sh
 fj issue list
-fj issue search "trip creation"
+fj issue search "Event creation"
 fj issue create
 fj issue view <issue-number>
 ```

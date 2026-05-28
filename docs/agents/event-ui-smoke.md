@@ -19,7 +19,7 @@ npm run test:smoke:critical
 npm run test:smoke:extended
 ```
 
-`test:smoke:critical` runs the Event UI flow project. `test:smoke:extended` runs the realtime browser project. Both commands apply local D1 migrations before Playwright starts. Keep `npm run test:smoke` as the full browser gate; it runs both projects.
+`test:smoke:critical` runs the Event UI flow project, including focused accessibility coverage for the core workflow and correction controls. `test:smoke:extended` runs the realtime browser project. Both commands apply local D1 migrations before Playwright starts. Keep `npm run test:smoke` as the full browser gate; it runs both projects.
 
 ## Critical Smoke Path
 
@@ -33,6 +33,7 @@ The critical Event UI smoke path should prove that a browser user can:
 6. Confirm Event History shows the saved Expense and Settlement Payment with correction actions still reachable.
 7. Copy the Event Link and see feedback without disrupting the current form or page layout.
 8. Complete the same create, capture, and settlement path on a mobile viewport without overlapping controls.
+9. Keep headings, labels, grouped Included Participant controls, correction actions, and focus behavior accessible through the dense Event panels.
 
 This protects against regressions where controls are present in markup but the Event flow is broken, hidden, confusing, or unusable.
 
@@ -48,6 +49,8 @@ The extended browser path should cover behavior that is important but slower or 
 ## Locator Guidance
 
 Smoke tests should prefer user-facing locators: labels, roles, visible text, and stable product copy. Add stable test identifiers only where repeated dense panels make accessible selection ambiguous. Test identifiers should support the user-facing assertion; they should not replace it.
+
+Use the Event UI builder helpers in `test/e2e/event-ui-builders.ts` for repeated setup. Keep helpers domain-oriented: create Events, add Participants, add Expenses, adjust Shares, record Settlement Payments, and locate durable panels. Do not hide the behavior being asserted behind a helper.
 
 ## Verification Stack
 

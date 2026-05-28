@@ -1,4 +1,4 @@
-SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), product requirements are in [`docs/prd/`](./docs/prd/), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
+SettleUp is a no-login group expense splitter for one bounded shared-cost occasion. Current product scope is in [`PRODUCT.md`](./PRODUCT.md), shipped product and verification requirements are in [`docs/prd/`](./docs/prd/), domain language is in [`CONTEXT.md`](./CONTEXT.md), design direction is in [`DESIGN.md`](./DESIGN.md), and durable decisions are in [`docs/adr/`](./docs/adr/).
 
 The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and CSS. The current visual system is documented in [`docs/design/brandkit.md`](./docs/design/brandkit.md), with the standalone review artifact in [`docs/design/mockups.html`](./docs/design/mockups.html).
 
@@ -11,6 +11,8 @@ The frontend is served by the Hono Worker with plain TypeScript, JavaScript, and
 - `src/event-realtime.ts` owns Event-scoped realtime notifications through a Durable Object room per Event token.
 - `src/money.ts` owns two-decimal Currency amount parsing/formatting rules used by server code and browser draft validation.
 - `src/ui/client*.ts` keeps the browser Event screen as plain TypeScript modules that are concatenated into the single `/static/client.js` asset.
+- `test/d1-store.ts` applies checked-in D1 migrations to fresh Miniflare databases for storage behavior tests.
+- `test/e2e/` owns Playwright browser coverage for the critical Event path, realtime fallback behavior, and Event UI accessibility.
 
 ## Development
 
@@ -47,6 +49,8 @@ npm run deploy:dry-run
 The coverage gate uses Vitest's V8 provider over runtime source in `src/**/*.ts`, excluding tests, generated binding declarations, dry-run output, and docs. The initial global thresholds are set to the current behavior-suite baseline: 84% statements, 62% branches, 87% functions, and 84% lines. Treat those thresholds as a regression signal for behavior coverage, not a demand to test implementation details; ratchet them upward when new behavior tests raise the baseline naturally.
 
 The Playwright smoke suite exercises browser behavior against local Wrangler dev and applies local D1 migrations before each browser command. Use `npm run test:smoke:critical` for the core Event UI path, `npm run test:smoke:extended` for realtime browser coverage, and `npm run test:smoke` for the full browser gate. Forgejo Actions uploads `playwright-report/` and `test-results/` when the browser suite fails. HTML validation checks the standalone design mockup. Remove `dist-dry-run/` after direct dry-run checks; it is generated output, and `npm run verify` plus the workflow remove it automatically. `coverage/`, `playwright-report/`, `test-results/`, `.wrangler/`, and `dist-dry-run/` should stay out of commits.
+
+Current confidence coverage includes migration-backed D1 persistence, D1 rollback behavior for multi-record Event mutations, Durable Object realtime room and token isolation tests, success-only mutation notifications, browser fallback polling with draft preservation, and Event UI accessibility checks for core workflows and correction controls.
 
 ## Deployment
 

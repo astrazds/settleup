@@ -25,6 +25,13 @@ rm -rf dist-dry-run
 - `npm run validate:html`: standalone validation for `docs/design/mockups.html`.
 - `npm run deploy:dry-run`: Wrangler packaging verification without deploying.
 
+## Current Confidence Inventory
+
+- Domain and route behavior: Event creation and access, Participant mutations, Expense mutations, Settlement Payment mutations, malformed input handling, Currency handling, Balances, and Suggested Settlements.
+- Storage behavior: migration-backed D1 setup, Event Record round trips through `D1Store`, and rollback coverage for multi-record Event mutations.
+- Realtime behavior: Durable Object room broadcast, Event token isolation, connection routing, success-only mutation notifications, draft preservation, stale-draft warnings, and fallback polling.
+- Browser behavior: critical Event creation, capture, correction, settlement, Event Link copy feedback, mobile layout, and focused Event UI accessibility coverage.
+
 ## Coverage Policy
 
 Coverage is a regression guard for behavior tests. It should confirm that existing domain, route, store, and generated-client behavior remains exercised; it should not drive tests against private implementation details.
@@ -43,6 +50,8 @@ Raise thresholds when meaningful behavior coverage raises the baseline. Lower th
 Forgejo Actions workflows live under `.forgejo/workflows/`. This repo uses the `docker-node-runner` runner label, installs dependencies with `npm ci`, installs the Chromium Playwright browser and its Linux system dependencies before the smoke suite, and relies on `pretest:smoke` to apply local D1 migrations.
 
 When Playwright fails in Forgejo Actions, the workflow uploads `playwright-report/` and `test-results/` as the `playwright-artifacts` artifact. Use those artifacts for traces, screenshots, and the HTML report before rerunning remotely.
+
+Use `fj actions tasks` from the repository root to confirm the latest Forgejo workflow state after pushing verification changes.
 
 ## Generated Output Hygiene
 

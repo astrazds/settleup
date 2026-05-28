@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. The Worker entrypoint is `src/index.ts`; Wrangler configuration is in `wrangler.jsonc` with worker name `settleup`. The current Cloudflare binding is `DB`, a D1 database named `settleup`; D1 migrations live in `migrations/`. TypeScript settings live in `tsconfig.json`, npm scripts live in `package.json`, and generated Cloudflare binding types live in `worker-configuration.d.ts`. Keep runtime source under `src/`. Place tests beside covered code as `*.test.ts` or in top-level `test/` for cross-module behavior.
+This is a Cloudflare Workers project using Hono, Cloudflare D1, Durable Objects, and TypeScript. The Worker entrypoint is `src/index.ts`; Wrangler configuration is in `wrangler.jsonc` with worker name `settleup`. The current bindings are `DB`, a D1 database named `settleup`, and `EVENT_REALTIME`, a Durable Object namespace for Event-scoped WebSocket notifications. D1 migrations live in `migrations/`; Durable Object migrations live in `wrangler.jsonc`. TypeScript settings live in `tsconfig.json`, npm scripts live in `package.json`, and generated Cloudflare binding types live in `worker-configuration.d.ts`. Keep runtime source under `src/`. Place Vitest behavior tests beside covered code as `*.test.ts`; place cross-module helpers and Playwright suites under top-level `test/`.
 
 ## Build, Test, and Development Commands
 
@@ -11,10 +11,15 @@ This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. 
 - `npm run deploy`: deploy the Worker with Wrangler using minification.
 - `npm run cf-typegen`: generate or refresh Cloudflare binding types from `wrangler.jsonc`.
 - `npm test`: run Vitest behavior tests.
-- `npm run test:smoke`: run the Event UI smoke path against the local Worker when the Playwright smoke suite is present.
+- `npm run test:coverage`: run Vitest with V8 coverage thresholds over runtime source.
+- `npm run test:smoke`: run the full Playwright browser gate against local Wrangler dev and local D1.
+- `npm run test:smoke:critical`: run the critical Event UI browser project.
+- `npm run test:smoke:extended`: run the extended realtime browser project.
 - `npm run typecheck`: run strict TypeScript checking without emitting files.
+- `npm run validate:html`: validate the standalone design mockup.
+- `npm run verify`: run the full local confidence gate and clean `dist-dry-run/`.
 - `npx wrangler d1 migrations apply settleup --local`: apply D1 migrations to the local development database.
-- `npx wrangler deploy --dry-run --outdir dist-dry-run`: verify Worker packaging without deploying; remove `dist-dry-run/` afterwards.
+- `npm run deploy:dry-run`: verify Worker packaging without deploying; remove `dist-dry-run/` afterwards when running it directly.
 
 ## Coding Style & Naming Conventions
 
@@ -28,7 +33,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 ## Testing Guidelines
 
-Vitest is configured for behavior tests. Prefer public interfaces: pure domain functions for deep modules and Hono `app.request()` route tests for Worker behavior. Name tests after the route or module under test, such as `index.test.ts` or `expenses.test.ts`. For Event-page UI changes, also run `npm run test:smoke`; it protects against controls that exist in markup but fail the browser user flow. At minimum, run `npm test`, `npm run typecheck`, `npm run test:smoke` for Event-page UI changes, and a Wrangler dry run before deployment.
+Vitest is configured for behavior tests. Prefer public interfaces: pure domain functions for deep modules, Hono `app.request()` route tests for Worker behavior, Miniflare-backed D1 tests for storage behavior, and notifier seams for realtime behavior. Name tests after the route or module under test, such as `index.test.ts`, `store.test.ts`, or `event-realtime.test.ts`. For Event-page UI changes, also run `npm run test:smoke`; it protects against controls that exist in markup but fail the browser user flow. Use `npm run test:smoke:critical` while iterating on the core Event path and `npm run test:smoke:extended` for realtime browser behavior. At minimum, run `npm run verify` before merging broad runtime, UI, Worker configuration, or deployment packaging changes.
 
 ## Commit & Pull Request Guidelines
 

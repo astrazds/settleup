@@ -28,7 +28,7 @@ Use Wrangler for repo-local development commands:
 npm run dev
 npm run cf-typegen
 npx wrangler d1 migrations apply settleup --local
-npx wrangler deploy --dry-run --outdir dist-dry-run
+npm run deploy:dry-run
 npm run deploy
 ```
 
@@ -36,8 +36,8 @@ Before creating, deleting, or mutating remote Cloudflare resources, confirm the 
 
 ## D1 tests
 
-D1 adapter behavior is tested with Miniflare and the checked-in SQL migrations instead of a hand-written SQL fake. When changing D1 schema or queries, update `migrations/`, keep `D1Store` aligned with the migrated schema, and run `npm test` so the migration-backed tests exercise the real D1 binding shape.
+D1 adapter behavior is tested with Miniflare and the checked-in SQL migrations instead of a hand-written SQL fake. When changing D1 schema or queries, update `migrations/`, keep `D1Store` aligned with the migrated schema, and run `npm test` so the migration-backed tests exercise the real D1 binding shape. Multi-record Event mutations must remain all-or-nothing; keep rollback coverage in `src/store.test.ts` when adding new write paths.
 
 ## Realtime
 
-Event realtime uses the `EVENT_REALTIME` Durable Object binding. Treat D1 as the saved Event source of truth; the Durable Object only coordinates WebSocket clients and broadcasts Event-change notifications after successful mutations. Use WebSocket hibernation APIs for new realtime code and keep polling as a browser fallback, not the primary collaboration path.
+Event realtime uses the `EVENT_REALTIME` Durable Object binding and the Durable Object migration in `wrangler.jsonc`. Treat D1 as the saved Event source of truth; the Durable Object only coordinates WebSocket clients and broadcasts Event-change notifications after successful mutations. Use WebSocket hibernation APIs for new realtime code and keep polling as a browser fallback, not the primary collaboration path. Realtime changes should preserve Event token isolation and success-only notifications.

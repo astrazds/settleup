@@ -8,9 +8,21 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost occasi
 
 SettleUp should prioritize fast shared expense capture during the Event first, confident final settlement second, and low-friction return visits only where they support capture or settlement. The main product test is whether someone can add or correct shared costs while the group is still in motion without turning the moment into admin.
 
+## Current Product State
+
+The current implementation includes the core MVP flow: Private-by-Link Event creation, local Participant defaults, Participant management, Included Participant expense capture, exact Shares, Balances, Suggested Settlements, Settlement Payments, settlement focus, copyable settlement summaries, and Event-change realtime notifications with fallback polling.
+
+Included Participants, settlement focus, and realtime stale-draft polish are shipped product behavior, not future scope. The product should keep these behaviors stable while the next tranche improves return visits and confidence around shared-device use.
+
 ## Next Feature Sequence
 
-The next implementation tranche after realtime should be a single vertical slice for Included Participants. Implement checkbox-style inclusion, payer included by default, equal split among included Participants, and continued exact Share support before bundling broader capture helpers or settlement focus. Inclusion checkboxes should generate explicit saved Shares whose minor-unit amounts sum to the Expense amount.
+The next product tranche should strengthen current Participant clarity for low-friction return visits. SettleUp may remember the visitor's selected Participant for an Event in the browser, but the interface should make who they are acting as obvious and easy to switch without implying login, ownership, or permissions.
+
+Remembered current Participant context should be visible near money-changing forms without blocking every action. SettleUp should prefer persistent "defaults" context and quick switching over return-visit prompts or pre-submit confirmation gates.
+
+Browser-local recent Event lists should remain deferred until the Event page itself is excellent. A recent list may help return visits later, but it should not pull the product toward an account-like home screen before capture, settlement, and current Participant clarity are strong.
+
+The capture flow should continue to optimize around Included Participants first. SettleUp should equal-split among Included Participants by default, preserve exact Share overrides when needed, and keep saved Shares explicit so their minor-unit amounts sum to the Expense amount.
 
 When equal-splitting an Expense among Included Participants, any minor-unit rounding remainder should be assigned by Participant order. Do not privilege the payer or current Participant because that implies social intent where there is only arithmetic.
 
@@ -36,7 +48,7 @@ When exact Share amounts are adjusted, Shares must still sum to the Expense amou
 
 Remaining-amount helpers should start generic, such as assigning the remaining amount to a selected Included Participant. Intent-specific helpers like "I paid the difference" should wait until the repeated real-world patterns are clear enough to avoid ambiguous money behavior.
 
-For confident final settlement, Suggested Settlements should become the primary action once an Event is ready to settle. Balances explain the current state, but the settlement flow should foreground the recommended Participant-to-Participant payments and make recording each one as a Settlement Payment fast.
+For confident final settlement, Suggested Settlements should remain the primary action once an Event is ready to settle. Balances explain the current state, but the settlement flow should foreground the recommended Participant-to-Participant payments and make recording each one as a Settlement Payment fast.
 
 Readiness to settle should be user-controlled through a settlement-focused mode or action. SettleUp should not automatically infer that an Event is ready to settle from Balances or recent activity, and entering settlement focus should not lock the Event or imply ownership.
 
@@ -47,12 +59,6 @@ Recording a Suggested Settlement should use inline confirmation before saving a 
 Inline confirmation for a Suggested Settlement should allow the amount to be edited before recording the Settlement Payment. The suggested amount should remain visible as the reference, but partial payments and overpayments should not force users into the generic Settlement Payment form.
 
 After any Settlement Payment is recorded, SettleUp should refresh Balances and Suggested Settlements from the saved Event state. Suggested Settlements should not become checklist items with progress; they remain derived recommendations based on current Balances.
-
-Low-friction return visits should first strengthen current Participant clarity. SettleUp may remember the visitor's selected Participant for an Event in the browser, but the interface should make who they are acting as obvious and easy to switch without implying login, ownership, or permissions.
-
-Remembered current Participant context should be visible near money-changing forms without blocking every action. SettleUp should prefer persistent "defaults" context and quick switching over return-visit prompts or pre-submit confirmation gates.
-
-Browser-local recent Event lists should be deferred until the Event page itself is excellent. A recent list may help return visits later, but it should not pull the product toward an account-like home screen before capture, settlement, and current Participant clarity are strong.
 
 True realtime collaboration is worth adding earlier than originally planned because it directly improves the shared Event experience. Realtime should make other Participants' saved changes appear quickly while still preserving local draft forms; it should not introduce chat, edit attribution, presence, locking, accounts, or permissions.
 
@@ -68,7 +74,17 @@ Natural-language Expense entry should stay deferred until the structured capture
 
 Expense categories and tags should stay deferred. They support analysis and reporting more than settling a bounded occasion, and they add classification friction during fast capture.
 
-Full exports and print views should stay deferred, but a concise copyable settlement summary may be added after settlement focus. The summary should support pasting final Suggested Settlements into the group chat, not archiving or reporting the full Event.
+Full exports and print views should stay deferred. The concise copyable settlement summary should stay plain and group-chat-friendly, not expand into archiving or reporting the full Event.
+
+## Test Confidence Direction
+
+SettleUp's confidence suite should stay behavior-first. Prefer public domain functions, Hono requests, migration-backed D1 store tests, realtime notifier seams, and Playwright-visible Event behavior over private implementation assertions.
+
+D1 adapter tests should continue applying checked-in migrations to fresh Miniflare databases. Multi-record Event mutations should remain all-or-nothing, and tests should prove rollback behavior for Participants, Expenses, Shares, and Settlement Payments when storage changes.
+
+Realtime tests should continue proving Event token isolation, Durable Object room broadcast behavior, success-only mutation notifications, draft preservation, and fallback polling. Realtime should remain Event-change notification only, not presence or edit attribution.
+
+Browser coverage should keep a small critical Event path and a separate extended realtime path. Accessibility checks should grow around money-changing controls, correction flows, focus behavior, and dense repeated panels before adding broad visual or snapshot testing.
 
 Whole-Event deletion, automatic expiry, and Event Link token rotation should stay deferred as privacy hardening. In a no-login Private-by-Link Event, SettleUp first needs a clear answer for who may delete or rotate access, how accidental deletion is handled, and how Participants recover a changed Event Link.
 

@@ -79,7 +79,7 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - Recording a Suggested Settlement should expand or reveal inline confirmation with sender, recipient, amount, and a final "Record Settlement Payment" action. Avoid one-click saved history and avoid forcing users back through the generic form for the common settlement path.
 - Suggested Settlement confirmation should keep the suggested amount visible and make the recorded amount editable. Partial payments and overpayments should feel deliberate, not hidden behind the generic Settlement Payment form.
 - After recording a Settlement Payment, refresh the visible Balances and Suggested Settlements instead of showing progress on the old suggestion. Suggested Settlements are current recommendations, not checklist items.
-- A future copyable settlement summary should be plain and group-chat-friendly. It should not look like a report, receipt, export center, or print workflow.
+- The copyable settlement summary should be plain and group-chat-friendly. It should not look like a report, receipt, export center, or print workflow.
 - Use a named spacing scale for product rhythm. Related controls should group tightly, while distinct states and mockup frames should have visibly larger gaps.
 - Touch and narrow-screen controls should use at least 44px hit areas. Desktop controls may stay denser where pointer input and repeated data entry benefit from compactness.
 - In design artifacts, use full-width anchor states for Create Event and Populated Event, then pair smaller state comparisons such as Empty Event with Settle Up and Mobile Event with Interaction States.
