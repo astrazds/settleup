@@ -121,7 +121,7 @@ export class EventUi {
     const settlement = this.settlementPanel()
     const form = settlement.locator('[data-settlement-form]')
     const manualPayment = settlement.getByRole('button', { name: 'Manual Payment' })
-    if (await manualPayment.isVisible()) {
+    if (!await form.isVisible() && await manualPayment.isVisible()) {
       await manualPayment.click()
     }
     await expect(form).toBeVisible()
