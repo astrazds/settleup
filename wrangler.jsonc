@@ -7,7 +7,7 @@
     {
       "binding": "DB",
       "database_name": "settleup",
-      "database_id": "local-settleup-dev",
+      "database_id": "fcca3b4a-7993-4c3b-bcbb-9bf7d538b2bc",
       "migrations_dir": "migrations"
     }
   ],
