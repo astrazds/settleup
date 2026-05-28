@@ -12,4 +12,4 @@ Published parent issues:
 - Forgejo issue `#27`: Realtime Collaboration Polish
 - Forgejo issue `#28`: Settlement Focus and Recording
 
-Implementation issues `#29` through `#38` were completed against these PRDs in one pass, with browser-client contract coverage in `src/ui/client.test.ts` plus the existing route, domain, and store tests.
+Implementation issues `#29` through `#38` were completed against these PRDs in one pass, with generated browser-client behavior coverage in `src/ui/client.test.ts` plus the existing route, domain, and store tests.

@@ -22,7 +22,7 @@ async function boot() {
 }
 
 async function refresh(preserveDrafts, completeMessage) {
-  const hadActiveDraft = preserveDrafts && hasActiveDraft()
+  const previousEventUpdatedAt = snapshot?.event?.updatedAt || null
   const refreshNote = app.querySelector('[data-refresh-note]')
   if (preserveDrafts && refreshNote) {
     refreshNote.hidden = false
@@ -45,7 +45,7 @@ async function refresh(preserveDrafts, completeMessage) {
       renderedRefreshNote.hidden = true
     }, 1800)
   }
-  if (hadActiveDraft) {
+  if (shouldShowDraftUpdateWarning(preserveDrafts, previousEventUpdatedAt)) {
     showDraftUpdateWarnings()
   }
 }
@@ -156,6 +156,16 @@ function setRealtimeState(message) {
 
 function hasActiveDraft() {
   return expenseDraftDirty || settlementDraftDirty
+}
+
+function shouldShowDraftUpdateWarning(preserveDrafts, previousEventUpdatedAt) {
+  return Boolean(
+    preserveDrafts &&
+    hasActiveDraft() &&
+    previousEventUpdatedAt &&
+    snapshot?.event?.updatedAt &&
+    snapshot.event.updatedAt !== previousEventUpdatedAt
+  )
 }
 
 function showDraftUpdateWarnings() {
