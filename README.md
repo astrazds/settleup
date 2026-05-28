@@ -60,6 +60,8 @@ npx wrangler d1 migrations apply settleup --local
 
 `npm run verify` is the full local confidence gate. It runs behavior tests, coverage, typecheck, Playwright smoke tests, HTML validation, and a Wrangler deploy dry run, then cleans `dist-dry-run/`.
 
+Forgejo Actions runs the same gate on pushes and pull requests. Pushes to `main` deploy production after verification passes, using the Cloudflare secrets documented in [docs/VERIFICATION.md](./docs/VERIFICATION.md).
+
 ## Cloudflare
 
 `wrangler.jsonc` is the repo-local configuration source. The Worker is `settleup`; current bindings are:

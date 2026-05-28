@@ -48,7 +48,21 @@ Before creating, deleting, or mutating remote Cloudflare resources, confirm the 
 
 ## CI And Output
 
-Forgejo Actions runs the full gate on pushes to `main` and pull requests. Use `fj actions tasks` from the repository root to confirm workflow state after pushing.
+Forgejo Actions runs the full gate on pushes to `main` and pull requests. On a successful `main` push, the same workflow deploys production after the verification job passes.
+
+Production deploy uses these Forgejo repository secrets:
+
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID that owns the `settleup` Worker and D1 database.
+- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with permission to deploy the Worker, read/apply D1 migrations, and access the configured Durable Object namespace.
+
+The production deploy job runs:
+
+```sh
+npx wrangler d1 migrations apply settleup --remote
+npm run deploy
+```
+
+Use `fj actions tasks` from the repository root to confirm workflow state after pushing.
 
 Generated output stays out of commits:
 
