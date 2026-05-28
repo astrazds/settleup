@@ -1,9 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DurableObjectEventRealtimeNotifier, EventRealtimeRoom } from './event-realtime'
 import type { EventRealtimeNotifier } from './event-realtime'
+import { parseEventRealtimeMessage } from './event-realtime-protocol'
 import { createApp } from './index'
 import type { EventSnapshot } from './domain'
 import { MemoryStore } from './store'
+
+describe('Event realtime protocol', () => {
+  it('parses only Event-change notifications from browser-delivered WebSocket data', () => {
+    expect(parseEventRealtimeMessage('{"type":"event_changed"}')).toEqual({ type: 'event_changed' })
+    expect(parseEventRealtimeMessage('pong')).toBeNull()
+    expect(parseEventRealtimeMessage('{')).toBeNull()
+    expect(parseEventRealtimeMessage('{"type":"presence_changed"}')).toBeNull()
+    expect(parseEventRealtimeMessage(new ArrayBuffer(0))).toBeNull()
+  })
+})
 
 describe('Event realtime room', () => {
   beforeEach(() => {

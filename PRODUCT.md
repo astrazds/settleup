@@ -40,6 +40,7 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Suggested Settlements are derived recommendations, not recorded history.
 - Settlement Payments may overpay.
 - Draft forms must not be overwritten by realtime or polling refreshes.
+- Realtime messages announce saved Event changes only; D1 remains the source of truth.
 - Concurrent edits are last-write-wins for the MVP.
 - Event data is Private-by-Link, not public and not account-private.
 - Event Link tokens are opaque, URL-safe, lowercase, and avoid visually ambiguous characters.
@@ -58,4 +59,4 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 
 ## Test Direction
 
-Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, migration-backed D1 tests, realtime notifier seams, and Playwright-visible Event behavior over private implementation assertions.
+Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed D1 tests, realtime protocol/notifier seams, DOM-free UI policy helpers, and Playwright-visible Event behavior over private implementation assertions.

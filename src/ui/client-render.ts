@@ -44,7 +44,7 @@ function renderSuggestedSettlements() {
   const list = app.querySelector('[data-suggestions]')
   const count = app.querySelector('[data-suggestion-count]')
   const copySummary = app.querySelector('[data-copy-summary]')
-  const actionState = panelActionState(snapshot, settlementFocus).suggestedSettlements
+  const actionState = composeEventPagePolicy(snapshot, settlementFocus).suggestedSettlements
   count.textContent = snapshot.suggestedSettlements.length > 0 ? snapshot.suggestedSettlements.length + ' payments' : ''
   count.hidden = !actionState.showSuggestionCount
   if (copySummary) {
@@ -72,7 +72,7 @@ function renderSuggestedSettlements() {
 
 function renderHistory() {
   const list = app.querySelector('[data-history]')
-  const items = historyItems(snapshot)
+  const items = eventHistoryItems(snapshot)
   if (items.length === 0) {
     list.innerHTML = '<p class="empty">No Event history yet. Expenses and Settlement Payments will appear here.</p>'
     return
@@ -95,19 +95,8 @@ function renderHistory() {
   list.querySelectorAll('[data-delete-payment]').forEach((button) => button.addEventListener('click', deletePayment))
 }
 
-function historyItems(eventSnapshot) {
-  const expenses = (eventSnapshot.expenses || []).map((record) => ({ kind: 'expense', record, occurredAt: record.createdAt || record.updatedAt || '' }))
-  const settlementPayments = (eventSnapshot.settlementPayments || []).map((record) => ({ kind: 'settlementPayment', record, occurredAt: record.createdAt || record.updatedAt || '' }))
-  return expenses.concat(settlementPayments).sort((left, right) => {
-    const byTime = right.occurredAt.localeCompare(left.occurredAt)
-    if (byTime !== 0) return byTime
-    if (left.kind !== right.kind) return left.kind === 'expense' ? -1 : 1
-    return left.record.id.localeCompare(right.record.id)
-  })
-}
-
 function renderPanelStates() {
-  const actionState = panelActionState(snapshot, settlementFocus)
+  const actionState = composeEventPagePolicy(snapshot, settlementFocus)
   const settlementSection = app.querySelector('[data-settlement-form-section]')
   if (settlementSection) {
     settlementSection.hidden = false
@@ -127,25 +116,16 @@ function renderStartGuidance() {
   const panel = app.querySelector('[data-start-guidance]')
   if (!panel) return
 
-  const hasOneParticipant = snapshot.participants.length === 1
-  const hasNoExpenses = snapshot.expenses.length === 0
-  const shouldAddParticipants = hasOneParticipant && hasNoExpenses
-  const shouldAddExpense = snapshot.participants.length > 1 && hasNoExpenses
+  const guidance = composeEventPagePolicy(snapshot, settlementFocus).startGuidance
 
-  panel.hidden = !(shouldAddParticipants || shouldAddExpense)
-  if (shouldAddParticipants) {
-    panel.dataset.startTarget = '[data-participant-form]'
-    text('[data-start-title]', 'Add the people sharing this Event')
-    text('[data-start-copy]', 'Start with Participants, then record the first shared cost.')
-    text('[data-start-action]', 'Add Participant')
+  panel.hidden = !guidance.visible
+  panel.dataset.startTarget = guidance.target
+  if (!guidance.visible) {
     return
   }
-  if (shouldAddExpense) {
-    panel.dataset.startTarget = '[data-expense-form]'
-    text('[data-start-title]', 'Record the first shared cost')
-    text('[data-start-copy]', 'Participants are ready. Add an Expense when someone pays for the group.')
-    text('[data-start-action]', 'Add Expense')
-  }
+  text('[data-start-title]', guidance.title)
+  text('[data-start-copy]', guidance.copy)
+  text('[data-start-action]', guidance.action)
 }
 
 function fillParticipantSelects(preserve) {
@@ -204,15 +184,6 @@ function isParticipantReferenced(participantId) {
   return isParticipantReferencedInSnapshot(snapshot, participantId)
 }
 
-function isParticipantReferencedInSnapshot(eventSnapshot, participantId) {
-  return (eventSnapshot.expenses || []).some((expense) =>
-    expense.payerParticipantId === participantId ||
-    expense.shares.some((share) => share.participantId === participantId)
-  ) || (eventSnapshot.settlementPayments || []).some((payment) =>
-    payment.senderParticipantId === participantId || payment.recipientParticipantId === participantId
-  )
-}
-
 function optionForParticipant(participant) {
   return '<option value="' + escapeAttr(participant.id) + '">' + escapeHtml(participant.displayName) + '</option>'
 }
@@ -232,7 +203,7 @@ function text(selector, value) {
 function updateSettlementFocus() {
   const section = app.querySelector('[data-settlement-section]')
   const button = app.querySelector('[data-settlement-focus]')
-  const actionState = panelActionState(snapshot, settlementFocus).suggestedSettlements
+  const actionState = composeEventPagePolicy(snapshot, settlementFocus).suggestedSettlements
   if (!actionState.showSettlementFocus) {
     settlementFocus = false
   }
@@ -252,66 +223,9 @@ function updateSettlementFocus() {
   }
 }
 
-function panelActionState(eventSnapshot, isSettlementFocus) {
-  const suggestedSettlements = eventSnapshot.suggestedSettlements || []
-  const expenses = eventSnapshot.expenses || []
-  const settlementPayments = eventSnapshot.settlementPayments || []
-  const hasSuggestedSettlements = suggestedSettlements.length > 0
-  const inFocus = Boolean(isSettlementFocus && hasSuggestedSettlements)
-  const canRecordSettlementPayment = eventSnapshot.participants.length >= 2
-  return {
-    suggestedSettlements: {
-      inFocus,
-      showSettlementFocus: hasSuggestedSettlements,
-      showCopySummary: inFocus,
-      showSuggestionCount: hasSuggestedSettlements,
-      settlementFocusLabel: inFocus ? 'Exit settle up' : 'Settle up',
-      settlementFocusButtonClass: inFocus ? 'secondary' : '',
-      recordButtonClass: inFocus ? '' : 'secondary'
-    },
-    settlementPaymentForm: {
-      canRecord: canRecordSettlementPayment,
-      disabledReason: canRecordSettlementPayment ? '' : 'Add another Participant before recording a Settlement Payment.'
-    },
-    participants: {
-      deleteById: Object.fromEntries(eventSnapshot.participants.map((participant) => [
-        participant.id,
-        participantDeleteState({ ...eventSnapshot, expenses, settlementPayments }, participant.id)
-      ]))
-    },
-    eventLink: {
-      showCopy: true,
-      placement: 'expenseDefaults',
-      showPanel: false
-    },
-    layout: {
-      participantPlacement: 'addExpense',
-      showParticipantsPanel: false,
-      eventLinkPlacement: 'expenseDefaults',
-      showEventLinkPanel: false,
-      suggestedSettlementPlacement: 'settlementPayment',
-      showSuggestedSettlementsPanel: false,
-      showHistoryPanel: true,
-      showExpensesPanel: false,
-      showSettlementPaymentsPanel: false,
-      historyOrder: 'newest-first'
-    }
-  }
-}
-
 function newParticipantId(previousSnapshot, nextSnapshot) {
   const previousIds = new Set((previousSnapshot?.participants || []).map((participant) => participant.id))
   return (nextSnapshot?.participants || []).find((participant) => !previousIds.has(participant.id))?.id || null
-}
-
-function participantDeleteState(eventSnapshot, participantId) {
-  if (eventSnapshot.participants.length <= 1) {
-    return { canDelete: false, reason: 'Keep at least one Participant in the Event.' }
-  }
-  if (isParticipantReferencedInSnapshot(eventSnapshot, participantId)) {
-    return { canDelete: false, reason: 'Referenced Participants cannot be deleted.' }
-  }
-  return { canDelete: true, reason: '' }
 }
 
 function showError(selector, message) {

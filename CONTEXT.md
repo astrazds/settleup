@@ -16,6 +16,10 @@ _Avoid_: Invite, login link, magic link, access token
 The saved state of an **Event** before derived **Balances** and **Suggested Settlements** are added. An **Event Record** contains the Event summary, Participants, Expenses, Shares, and Settlement Payments that storage adapters persist or load.
 _Avoid_: Raw event, database row bundle, store payload
 
+**Saved Event Command**:
+An authenticated-by-link mutation against an existing **Event**, such as adding a Participant, updating an Expense, or recording a Settlement Payment. A Saved Event Command validates input, changes the saved Event Record, returns a fresh Event Snapshot, and only then announces an Event change.
+_Avoid_: RPC, action blob, endpoint case
+
 **Event Snapshot**:
 The full readable state of an **Event** returned to callers after **Balances** and **Suggested Settlements** have been derived from an **Event Record**.
 _Avoid_: View model, response blob, DTO
@@ -36,6 +40,10 @@ _Avoid_: Exchange rate, converted amount, multi-currency
 A cost recorded in an **Event** because one **Participant** paid money on behalf of one or more **Participants**. An **Expense** has exactly one paying Participant and one or more **Shares**, and is not itself a repayment between Participants.
 _Avoid_: Payment, entry, transaction, bill
 
+**Expense Draft**:
+Unsaved browser state for composing an Expense, including Included Participants, equal Share defaults, exact Share overrides, and remaining amount helpers. An Expense Draft is not part of the saved Event Record until submitted.
+_Avoid_: Temporary Expense, local record, staged transaction
+
 **Included Participant**:
 A **Participant** who has a **Share** on a specific **Expense**. A Participant may be included in one Expense and not included in another.
 _Avoid_: Attendee, member, selected user
@@ -47,6 +55,10 @@ _Avoid_: User, member, account, contact
 **Private-by-Link**:
 A privacy model where an **Event** is accessible to anyone with its **Event Link** and not discoverable through public listing or search. **Private-by-Link** does not mean account-private or end-to-end encrypted.
 _Avoid_: Public, account-private, encrypted
+
+**Realtime Event Change**:
+A small notification that tells open Event pages to refresh their Event Snapshot after a saved mutation. It does not carry Event data, presence, edit attribution, locks, or permissions.
+_Avoid_: Presence message, live patch, audit event
 
 **Settlement Payment**:
 Money one **Participant** records as paid to another Participant to reduce or clear balances in an **Event**. A **Settlement Payment** has a Sender and a Recipient, is not an **Expense**, and has no **Shares**.
@@ -82,6 +94,10 @@ _Avoid_: Balance, debt, invoice
 
 **Domain Expert**: No, it is an **Expense**. The Payment language is only used for **Settlement Payments** between Participants.
 
+**Developer**: Can the browser send a partial Expense while someone is still adjusting Shares?
+
+**Domain Expert**: Keep that as an **Expense Draft**. Only a submitted Expense becomes part of the **Event Record**.
+
 **Developer**: Alex later pays Sarah back. Is that another Expense?
 
 **Domain Expert**: No, that is a **Settlement Payment**.
@@ -105,6 +121,10 @@ _Avoid_: Balance, debt, invoice
 **Developer**: Should we store the User who paid for dinner?
 
 **Domain Expert**: Store the **Participant**. SettleUp does not require accounts.
+
+**Developer**: Does a realtime message include the changed Expense?
+
+**Domain Expert**: No. A **Realtime Event Change** only tells clients to fetch a fresh **Event Snapshot**.
 
 **Developer**: Can two people in the same Event both be called Alex?
 

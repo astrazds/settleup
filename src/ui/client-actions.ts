@@ -257,25 +257,15 @@ function updateShareSummary() {
   const summary = app.querySelector('[data-share-summary]')
   if (!form || !summary || !snapshot) return
 
-  const totalInput = form.amount.value.trim()
-  const parsedTotalMinor = totalInput ? parseDraftMoneyMinor(totalInput) : 0
-  let hasInvalidDraftMoney = totalInput !== '' && parsedTotalMinor === null
-  let assignedMinor = 0
-  for (const input of Array.from(app.querySelectorAll('[name="shareAmount"]'))) {
-    const shareInput = input.value.trim()
-    const parsedShareMinor = shareInput ? parseDraftMoneyMinor(shareInput) : 0
-    hasInvalidDraftMoney = hasInvalidDraftMoney || (shareInput !== '' && parsedShareMinor === null)
-    assignedMinor += parsedShareMinor || 0
-  }
-  const totalMinor = parsedTotalMinor || 0
-  const remainingMinor = (totalMinor || 0) - assignedMinor
+  const shareAmounts = Array.from(app.querySelectorAll('[name="shareAmount"]')).map((input) => input.value)
+  const shareSummary = draftShareSummary(form.amount.value, shareAmounts)
 
-  text('[data-share-total]', money(totalMinor))
-  text('[data-share-assigned]', money(assignedMinor))
-  text('[data-share-remaining]', money(remainingMinor))
-  summary.classList.toggle('error-state', hasInvalidDraftMoney || remainingMinor !== 0)
+  text('[data-share-total]', money(shareSummary.totalMinor))
+  text('[data-share-assigned]', money(shareSummary.assignedMinor))
+  text('[data-share-remaining]', money(shareSummary.remainingMinor))
+  summary.classList.toggle('error-state', shareSummary.hasInvalidDraftMoney || shareSummary.remainingMinor !== 0)
   syncAssignRemainingOptions()
-  updateIncludedState(totalMinor)
+  updateIncludedState(shareSummary.totalMinor)
 }
 
 function markExpenseDirty() {
@@ -321,23 +311,6 @@ function equalIncludedSharePayload(amountMinor) {
   }))
 }
 
-function equalShares(amountMinor, participants) {
-  if (participants.length === 0) return []
-  const base = Math.floor(amountMinor / participants.length)
-  let remainder = amountMinor - base * participants.length
-  return participants
-    .slice()
-    .sort((left, right) => left.order - right.order)
-    .map((participant) => {
-      const amountMinorForParticipant = base + (remainder > 0 ? 1 : 0)
-      remainder -= 1
-      return {
-        participantId: participant.id,
-        amountMinor: amountMinorForParticipant
-      }
-    })
-}
-
 function includedParticipants() {
   const includedIds = new Set(Array.from(app.querySelectorAll('[name="includedParticipantId"]:checked')).map((input) => input.value))
   return snapshot.participants.filter((participant) => includedIds.has(participant.id))
@@ -349,20 +322,11 @@ function syncExactSharesFromIncluded() {
     return
   }
   const list = app.querySelector('[data-share-list]')
-  const previousAmounts = new Map(
-    Array.from(app.querySelectorAll('[data-share-row]')).map((row) => [
-      row.querySelector('[name="shareParticipantId"]').value,
-      row.querySelector('[name="shareAmount"]').value
-    ])
-  )
-  const amountMinor = parseDraftMoneyMinor(app.querySelector('[data-expense-form]').amount.value) || 0
-  const fallbackShares = new Map(equalShares(amountMinor, includedParticipants()).map((share) => [
-    share.participantId,
-    share.amountMinor > 0 ? formatDraftMoneyMinor(share.amountMinor) : ''
-  ]))
+  const amountText = app.querySelector('[data-expense-form]').amount.value
+  const syncedShares = syncDraftSharesFromIncluded(amountText, includedParticipants(), exactSharePayload())
   list.innerHTML = ''
-  for (const participant of includedParticipants().slice().sort((left, right) => left.order - right.order)) {
-    addShareRow(participant.id, previousAmounts.get(participant.id) ?? fallbackShares.get(participant.id) ?? '')
+  for (const share of syncedShares) {
+    addShareRow(share.participantId, share.amount)
   }
 }
 
@@ -392,9 +356,9 @@ function updateIncludedState(totalMinor) {
   const hasZeroShare = equalDraftShares.some((share) => share.amountMinor <= 0)
 
   if (payerWarning) {
-    const payer = findParticipant(payerId)
-    payerWarning.hidden = included.some((participant) => participant.id === payerId)
-    payerWarning.textContent = payerWarning.hidden ? '' : payer.displayName + ' paid but is not included.'
+    const warning = payerWarningMessage(payerId, included, snapshot.participants)
+    payerWarning.hidden = warning === ''
+    payerWarning.textContent = warning
   }
   if (saveButton) {
     saveButton.disabled = !hasIncluded || (app.querySelector('[data-exact-shares]').hidden && hasZeroShare)
@@ -416,27 +380,24 @@ function assignRemaining() {
   const selectedId = app.querySelector('[data-assign-remaining-participant]').value
   if (!selectedId) return
   const remaining = remainingShareAmount()
+  const assignment = assignRemainingToDraftShare(exactSharePayload(), selectedId, remaining)
+  if (!assignment.ok) {
+    showError('[data-expense-error]', assignment.message)
+    return
+  }
   const row = Array.from(app.querySelectorAll('[data-share-row]')).find((candidate) =>
     candidate.querySelector('[name="shareParticipantId"]').value === selectedId
   )
   if (!row) return
   const input = row.querySelector('[name="shareAmount"]')
-  const current = parseDraftMoneyMinor(input.value) || 0
-  const nextAmount = current + remaining
-  if (nextAmount <= 0) {
-    showError('[data-expense-error]', 'Remaining amount would make that Share non-positive')
-    return
-  }
-  input.value = formatDraftMoneyMinor(nextAmount)
+  input.value = assignment.shares.find((share) => share.participantId === selectedId)?.amount || input.value
   updateShareSummary()
 }
 
 function remainingShareAmount() {
-  const total = parseDraftMoneyMinor(app.querySelector('[data-expense-form]').amount.value) || 0
-  const assigned = Array.from(app.querySelectorAll('[name="shareAmount"]')).reduce((sum, input) => {
-    return sum + (parseDraftMoneyMinor(input.value) || 0)
-  }, 0)
-  return total - assigned
+  const amountText = app.querySelector('[data-expense-form]').amount.value
+  const shareAmounts = Array.from(app.querySelectorAll('[name="shareAmount"]')).map((input) => input.value)
+  return draftShareSummary(amountText, shareAmounts).remainingMinor
 }
 
 function toggleSettlementFocus() {

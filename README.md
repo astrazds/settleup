@@ -13,11 +13,16 @@ Core docs:
 
 - `src/index.ts`: Hono Worker routes and response shapes.
 - `src/event-command-input.ts`: form and JSON command parsing.
+- `src/event-command-runtime.ts`: saved Event mutation lifecycle, validation mapping, and success-only realtime notification.
 - `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, Shares, and Settlement Payments.
+- `src/d1-event-record-persistence.ts`: D1 row mapping and all-or-nothing Event Record persistence.
 - `src/store.ts`: `MemoryStore` for tests and `D1Store` for Cloudflare D1.
+- `src/event-realtime-protocol.ts`: shared Event realtime message shape, route path, fallback interval, and reconnect policy.
 - `src/event-realtime.ts`: Durable Object WebSocket notifications scoped by Event token.
 - `src/money.ts`: two-decimal Currency parsing and formatting.
-- `src/ui/client*.ts`: plain TypeScript browser client, bundled into `/static/client.js`.
+- `src/ui/client-expense-draft.ts`: DOM-free Expense Draft Share composition.
+- `src/ui/client-event-page-policy.ts`: DOM-free Event page state policy.
+- `src/ui/client*.ts`: plain TypeScript browser client modules, bundled into `/static/client.js`.
 - `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
 
 ## Commands

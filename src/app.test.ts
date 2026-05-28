@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { executeSavedEventCommand } from './event-command-runtime'
 import { createApp } from './index'
 import type { EventSnapshot, Expense, Participant, SettlementPayment } from './domain'
 import type { EventRealtimeNotifier } from './event-realtime'
@@ -345,6 +346,256 @@ describe('Event workflows', () => {
         message: 'Amount must be a positive decimal amount'
       }
     })
+  })
+})
+
+describe('Saved Event command execution', () => {
+  it('creates an Expense through the shared command lifecycle and notifies after saving', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const created = await store.createEvent({
+      title: 'Sydney weekend',
+      currency: 'AUD',
+      displayName: 'Sarah'
+    })
+    const withAlex = await store.addParticipant(created.event.token, 'Alex')
+    const sarah = requireParticipant(withAlex, 'Sarah')
+    const alex = requireParticipant(withAlex, 'Alex')
+
+    const result = await executeSavedEventCommand(store, notifier, {
+      type: 'createExpense',
+      token: created.event.token,
+      body: {
+        description: 'Dinner',
+        amount: '80.00',
+        payerParticipantId: sarah.id,
+        shares: [
+          { participantId: sarah.id, amount: '30.00' },
+          { participantId: alex.id, amount: '50.00' }
+        ]
+      }
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      throw new Error(result.error.message)
+    }
+    expect(result.snapshot.expenses).toEqual([
+      expect.objectContaining({ description: 'Dinner', amountMinor: 8000 })
+    ])
+    expect(result.snapshot.suggestedSettlements).toEqual([
+      { senderParticipantId: alex.id, recipientParticipantId: sarah.id, amountMinor: 5000 }
+    ])
+    expect(notifier.changedTokens).toEqual([created.event.token])
+  })
+
+  it('updates and deletes Expenses through the shared command lifecycle', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const fixture = await savedEventExpenseFixture(store)
+
+    const updateResult = await executeSavedEventCommand(store, notifier, {
+      type: 'updateExpense',
+      token: fixture.token,
+      expenseId: fixture.expense.id,
+      body: {
+        description: 'Groceries',
+        amount: '60.00',
+        payerParticipantId: fixture.sarah.id,
+        shares: [
+          { participantId: fixture.sarah.id, amount: '10.00' },
+          { participantId: fixture.alex.id, amount: '50.00' }
+        ]
+      }
+    })
+
+    expect(updateResult.ok).toBe(true)
+    if (!updateResult.ok) {
+      throw new Error(updateResult.error.message)
+    }
+    expect(requireExpense(updateResult.snapshot, fixture.expense.id)).toEqual(expect.objectContaining({
+      description: 'Groceries',
+      amountMinor: 6000
+    }))
+
+    const deleteResult = await executeSavedEventCommand(store, notifier, {
+      type: 'deleteExpense',
+      token: fixture.token,
+      expenseId: fixture.expense.id
+    })
+
+    expect(deleteResult.ok).toBe(true)
+    if (!deleteResult.ok) {
+      throw new Error(deleteResult.error.message)
+    }
+    expect(deleteResult.snapshot.expenses).toEqual([])
+    expect(deleteResult.snapshot.balances).toEqual([
+      { participantId: fixture.sarah.id, amountMinor: 0 },
+      { participantId: fixture.alex.id, amountMinor: 0 }
+    ])
+    expect(notifier.changedTokens).toEqual([fixture.token, fixture.token])
+  })
+
+  it('executes Settlement Payment mutations through the shared command lifecycle', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const fixture = await savedEventExpenseFixture(store)
+
+    const createResult = await executeSavedEventCommand(store, notifier, {
+      type: 'createSettlementPayment',
+      token: fixture.token,
+      body: {
+        senderParticipantId: fixture.alex.id,
+        recipientParticipantId: fixture.sarah.id,
+        amount: '50.00'
+      }
+    })
+
+    expect(createResult.ok).toBe(true)
+    if (!createResult.ok) {
+      throw new Error(createResult.error.message)
+    }
+    const payment = requireSettlementPayment(createResult.snapshot, fixture.alex.id, fixture.sarah.id)
+    expect(payment).toEqual(expect.objectContaining({ amountMinor: 5000 }))
+
+    const updateResult = await executeSavedEventCommand(store, notifier, {
+      type: 'updateSettlementPayment',
+      token: fixture.token,
+      settlementPaymentId: payment.id,
+      body: {
+        senderParticipantId: fixture.alex.id,
+        recipientParticipantId: fixture.sarah.id,
+        amount: '25.00'
+      }
+    })
+
+    expect(updateResult.ok).toBe(true)
+    if (!updateResult.ok) {
+      throw new Error(updateResult.error.message)
+    }
+    expect(requireSettlementPayment(updateResult.snapshot, payment.id)).toEqual(expect.objectContaining({
+      amountMinor: 2500
+    }))
+
+    const deleteResult = await executeSavedEventCommand(store, notifier, {
+      type: 'deleteSettlementPayment',
+      token: fixture.token,
+      settlementPaymentId: payment.id
+    })
+
+    expect(deleteResult.ok).toBe(true)
+    if (!deleteResult.ok) {
+      throw new Error(deleteResult.error.message)
+    }
+    expect(deleteResult.snapshot.settlementPayments).toEqual([])
+    expect(notifier.changedTokens).toEqual([fixture.token, fixture.token, fixture.token])
+  })
+
+  it('returns command errors without notifying when validation or not-found checks fail', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const fixture = await savedEventExpenseFixture(store)
+
+    const validationResult = await executeSavedEventCommand(store, notifier, {
+      type: 'updateExpense',
+      token: fixture.token,
+      expenseId: fixture.expense.id,
+      body: {
+        description: 'Groceries',
+        amount: '60.00',
+        payerParticipantId: fixture.sarah.id,
+        shares: [
+          { participantId: fixture.sarah.id, amount: '15.00' },
+          { participantId: fixture.alex.id, amount: '15.00' }
+        ]
+      }
+    })
+    const notFoundResult = await executeSavedEventCommand(store, notifier, {
+      type: 'deleteSettlementPayment',
+      token: fixture.token,
+      settlementPaymentId: 'missing-payment'
+    })
+
+    expect(validationResult).toEqual({
+      ok: false,
+      error: {
+        code: 'validation_error',
+        message: 'Shares must sum to the Expense amount',
+        status: 400
+      }
+    })
+    expect(notFoundResult).toEqual({
+      ok: false,
+      error: {
+        code: 'not_found',
+        message: 'Settlement Payment not found',
+        status: 404
+      }
+    })
+    expect(notifier.changedTokens).toEqual([])
+  })
+
+  it('keeps saved changes when realtime notification fails', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    notifier.failEventChanged = true
+    const created = await store.createEvent({
+      title: 'Sydney weekend',
+      currency: 'AUD',
+      displayName: 'Sarah'
+    })
+
+    const result = await executeSavedEventCommand(store, notifier, {
+      type: 'addParticipant',
+      token: created.event.token,
+      body: { displayName: 'Alex' }
+    })
+
+    expect(result.ok).toBe(true)
+    const saved = await store.getEventByToken(created.event.token)
+    expect(saved?.participants.map((participant) => participant.displayName)).toEqual(['Sarah', 'Alex'])
+    expect(notifier.changedTokens).toEqual([created.event.token])
+  })
+
+  it('executes Participant mutations through the shared command lifecycle', async () => {
+    const store = new MemoryStore()
+    const notifier = new FakeRealtimeNotifier()
+    const created = await store.createEvent({
+      title: 'Sydney weekend',
+      currency: 'AUD',
+      displayName: 'Sarah'
+    })
+    const withAlex = await store.addParticipant(created.event.token, 'Alex')
+    const alex = requireParticipant(withAlex, 'Alex')
+
+    const renamedResult = await executeSavedEventCommand(store, notifier, {
+      type: 'renameParticipant',
+      token: created.event.token,
+      participantId: alex.id,
+      body: { displayName: 'Alex Lee' }
+    })
+
+    expect(renamedResult.ok).toBe(true)
+    if (!renamedResult.ok) {
+      throw new Error(renamedResult.error.message)
+    }
+    expect(requireParticipant(renamedResult.snapshot, 'Alex Lee')).toEqual(expect.objectContaining({
+      id: alex.id,
+      order: alex.order
+    }))
+
+    const deleteResult = await executeSavedEventCommand(store, notifier, {
+      type: 'deleteParticipant',
+      token: created.event.token,
+      participantId: alex.id
+    })
+
+    expect(deleteResult.ok).toBe(true)
+    if (!deleteResult.ok) {
+      throw new Error(deleteResult.error.message)
+    }
+    expect(deleteResult.snapshot.participants.map((participant) => participant.id)).not.toContain(alex.id)
+    expect(notifier.changedTokens).toEqual([created.event.token, created.event.token])
   })
 })
 
@@ -819,6 +1070,33 @@ async function settlementPaymentFixture(app: ReturnType<typeof createApp>): Prom
   }
 }
 
+async function savedEventExpenseFixture(store: MemoryStore): Promise<{
+  token: string
+  sarah: Participant
+  alex: Participant
+  expense: Expense
+}> {
+  const created = await store.createEvent({
+    title: 'Sydney weekend',
+    currency: 'AUD',
+    displayName: 'Sarah'
+  })
+  const token = created.event.token
+  const sarah = created.participants[0]
+  const withAlex = await store.addParticipant(token, 'Alex')
+  const alex = requireParticipant(withAlex, 'Alex')
+  const withExpense = await store.createExpense(token, {
+    description: 'Dinner',
+    amountMinor: 8000,
+    payerParticipantId: sarah.id,
+    shares: [
+      { participantId: sarah.id, amountMinor: 3000 },
+      { participantId: alex.id, amountMinor: 5000 }
+    ]
+  })
+  return { token, sarah, alex, expense: requireExpense(withExpense, 'Dinner') }
+}
+
 async function responseJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T
 }
@@ -862,9 +1140,13 @@ function requireSettlementPayment(
 class FakeRealtimeNotifier implements EventRealtimeNotifier {
   readonly changedTokens: string[] = []
   readonly connectedTokens: string[] = []
+  failEventChanged = false
 
   async eventChanged(token: string): Promise<void> {
     this.changedTokens.push(token)
+    if (this.failEventChanged) {
+      throw new Error('Realtime unavailable')
+    }
   }
 
   async connect(token: string): Promise<Response> {

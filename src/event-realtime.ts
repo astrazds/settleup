@@ -1,4 +1,11 @@
 import { DurableObject } from 'cloudflare:workers'
+import {
+  EVENT_REALTIME_PING,
+  EVENT_REALTIME_PONG,
+  eventChangedMessage,
+  serializeEventRealtimeMessage
+} from './event-realtime-protocol'
+import type { EventRealtimeMessage } from './event-realtime-protocol'
 
 export interface EventRealtimeNotifier {
   eventChanged(token: string): Promise<void>
@@ -25,14 +32,10 @@ export class DurableObjectEventRealtimeNotifier implements EventRealtimeNotifier
   }
 }
 
-type EventRealtimeMessage = {
-  type: 'event_changed'
-}
-
 export class EventRealtimeRoom extends DurableObject<CloudflareBindings> {
   constructor(ctx: DurableObjectState, env: CloudflareBindings) {
     super(ctx, env)
-    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'))
+    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(EVENT_REALTIME_PING, EVENT_REALTIME_PONG))
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -51,12 +54,12 @@ export class EventRealtimeRoom extends DurableObject<CloudflareBindings> {
   }
 
   async eventChanged(): Promise<void> {
-    this.broadcast({ type: 'event_changed' })
+    this.broadcast(eventChangedMessage())
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
-    if (message === 'ping') {
-      ws.send('pong')
+    if (message === EVENT_REALTIME_PING) {
+      ws.send(EVENT_REALTIME_PONG)
     }
   }
 
@@ -69,7 +72,7 @@ export class EventRealtimeRoom extends DurableObject<CloudflareBindings> {
   }
 
   private broadcast(message: EventRealtimeMessage): void {
-    const payload = JSON.stringify(message)
+    const payload = serializeEventRealtimeMessage(message)
     for (const client of this.ctx.getWebSockets()) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(payload)

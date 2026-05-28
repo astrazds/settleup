@@ -2,7 +2,16 @@ import { readdir } from 'node:fs/promises'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { Miniflare } from 'miniflare'
 import { createMigratedD1Store } from '../test/d1-store'
+import { D1EventRecordPersistence } from './d1-event-record-persistence'
 import type { EventSnapshot, ExpenseInput, Participant, SettlementPayment } from './domain'
+import {
+  addParticipantToEvent,
+  createEventRecord,
+  createExpenseInEvent,
+  createSettlementPaymentInEvent,
+  eventSnapshot
+} from './event-record'
+import type { EventRecord } from './event-record'
 import { D1Store } from './store'
 
 const miniflareInstances: Miniflare[] = []
@@ -12,6 +21,67 @@ afterEach(async () => {
 })
 
 describe('D1Store with migrations', () => {
+  it('hydrates Event Records written through the D1 Event Record persistence mapper', async () => {
+    const { db } = await createD1Store()
+    const persistence = new D1EventRecordPersistence(db)
+    const createdAt = '2026-05-28T02:00:00.000Z'
+    const withAlexAt = '2026-05-28T02:01:00.000Z'
+    const expenseAt = '2026-05-28T02:02:00.000Z'
+    const settlementPaymentAt = '2026-05-28T02:03:00.000Z'
+    const created = createEventRecord(
+      {
+        title: 'Mapper weekend',
+        currency: 'AUD',
+        displayName: 'Sarah'
+      },
+      {
+        eventId: 'event-mapper-weekend',
+        participantId: 'participant-sarah',
+        token: 'mapper-weekend-token',
+        now: createdAt
+      }
+    )
+    const withAlex = addParticipantToEvent(created, 'Alex', {
+      participantId: 'participant-alex',
+      now: withAlexAt
+    })
+    const withExpense = createExpenseInEvent(
+      withAlex,
+      {
+        description: 'Dinner',
+        amountMinor: 8000,
+        payerParticipantId: 'participant-sarah',
+        shares: [
+          { participantId: 'participant-sarah', amountMinor: 3000 },
+          { participantId: 'participant-alex', amountMinor: 5000 }
+        ]
+      },
+      {
+        expenseId: 'expense-dinner',
+        now: expenseAt
+      }
+    )
+    const record = createSettlementPaymentInEvent(
+      withExpense,
+      {
+        senderParticipantId: 'participant-alex',
+        recipientParticipantId: 'participant-sarah',
+        amountMinor: 2000
+      },
+      {
+        settlementPaymentId: 'settlement-payment-alex-sarah',
+        now: settlementPaymentAt
+      }
+    )
+
+    await persistence.create(record)
+
+    const persisted = await persistence.findByToken(record.event.token)
+
+    expect(persisted).not.toBeNull()
+    expect(eventSnapshot(requireRecord(persisted))).toEqual(eventSnapshot(record))
+  })
+
   it('applies every checked-in migration to a fresh D1 database', async () => {
     const { store, migrationFiles } = await createD1Store()
     const checkedInMigrationFiles = await readdir(new URL('../migrations/', import.meta.url))
@@ -452,4 +522,11 @@ function requireParticipant(snapshot: EventSnapshot, displayName: string) {
     throw new Error(`Expected Participant ${displayName}`)
   }
   return participant
+}
+
+function requireRecord(record: EventRecord | null): EventRecord {
+  if (!record) {
+    throw new Error('Expected Event Record')
+  }
+  return record
 }

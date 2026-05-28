@@ -26,6 +26,8 @@ The Event page uses four durable task regions:
 
 Utility actions stay compact. Event Link sharing belongs near Expense defaults, not as a full panel. Suggested Settlements are recommendations until recorded as Settlement Payments.
 
+The Event page state policy lives outside DOM rendering. Keep placement, visibility, empty guidance, history ordering, Participant deletion availability, and settlement focus behavior in a plain policy layer so renderer changes do not redefine the product shape.
+
 ## Interaction Rules
 
 - Draft forms must survive realtime and polling refreshes.
@@ -41,3 +43,4 @@ Utility actions stay compact. Event Link sharing belongs near Expense defaults, 
 - Buttons and inputs use explicit HTML types.
 - Focus rings must be visible.
 - Empty states teach the next useful action.
+- Event History combines saved Expenses and Settlement Payments in newest-first order.

@@ -1,4 +1,7 @@
-export const clientBootstrapScript = String.raw`
+import { EVENT_REALTIME_PROTOCOL_CLIENT_SCRIPT } from '../event-realtime-protocol'
+
+export const clientBootstrapScript = `${EVENT_REALTIME_PROTOCOL_CLIENT_SCRIPT}
+${String.raw`
 const app = document.querySelector('#app')
 const token = app?.dataset.token
 let snapshot = null
@@ -108,35 +111,25 @@ function connectRealtime() {
 }
 
 async function handleRealtimeMessage(data) {
-  if (data === 'pong') return
-  if (typeof data !== 'string') return
-
-  let message = null
-  try {
-    message = JSON.parse(data)
-  } catch {
-    return
-  }
-
-  if (message?.type === 'event_changed') {
+  const message = parseEventRealtimeMessage(data)
+  if (message) {
     await refresh(true, 'Event updated. Draft fields stayed unchanged.')
   }
 }
 
 function realtimeUrl() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return protocol + '//' + window.location.host + '/api/events/' + token + '/realtime'
+  return protocol + '//' + window.location.host + eventRealtimeRoutePath(token)
 }
 
 function scheduleRealtimeReconnect() {
   realtimeReconnectAttempt += 1
-  const delay = Math.min(1000 * 2 ** (realtimeReconnectAttempt - 1), 30000)
-  realtimeReconnectId = window.setTimeout(connectRealtime, delay)
+  realtimeReconnectId = window.setTimeout(connectRealtime, eventRealtimeReconnectDelay(realtimeReconnectAttempt))
 }
 
 function startFallbackPolling() {
   if (fallbackPollingId) return
-  fallbackPollingId = window.setInterval(() => refresh(true), 8000)
+  fallbackPollingId = window.setInterval(() => refresh(true), eventRealtimeFallbackPollMs)
 }
 
 function stopFallbackPolling() {
@@ -195,4 +188,4 @@ window.addEventListener('beforeunload', () => {
     realtimeSocket.close(1000, 'Page closing')
   }
 })
-`
+`}`

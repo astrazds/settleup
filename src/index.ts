@@ -1,18 +1,17 @@
 import { Hono } from 'hono'
 import {
   CommandInputError,
-  parseCreateEventInput,
-  parseExpenseInput,
-  parseParticipantDisplayName,
-  parseSettlementPaymentInput
+  parseCreateEventInput
 } from './event-command-input'
+import { executeSavedEventCommand } from './event-command-runtime'
+import type { SavedEventCommandResult } from './event-command-runtime'
 import {
   DurableObjectEventRealtimeNotifier,
   EventRealtimeRoom,
   NoopEventRealtimeNotifier
 } from './event-realtime'
 import type { EventRealtimeNotifier } from './event-realtime'
-import { D1Store, StoreError } from './store'
+import { D1Store } from './store'
 import type { AppStore } from './store'
 import { clientScript } from './ui/client'
 import { renderCreatePage, renderEventPage, renderNotFoundPage, stylesheet } from './ui/views'
@@ -125,96 +124,122 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
 
   app.post('/api/events/:token/participants', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      return store.addParticipant(token, parseParticipantDisplayName(await readJson(c.req.raw)))
-    })
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'addParticipant',
+        token,
+        body: await readJson(c.req.raw)
+      }
+    ))
   })
 
   app.patch('/api/events/:token/participants/:participantId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      return store.renameParticipant(
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'renameParticipant',
         token,
-        c.req.param('participantId'),
-        parseParticipantDisplayName(await readJson(c.req.raw))
-      )
-    })
+        participantId: c.req.param('participantId'),
+        body: await readJson(c.req.raw)
+      }
+    ))
   })
 
   app.delete('/api/events/:token/participants/:participantId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, (store) =>
-      store.deleteParticipant(token, c.req.param('participantId'))
-    )
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'deleteParticipant',
+        token,
+        participantId: c.req.param('participantId')
+      }
+    ))
   })
 
   app.post('/api/events/:token/expenses', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      const snapshot = await store.getEventByToken(token)
-      if (!snapshot) {
-        throw new StoreError('Event not found', 404)
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'createExpense',
+        token,
+        body: await readJson(c.req.raw)
       }
-      return store.createExpense(token, parseExpenseInput(await readJson(c.req.raw), snapshot.event.currency))
-    })
+    ))
   })
 
   app.patch('/api/events/:token/expenses/:expenseId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      const snapshot = await store.getEventByToken(token)
-      if (!snapshot) {
-        throw new StoreError('Event not found', 404)
-      }
-      return store.updateExpense(
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'updateExpense',
         token,
-        c.req.param('expenseId'),
-        parseExpenseInput(await readJson(c.req.raw), snapshot.event.currency)
-      )
-    })
+        expenseId: c.req.param('expenseId'),
+        body: await readJson(c.req.raw)
+      }
+    ))
   })
 
   app.delete('/api/events/:token/expenses/:expenseId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, (store) =>
-      store.deleteExpense(token, c.req.param('expenseId'))
-    )
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'deleteExpense',
+        token,
+        expenseId: c.req.param('expenseId')
+      }
+    ))
   })
 
   app.post('/api/events/:token/settlement-payments', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      const snapshot = await store.getEventByToken(token)
-      if (!snapshot) {
-        throw new StoreError('Event not found', 404)
-      }
-      return store.createSettlementPayment(
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'createSettlementPayment',
         token,
-        parseSettlementPaymentInput(await readJson(c.req.raw), snapshot.event.currency)
-      )
-    })
+        body: await readJson(c.req.raw)
+      }
+    ))
   })
 
   app.patch('/api/events/:token/settlement-payments/:settlementPaymentId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, async (store) => {
-      const snapshot = await store.getEventByToken(token)
-      if (!snapshot) {
-        throw new StoreError('Event not found', 404)
-      }
-      return store.updateSettlementPayment(
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'updateSettlementPayment',
         token,
-        c.req.param('settlementPaymentId'),
-        parseSettlementPaymentInput(await readJson(c.req.raw), snapshot.event.currency)
-      )
-    })
+        settlementPaymentId: c.req.param('settlementPaymentId'),
+        body: await readJson(c.req.raw)
+      }
+    ))
   })
 
   app.delete('/api/events/:token/settlement-payments/:settlementPaymentId', async (c) => {
     const token = c.req.param('token')
-    return handleStore(storeFactory(c.env), realtimeNotifierFactory(c.env), token, (store) =>
-      store.deleteSettlementPayment(token, c.req.param('settlementPaymentId'))
-    )
+    return handleSavedEventCommand(async () => executeSavedEventCommand(
+      storeFactory(c.env),
+      realtimeNotifierFactory(c.env),
+      {
+        type: 'deleteSettlementPayment',
+        token,
+        settlementPaymentId: c.req.param('settlementPaymentId')
+      }
+    ))
   })
 
   return app
@@ -232,25 +257,22 @@ async function readJson(request: Request): Promise<unknown> {
   }
 }
 
-async function handleStore(
-  store: AppStore,
-  realtimeNotifier: EventRealtimeNotifier,
-  token: string,
-  action: (store: AppStore) => Promise<unknown>
-): Promise<Response> {
+async function handleSavedEventCommand(command: () => Promise<SavedEventCommandResult>): Promise<Response> {
   try {
-    const result = await action(store)
-    await notifyEventChanged(realtimeNotifier, token)
-    return Response.json(result)
+    return savedEventCommandResponse(await command())
   } catch (error: unknown) {
-    if (error instanceof StoreError) {
-      return jsonError(error.status === 404 ? 'not_found' : 'validation_error', error.message, error.status)
-    }
     if (error instanceof CommandInputError) {
       return validationError(error.message)
     }
     throw error
   }
+}
+
+function savedEventCommandResponse(result: SavedEventCommandResult): Response {
+  if (result.ok) {
+    return Response.json(result.snapshot)
+  }
+  return jsonError(result.error.code, result.error.message, result.error.status)
 }
 
 function validationError(message: string): Response {
@@ -270,17 +292,4 @@ function defaultRealtimeNotifierFactory(env: Bindings | undefined): EventRealtim
     return new NoopEventRealtimeNotifier()
   }
   return new DurableObjectEventRealtimeNotifier(env.EVENT_REALTIME)
-}
-
-async function notifyEventChanged(realtimeNotifier: EventRealtimeNotifier, token: string): Promise<void> {
-  try {
-    await realtimeNotifier.eventChanged(token)
-  } catch (error: unknown) {
-    console.error(JSON.stringify({
-      level: 'error',
-      message: 'event_realtime_notify_failed',
-      token,
-      error: error instanceof Error ? error.message : String(error)
-    }))
-  }
 }
