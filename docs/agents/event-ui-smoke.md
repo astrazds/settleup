@@ -1,0 +1,43 @@
+# Event UI Smoke Verification
+
+Use this workflow when changing the Event page, Event-page panels, browser form behavior, responsive layout, or user-facing copy that affects the core shared-cost path.
+
+## Command
+
+Run the smoke suite with:
+
+```sh
+npm run test:smoke
+```
+
+The intended smoke command runs Playwright against Wrangler's local Worker, not a mocked DOM or static HTML fixture. Keep it small enough for local pre-merge checks.
+
+## Core Smoke Path
+
+The core Event UI smoke path should prove that a browser user can:
+
+1. Create an Event from the first screen.
+2. Add Event Participants from the Event page.
+3. Add an Expense with a payer, amount, and Included Participants.
+4. Confirm Balances and Suggested Settlements update from the saved Event state.
+5. Record a Suggested Settlement as a Settlement Payment.
+6. Confirm Event History shows the saved Expense and Settlement Payment with correction actions still reachable.
+7. Copy the Event Link and see feedback without disrupting the current form or page layout.
+8. Complete the same create, capture, and settlement path on a mobile viewport without overlapping controls.
+
+This protects against regressions where controls are present in markup but the Event flow is broken, hidden, confusing, or unusable.
+
+## Locator Guidance
+
+Smoke tests should prefer user-facing locators: labels, roles, visible text, and stable product copy. Add stable test identifiers only where repeated dense panels make accessible selection ambiguous. Test identifiers should support the user-facing assertion; they should not replace it.
+
+## Verification Stack
+
+Use each command for a distinct layer:
+
+- `npm test`: domain logic, Hono route behavior, store behavior, and generated client syntax.
+- `npm run typecheck`: strict TypeScript compatibility.
+- `npm run test:smoke`: integrated Event page behavior through the browser and local Worker, including visible controls, form submission, client-side updates, toasts, responsive layout, and Event History visibility.
+- `npx wrangler deploy --dry-run --outdir dist-dry-run`: Worker packaging and Cloudflare runtime compatibility before deployment; remove `dist-dry-run/` afterwards.
+
+For Event-page UI changes, run `npm test`, `npm run typecheck`, `npm run test:smoke`, and the Wrangler dry run before merging or deploying. For non-UI changes, run the smoke suite when the change can affect rendered Event state, Event Snapshot shape, client-side update behavior, or the route responses used by the Event page.

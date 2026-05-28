@@ -4,6 +4,8 @@ dist/
 # dev
 .yarn/
 !.yarn/releases
+playwright-report/
+test-results/
 .vscode/*
 !.vscode/launch.json
 !.vscode/*.code-snippets

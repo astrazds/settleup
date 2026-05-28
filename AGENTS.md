@@ -11,6 +11,7 @@ This is a Cloudflare Workers project using Hono, Cloudflare D1, and TypeScript. 
 - `npm run deploy`: deploy the Worker with Wrangler using minification.
 - `npm run cf-typegen`: generate or refresh Cloudflare binding types from `wrangler.jsonc`.
 - `npm test`: run Vitest behavior tests.
+- `npm run test:smoke`: run the Event UI smoke path against the local Worker when the Playwright smoke suite is present.
 - `npm run typecheck`: run strict TypeScript checking without emitting files.
 - `npx wrangler d1 migrations apply settleup --local`: apply D1 migrations to the local development database.
 - `npx wrangler deploy --dry-run --outdir dist-dry-run`: verify Worker packaging without deploying; remove `dist-dry-run/` afterwards.
@@ -27,7 +28,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 ## Testing Guidelines
 
-Vitest is configured for behavior tests. Prefer public interfaces: pure domain functions for deep modules and Hono `app.request()` route tests for Worker behavior. Name tests after the route or module under test, such as `index.test.ts` or `expenses.test.ts`. At minimum, run `npm test`, `npm run typecheck`, and a Wrangler dry run before deployment.
+Vitest is configured for behavior tests. Prefer public interfaces: pure domain functions for deep modules and Hono `app.request()` route tests for Worker behavior. Name tests after the route or module under test, such as `index.test.ts` or `expenses.test.ts`. For Event-page UI changes, also run `npm run test:smoke`; it protects against controls that exist in markup but fail the browser user flow. At minimum, run `npm test`, `npm run typecheck`, `npm run test:smoke` for Event-page UI changes, and a Wrangler dry run before deployment.
 
 ## Commit & Pull Request Guidelines
 
@@ -46,6 +47,8 @@ When working on TypeScript in this repository, use the `typescript-expert` skill
 For Cloudflare Workers, Wrangler, D1, bindings, deployments, or account resources, use the `cloudflare` skill. Add `workers-best-practices` when authoring or reviewing Worker runtime behavior, and add `wrangler` before running Wrangler commands or changing `wrangler.jsonc`. Check Cloudflare documentation through the Cloudflare docs MCP before relying on specific limits, binding syntax, compatibility flags, or Wrangler command behavior.
 
 For any frontend, creative, or design work, use the `impeccable` skill before shaping or editing UI. Apply it to product UI, layout, visual hierarchy, copy, accessibility, responsive behavior, theming, and interaction polish. Use `PRODUCT.md` and `DESIGN.md` as the product and design sources.
+
+For Event-page UI changes, follow the smoke verification workflow in `docs/agents/event-ui-smoke.md`. Keep smoke coverage focused on the core Event path and prefer user-facing locators; add stable test identifiers only when dense panels make accessible selection ambiguous.
 
 ### Cloudflare MCP use
 

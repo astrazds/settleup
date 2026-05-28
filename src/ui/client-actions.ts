@@ -13,7 +13,9 @@ function bindStaticHandlers() {
     renderParticipants(true)
   })
   const participantForm = app.querySelector('[data-participant-form]')
-  participantForm.querySelector('[data-add-participant]').addEventListener('click', submitParticipant)
+  participantForm.querySelector('[data-add-participant]').addEventListener('click', (event) => {
+    submitParticipant({ preventDefault: () => event.preventDefault(), currentTarget: participantForm })
+  })
   participantForm.querySelector('[name="displayName"]').addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return
     event.preventDefault()
