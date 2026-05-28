@@ -21,7 +21,11 @@ function renderParticipants(preserveDrafts) {
   list.querySelectorAll('[data-rename-participant]').forEach((button) => button.addEventListener('click', renameParticipant))
   list.querySelectorAll('[data-delete-participant]').forEach((button) => button.addEventListener('click', deleteParticipant))
   if (!preserveDrafts && app.querySelector('[data-share-list]').children.length === 0) {
-    equalSplit()
+    renderIncludedParticipants(false)
+  }
+  const guidance = app.querySelector('[data-empty-event-guidance]')
+  if (guidance) {
+    guidance.hidden = !(snapshot.participants.length === 1 && snapshot.expenses.length === 0)
   }
 }
 
@@ -42,7 +46,11 @@ function renderBalances() {
 function renderSuggestedSettlements() {
   const list = app.querySelector('[data-suggestions]')
   const count = app.querySelector('[data-suggestion-count]')
+  const copySummary = app.querySelector('[data-copy-summary]')
   count.textContent = snapshot.suggestedSettlements.length > 0 ? snapshot.suggestedSettlements.length + ' payments' : ''
+  if (copySummary) {
+    copySummary.hidden = !(settlementFocus && snapshot.suggestedSettlements.length > 0)
+  }
   if (snapshot.suggestedSettlements.length === 0) {
     list.innerHTML = '<p class="empty">Everyone is settled.</p>'
     return
@@ -50,9 +58,15 @@ function renderSuggestedSettlements() {
   list.innerHTML = snapshot.suggestedSettlements.map((suggestion) => {
     const sender = findParticipant(suggestion.senderParticipantId)
     const recipient = findParticipant(suggestion.recipientParticipantId)
-    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p></div><span class="amount">' + money(suggestion.amountMinor) + '</span><button type="button" data-record-suggestion="' + suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor + '">Record</button></div>'
+    const key = suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor
+    const confirmation = activeSuggestionKey === key
+      ? '<div class="suggestion-confirmation"><p class="subtle">Suggested amount ' + money(suggestion.amountMinor) + '</p><label><span>Recorded amount</span><input type="text" inputmode="decimal" data-suggestion-amount value="' + escapeAttr(formatDraftMoneyMinor(suggestion.amountMinor)) + '"></label><span class="row-actions"><button type="button" data-confirm-suggestion="' + key + '">Record Settlement Payment</button><button class="secondary" type="button" data-cancel-suggestion>Cancel</button></span><p class="error" data-suggestion-error hidden></p></div>'
+      : ''
+    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p>' + confirmation + '</div><span class="amount">' + money(suggestion.amountMinor) + '</span><button type="button" data-record-suggestion="' + key + '">Record</button></div>'
   }).join('')
   list.querySelectorAll('[data-record-suggestion]').forEach((button) => button.addEventListener('click', recordSuggestion))
+  list.querySelectorAll('[data-confirm-suggestion]').forEach((button) => button.addEventListener('click', confirmSuggestion))
+  list.querySelectorAll('[data-cancel-suggestion]').forEach((button) => button.addEventListener('click', cancelSuggestion))
 }
 
 function renderExpenses() {
@@ -95,7 +109,38 @@ function fillParticipantSelects(preserve) {
   const recipient = app.querySelector('[name="suggestedRecipient"]')
   if (sender?.value) app.querySelector('[name="senderParticipantId"]').value = sender.value
   if (recipient?.value) app.querySelector('[name="recipientParticipantId"]').value = recipient.value
-  if (!preserve && app.querySelector('[data-share-list]').children.length === 0) equalSplit()
+  if (!preserve && app.querySelector('[data-share-list]').children.length === 0) renderIncludedParticipants(false)
+}
+
+function renderIncludedParticipants(preserve) {
+  const list = app.querySelector('[data-included-participants]')
+  if (!list || !snapshot) return
+
+  const previous = new Set(
+    preserve
+      ? Array.from(list.querySelectorAll('[name="includedParticipantId"]:checked')).map((input) => input.value)
+      : []
+  )
+  const payerId = app.querySelector('[data-expense-form]')?.payerParticipantId?.value || currentParticipantId || snapshot.participants[0]?.id || ''
+  const shouldUsePrevious = preserve && list.children.length > 0
+  const defaultIncluded = new Set(shouldUsePrevious ? previous : snapshot.participants.map((participant) => participant.id))
+  if (payerId && !shouldUsePrevious) {
+    defaultIncluded.add(payerId)
+  }
+
+  list.innerHTML = snapshot.participants.map((participant) =>
+    '<label class="included-option"><input type="checkbox" name="includedParticipantId" value="' + escapeAttr(participant.id) + '"' + (defaultIncluded.has(participant.id) ? ' checked' : '') + '><span>' + escapeHtml(participant.displayName) + '</span></label>'
+  ).join('')
+  list.querySelectorAll('[name="includedParticipantId"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      markExpenseDirty()
+      syncExactSharesFromIncluded()
+      updateShareSummary()
+    })
+  })
+  syncAssignRemainingOptions()
+  syncExactSharesFromIncluded()
+  updateShareSummary()
 }
 
 function findParticipant(id) {
@@ -116,6 +161,20 @@ function money(amountMinor) {
 function text(selector, value) {
   const element = app.querySelector(selector)
   if (element) element.textContent = value
+}
+
+function updateSettlementFocus() {
+  const section = app.querySelector('[data-settlement-section]')
+  const button = app.querySelector('[data-settlement-focus]')
+  const hasSuggestedSettlements = snapshot?.suggestedSettlements?.length > 0
+  if (!hasSuggestedSettlements) {
+    settlementFocus = false
+  }
+  if (section) section.classList.toggle('settlement-focus', settlementFocus)
+  if (button) {
+    button.hidden = !hasSuggestedSettlements
+    button.textContent = settlementFocus ? 'Exit settle up' : 'Settle up'
+  }
 }
 
 function showError(selector, message) {

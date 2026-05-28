@@ -451,6 +451,62 @@ h3 {
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
+.included-panel {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--wash);
+}
+.included-panel legend {
+  padding: 0 4px;
+  font-weight: var(--weight-heavy);
+}
+.included-panel .subtle {
+  margin: 0;
+}
+.included-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.included-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--sheet);
+}
+.included-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ledger);
+}
+.assign-remaining label {
+  min-width: min(100%, 220px);
+}
+.settlement-focus {
+  border-color: var(--amber-rule);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--amber-rule), transparent 72%);
+}
+.settlement-focus .section-head {
+  background: var(--amber-wash);
+}
+.suggestion-confirmation {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  max-width: 320px;
+}
+.suggestion-confirmation label {
+  display: grid;
+  gap: 4px;
+}
 .empty {
   color: var(--muted);
   padding: 18px 14px;
@@ -554,6 +610,9 @@ h3 {
   }
   .share-summary button {
     grid-column: 1 / -1;
+  }
+  .included-list {
+    grid-template-columns: minmax(0, 1fr);
   }
   .ledger-row.suggestion {
     grid-template-columns: minmax(0, 1fr);

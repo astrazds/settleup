@@ -40,3 +40,12 @@ Keep realtime collaboration focused on saved Event-change notifications. Show co
 ## Further Notes
 
 Current Participant selection is a local default, not authenticated identity. Realtime copy and behavior must not imply otherwise.
+
+## Implementation Status
+
+Shipped for Forgejo issue `#34`.
+
+- Expense and Settlement Payment drafts are marked dirty through visible form input and edit actions.
+- Realtime and fallback polling refreshes preserve active draft fields.
+- If an Event update arrives while a draft is active, the app shows the same neutral warning near the active form: "Event updated while you were editing. Review before saving."
+- The warning copy does not name Participants, imply presence, or introduce locks or permissions.

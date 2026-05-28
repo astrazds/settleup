@@ -28,7 +28,7 @@ Add a user-controlled settlement-focused mode on the same Event page. In that mo
 - The suggested amount remains visible and the recorded amount is editable.
 - After recording, refresh from the saved Event state and recompute Balances and Suggested Settlements.
 - Do not track progress on Suggested Settlements. They remain derived recommendations.
-- A future settlement summary should be plain text for group chat, not a report, export center, print view, or archive.
+- Settlement summaries should be plain text for group chat, not a report, export center, print view, or archive.
 
 ## Testing Decisions
 
@@ -48,3 +48,14 @@ Add a user-controlled settlement-focused mode on the same Event page. In that mo
 ## Further Notes
 
 `CONTEXT.md` defines Suggested Settlement as a recommendation and Settlement Payment as recorded money movement. The UI must preserve that distinction.
+
+## Implementation Status
+
+Shipped for Forgejo issues `#35` through `#38`.
+
+- The Event page now exposes Settle up only when current Suggested Settlements exist.
+- Settlement focus highlights Suggested Settlements while keeping the rest of the Event page reachable.
+- Recording from a Suggested Settlement now opens inline confirmation instead of filling the generic Settlement Payment form.
+- The confirmation keeps the suggested amount visible and allows a different recorded amount for partial payments or overpayments.
+- Recording posts a real Settlement Payment and refreshes Balances and Suggested Settlements from saved Event state.
+- Copy summary is available in settlement focus when suggestions exist and writes concise plain text to the clipboard.

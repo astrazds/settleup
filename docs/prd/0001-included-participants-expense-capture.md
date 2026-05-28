@@ -50,3 +50,13 @@ Make Included Participants the first-class Expense capture control. Users choose
 ## Further Notes
 
 `CONTEXT.md` defines an Included Participant as a Participant who has a Share on a specific Expense. The implementation should keep that domain meaning intact: inclusion is not membership in the Event.
+
+## Implementation Status
+
+Shipped for Forgejo issues `#29` through `#33`.
+
+- New Expense capture now starts with Included Participant checkboxes and an equal-split preview.
+- Saving an equal split generates explicit Shares in minor units and blocks invalid no-Participant or zero-share splits.
+- Editing an Expense initializes Included Participants and exact Share rows from the saved Shares, so later Participants are not added accidentally.
+- Exact Share controls stay behind Adjust Shares and include an assign-remaining helper for resolving positive or negative remaining amounts.
+- Empty Events with only the creator Participant now guide users toward adding Participants before the first shared Expense.

@@ -7,6 +7,10 @@ let fallbackPollingId = null
 let realtimeSocket = null
 let realtimeReconnectId = null
 let realtimeReconnectAttempt = 0
+let settlementFocus = false
+let activeSuggestionKey = null
+let expenseDraftDirty = false
+let settlementDraftDirty = false
 
 if (app && token) {
   boot()
@@ -18,6 +22,7 @@ async function boot() {
 }
 
 async function refresh(preserveDrafts, completeMessage) {
+  const hadActiveDraft = preserveDrafts && hasActiveDraft()
   const refreshNote = app.querySelector('[data-refresh-note]')
   if (preserveDrafts && refreshNote) {
     refreshNote.hidden = false
@@ -40,6 +45,9 @@ async function refresh(preserveDrafts, completeMessage) {
       renderedRefreshNote.hidden = true
     }, 1800)
   }
+  if (hadActiveDraft) {
+    showDraftUpdateWarnings()
+  }
 }
 
 function render(preserveDrafts) {
@@ -60,7 +68,9 @@ function render(preserveDrafts) {
   renderExpenses()
   renderSettlementPayments()
   fillParticipantSelects(preserveDrafts)
+  renderIncludedParticipants(preserveDrafts)
   updateShareSummary()
+  updateSettlementFocus()
 }
 
 function startRealtime() {
@@ -142,6 +152,27 @@ function stopFallbackPolling() {
 function setRealtimeState(message) {
   const state = app.querySelector('[data-realtime-state]')
   if (state) state.textContent = message
+}
+
+function hasActiveDraft() {
+  return expenseDraftDirty || settlementDraftDirty
+}
+
+function showDraftUpdateWarnings() {
+  if (expenseDraftDirty) {
+    const warning = app.querySelector('[data-expense-update-warning]')
+    if (warning) {
+      warning.textContent = 'Event updated while you were editing. Review before saving.'
+      warning.hidden = false
+    }
+  }
+  if (settlementDraftDirty) {
+    const warning = app.querySelector('[data-settlement-update-warning]')
+    if (warning) {
+      warning.textContent = 'Event updated while you were editing. Review before saving.'
+      warning.hidden = false
+    }
+  }
 }
 
 window.addEventListener('beforeunload', () => {
