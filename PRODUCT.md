@@ -40,7 +40,7 @@ For confident final settlement, Suggested Settlements should become the primary 
 
 Readiness to settle should be user-controlled through a settlement-focused mode or action. SettleUp should not automatically infer that an Event is ready to settle from Balances or recent activity, and entering settlement focus should not lock the Event or imply ownership.
 
-Settlement focus should change emphasis on the same Event page first. Expenses, Balances, Participants, and Event Link sharing should remain available so late costs can still be added without leaving a separate settlement workflow.
+Settlement focus should change emphasis on the same Event page first. Balances, Add Expense, embedded Event Participants, Event History, and Event Link sharing should remain available so late costs can still be added without leaving a separate settlement workflow.
 
 Recording a Suggested Settlement should use inline confirmation before saving a Settlement Payment. One-click recording is too easy to trigger accidentally, while simply filling the Settlement Payment form keeps too much form-filling friction in the final settlement moment.
 
@@ -125,7 +125,8 @@ Forgiveness, waivers, and "mark settled" overrides should stay out of scope. Set
 - The first screen is the create Event flow, not a marketing landing page.
 - Event pages live at `/e/:token`.
 - Internal JSON routes live under `/api/...` and include the Event token where Event state is accessed.
-- The Event page has separate sections for Balances, Suggested Settlements, Expenses, Settlement Payments, Participants, and Event Link sharing.
+- The Event page uses compressed task panels: Balances; Add Expense with Event Participants under Included Participants; Record Settlement Payment with Suggested Settlements; and Event History for saved Expenses and Settlement Payments.
+- Event Link sharing is a compact utility action beside Expense defaults rather than a full panel.
 - The Event Link can be copied/shared from inside the Event page, but the full token should not be prominently displayed.
 - The UI is English-only in MVP, with locale-aware currency formatting where practical.
 - JavaScript is required for the app experience.

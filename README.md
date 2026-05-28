@@ -36,11 +36,12 @@ Use Wrangler for local development, migrations, type generation, dry runs, and d
 ```txt
 npm test
 npm run typecheck
+npm run test:smoke
 npx --yes html-validate docs/design/mockups.html
 npx wrangler deploy --dry-run --outdir dist-dry-run
 ```
 
-Remove `dist-dry-run/` after dry-run checks; it is generated output.
+The Playwright smoke suite exercises the main Event UI flow against local Wrangler dev and applies local D1 migrations through `pretest:smoke`. Remove `dist-dry-run/` after dry-run checks; it is generated output.
 
 ## Deployment
 

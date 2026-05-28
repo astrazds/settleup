@@ -200,7 +200,7 @@ The canonical mockup set is in [mockups.html](./mockups.html):
 
 - Create Event
 - Empty Event after creation
-- Populated Event with Expenses and Balances
-- Settle Up state with Suggested Settlements
+- Populated Event with Add Expense, Balances, and Event History
+- Settle Up state with Suggested Settlements inside Record Settlement Payment
 - Mobile Event page
 - Interaction state strip

@@ -1,6 +1,6 @@
 # The No-Login Group Expense Splitter
 
-> Original sketch. Current product decisions live in `PRODUCT.md`, domain language lives in `CONTEXT.md`, and durable decisions live in `docs/adr/`.
+> Historical seed. This file preserves the original idea sketch. Current product decisions live in `PRODUCT.md`, domain language lives in `CONTEXT.md`, and durable decisions live in `docs/adr/`.
 
 - **The Problem:** Splitting a dinner bill or weekend trip expenses usually requires everyone downloading the same app, creating accounts, and syncing contacts.
 - **The "One Thing":** A temporary, shared link to track who owes what for a single event.

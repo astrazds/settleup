@@ -1,6 +1,6 @@
 # SettleUp Design Notes
 
-SettleUp is product UI. Design serves fast group expense entry at a table, in a group chat context, or on a phone during a trip. The interface should feel quiet, trustworthy, and direct.
+SettleUp is product UI. Design serves fast group expense entry at a table, in a group chat context, or on a phone during a bounded shared-cost occasion. The interface should feel quiet, trustworthy, and direct.
 
 ## Register
 
@@ -68,7 +68,7 @@ The theme should use a clear light surface with controlled brightness, warm tint
 - The create Event page is form-first with a brand header. Do not use a hero section, feature grid, stock imagery, or marketing composition. Use a compact brand lockup, one sentence promise, and a privacy note below the form.
 - The Event page uses a top summary and two-column desktop layout.
 - On mobile, the Event page collapses to a single column.
-- Separate sections are used for Balances, Suggested Settlements, Expenses, Settlement Payments, Participants, and Event Link sharing.
+- The Event page uses compressed task panels: Balances; Add Expense with Event Participants under Included Participants; Record Settlement Payment with Suggested Settlements; and Event History for saved Expenses and Settlement Payments. Event Link sharing is a utility action beside Expense defaults.
 - Balance wording should say "is owed", "owes", or "is settled" instead of relying on signed numbers.
 - Use medium product density. Desktop should use compact rows, aligned amounts, and fewer large empty panels. Mobile should keep generous tap targets without marketing-scale spacing. Forms should be dense but legible, with progressive sections. Records should be scan-first and row-based, not card-heavy.
 - On the Event page, Balances are visually dominant and Add Expense is the close second. Suggested Settlements become prominent when Balances are non-zero and the group is ready to settle.
@@ -94,8 +94,8 @@ Required mockups:
 
 - Create Event
 - Empty Event after creation
-- Populated Event with Expenses and Balances
-- Settle Up state with Suggested Settlements
+- Populated Event with Add Expense, Balances, and Event History
+- Settle Up state with Suggested Settlements inside Record Settlement Payment
 - Mobile Event page
 - Interaction state strip covering default, hover, focus, disabled, validation error, settled success row, owes row, and copied Event Link feedback
 

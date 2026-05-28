@@ -13,3 +13,5 @@ Published parent issues:
 - Forgejo issue `#28`: Settlement Focus and Recording
 
 Implementation issues `#29` through `#38` were completed against these PRDs in one pass, with generated browser-client behavior coverage in `src/ui/client.test.ts` plus the existing route, domain, and store tests.
+
+Event UI flow smoke coverage was tracked in Forgejo issue `#46` and is documented in `docs/agents/event-ui-smoke.md`.
