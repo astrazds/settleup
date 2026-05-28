@@ -14,18 +14,15 @@ function renderParticipants(preserveDrafts) {
   list.innerHTML = snapshot.participants.map((participant) =>
     '<div class="ledger-row"><strong>' + escapeHtml(participant.displayName) + '</strong><span class="row-actions">' +
     (participant.id === currentParticipantId ? '<span class="chip chip-current">defaults</span>' : '') +
+    (isParticipantReferenced(participant.id) ? '<span class="chip">in use</span>' : '') +
     '<button class="secondary" type="button" data-rename-participant="' + participant.id + '">Rename</button>' +
-    '<button class="danger" type="button" data-delete-participant="' + participant.id + '">Delete</button>' +
+    (participantCanBeDeleted(participant.id) ? '<button class="danger" type="button" data-delete-participant="' + participant.id + '">Delete</button>' : '') +
     '</span></div>'
   ).join('')
   list.querySelectorAll('[data-rename-participant]').forEach((button) => button.addEventListener('click', renameParticipant))
   list.querySelectorAll('[data-delete-participant]').forEach((button) => button.addEventListener('click', deleteParticipant))
   if (!preserveDrafts && app.querySelector('[data-share-list]').children.length === 0) {
     renderIncludedParticipants(false)
-  }
-  const guidance = app.querySelector('[data-empty-event-guidance]')
-  if (guidance) {
-    guidance.hidden = !(snapshot.participants.length === 1 && snapshot.expenses.length === 0)
   }
 }
 
@@ -47,9 +44,11 @@ function renderSuggestedSettlements() {
   const list = app.querySelector('[data-suggestions]')
   const count = app.querySelector('[data-suggestion-count]')
   const copySummary = app.querySelector('[data-copy-summary]')
+  const actionState = panelActionState(snapshot, settlementFocus).suggestedSettlements
   count.textContent = snapshot.suggestedSettlements.length > 0 ? snapshot.suggestedSettlements.length + ' payments' : ''
+  count.hidden = !actionState.showSuggestionCount
   if (copySummary) {
-    copySummary.hidden = !(settlementFocus && snapshot.suggestedSettlements.length > 0)
+    copySummary.hidden = !actionState.showCopySummary
   }
   if (snapshot.suggestedSettlements.length === 0) {
     list.innerHTML = '<p class="empty">Everyone is settled.</p>'
@@ -59,10 +58,12 @@ function renderSuggestedSettlements() {
     const sender = findParticipant(suggestion.senderParticipantId)
     const recipient = findParticipant(suggestion.recipientParticipantId)
     const key = suggestion.senderParticipantId + '|' + suggestion.recipientParticipantId + '|' + suggestion.amountMinor
-    const confirmation = activeSuggestionKey === key
+    const isConfirming = activeSuggestionKey === key
+    const confirmation = isConfirming
       ? '<div class="suggestion-confirmation"><p class="subtle">Suggested amount ' + money(suggestion.amountMinor) + '</p><label><span>Recorded amount</span><input type="text" inputmode="decimal" data-suggestion-amount value="' + escapeAttr(formatDraftMoneyMinor(suggestion.amountMinor)) + '"></label><span class="row-actions"><button type="button" data-confirm-suggestion="' + key + '">Record Settlement Payment</button><button class="secondary" type="button" data-cancel-suggestion>Cancel</button></span><p class="error" data-suggestion-error hidden></p></div>'
       : ''
-    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p>' + confirmation + '</div><span class="amount">' + money(suggestion.amountMinor) + '</span><button type="button" data-record-suggestion="' + key + '">Record</button></div>'
+    const recordClass = actionState.recordButtonClass ? ' class="' + actionState.recordButtonClass + '"' : ''
+    return '<div class="ledger-row suggestion"><div><strong>' + escapeHtml(sender.displayName) + ' sends ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Record when money moves.</p>' + confirmation + '</div><span class="amount">' + money(suggestion.amountMinor) + '</span>' + (isConfirming ? '' : '<button' + recordClass + ' type="button" data-record-suggestion="' + key + '">Record</button>') + '</div>'
   }).join('')
   list.querySelectorAll('[data-record-suggestion]').forEach((button) => button.addEventListener('click', recordSuggestion))
   list.querySelectorAll('[data-confirm-suggestion]').forEach((button) => button.addEventListener('click', confirmSuggestion))
@@ -97,6 +98,48 @@ function renderSettlementPayments() {
   }).join('')
   list.querySelectorAll('[data-edit-payment]').forEach((button) => button.addEventListener('click', editPayment))
   list.querySelectorAll('[data-delete-payment]').forEach((button) => button.addEventListener('click', deletePayment))
+}
+
+function renderPanelStates() {
+  const actionState = panelActionState(snapshot, settlementFocus)
+  const settlementSection = app.querySelector('[data-settlement-form-section]')
+  if (settlementSection) {
+    settlementSection.hidden = false
+  }
+  const settlementSubmit = app.querySelector('[data-settlement-form] button[type="submit"]')
+  const settlementUnavailable = app.querySelector('[data-settlement-unavailable]')
+  if (settlementSubmit) {
+    settlementSubmit.disabled = !actionState.settlementPaymentForm.canRecord
+  }
+  if (settlementUnavailable) {
+    settlementUnavailable.hidden = actionState.settlementPaymentForm.canRecord
+    settlementUnavailable.textContent = actionState.settlementPaymentForm.disabledReason
+  }
+}
+
+function renderStartGuidance() {
+  const panel = app.querySelector('[data-start-guidance]')
+  if (!panel) return
+
+  const hasOneParticipant = snapshot.participants.length === 1
+  const hasNoExpenses = snapshot.expenses.length === 0
+  const shouldAddParticipants = hasOneParticipant && hasNoExpenses
+  const shouldAddExpense = snapshot.participants.length > 1 && hasNoExpenses
+
+  panel.hidden = !(shouldAddParticipants || shouldAddExpense)
+  if (shouldAddParticipants) {
+    panel.dataset.startTarget = '[data-participant-form]'
+    text('[data-start-title]', 'Add the people sharing this Event')
+    text('[data-start-copy]', 'Start with Participants, then record the first shared cost.')
+    text('[data-start-action]', 'Add Participant')
+    return
+  }
+  if (shouldAddExpense) {
+    panel.dataset.startTarget = '[data-expense-form]'
+    text('[data-start-title]', 'Record the first shared cost')
+    text('[data-start-copy]', 'Participants are ready. Add an Expense when someone pays for the group.')
+    text('[data-start-action]', 'Add Expense')
+  }
 }
 
 function fillParticipantSelects(preserve) {
@@ -147,6 +190,23 @@ function findParticipant(id) {
   return snapshot.participants.find((participant) => participant.id === id) || { id, displayName: 'Unknown Participant' }
 }
 
+function participantCanBeDeleted(participantId) {
+  return participantDeleteState(snapshot, participantId).canDelete
+}
+
+function isParticipantReferenced(participantId) {
+  return isParticipantReferencedInSnapshot(snapshot, participantId)
+}
+
+function isParticipantReferencedInSnapshot(eventSnapshot, participantId) {
+  return (eventSnapshot.expenses || []).some((expense) =>
+    expense.payerParticipantId === participantId ||
+    expense.shares.some((share) => share.participantId === participantId)
+  ) || (eventSnapshot.settlementPayments || []).some((payment) =>
+    payment.senderParticipantId === participantId || payment.recipientParticipantId === participantId
+  )
+}
+
 function optionForParticipant(participant) {
   return '<option value="' + escapeAttr(participant.id) + '">' + escapeHtml(participant.displayName) + '</option>'
 }
@@ -166,15 +226,67 @@ function text(selector, value) {
 function updateSettlementFocus() {
   const section = app.querySelector('[data-settlement-section]')
   const button = app.querySelector('[data-settlement-focus]')
-  const hasSuggestedSettlements = snapshot?.suggestedSettlements?.length > 0
-  if (!hasSuggestedSettlements) {
+  const actionState = panelActionState(snapshot, settlementFocus).suggestedSettlements
+  if (!actionState.showSettlementFocus) {
     settlementFocus = false
   }
   if (section) section.classList.toggle('settlement-focus', settlementFocus)
   if (button) {
-    button.hidden = !hasSuggestedSettlements
-    button.textContent = settlementFocus ? 'Exit settle up' : 'Settle up'
+    button.hidden = !actionState.showSettlementFocus
+    button.className = actionState.settlementFocusButtonClass
+    button.textContent = actionState.settlementFocusLabel
   }
+  const count = app.querySelector('[data-suggestion-count]')
+  if (count) {
+    count.hidden = !actionState.showSuggestionCount
+  }
+  const copySummary = app.querySelector('[data-copy-summary]')
+  if (copySummary) {
+    copySummary.hidden = !actionState.showCopySummary
+  }
+}
+
+function panelActionState(eventSnapshot, isSettlementFocus) {
+  const suggestedSettlements = eventSnapshot.suggestedSettlements || []
+  const expenses = eventSnapshot.expenses || []
+  const settlementPayments = eventSnapshot.settlementPayments || []
+  const hasSuggestedSettlements = suggestedSettlements.length > 0
+  const inFocus = Boolean(isSettlementFocus && hasSuggestedSettlements)
+  const canRecordSettlementPayment = eventSnapshot.participants.length >= 2
+  return {
+    suggestedSettlements: {
+      inFocus,
+      showSettlementFocus: hasSuggestedSettlements,
+      showCopySummary: inFocus,
+      showSuggestionCount: hasSuggestedSettlements,
+      settlementFocusLabel: inFocus ? 'Exit settle up' : 'Settle up',
+      settlementFocusButtonClass: inFocus ? 'secondary' : '',
+      recordButtonClass: inFocus ? '' : 'secondary'
+    },
+    settlementPaymentForm: {
+      canRecord: canRecordSettlementPayment,
+      disabledReason: canRecordSettlementPayment ? '' : 'Add another Participant before recording a Settlement Payment.'
+    },
+    participants: {
+      deleteById: Object.fromEntries(eventSnapshot.participants.map((participant) => [
+        participant.id,
+        participantDeleteState({ ...eventSnapshot, expenses, settlementPayments }, participant.id)
+      ]))
+    },
+    eventLink: {
+      showCopy: true
+    }
+  }
+}
+
+function participantDeleteState(eventSnapshot, participantId) {
+  if (eventSnapshot.participants.length <= 1) {
+    return { canDelete: false, reason: 'Keep at least one Participant in the Event.' }
+  }
+  if (isParticipantReferencedInSnapshot(eventSnapshot, participantId)) {
+    return { canDelete: false, reason: 'Referenced Participants cannot be deleted.' }
+  }
+  return { canDelete: true, reason: '' }
 }
 
 function showError(selector, message) {

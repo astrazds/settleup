@@ -160,6 +160,7 @@ Avoid:
 ## Component Rules
 
 - Buttons use familiar product UI affordances.
+- Event-page panel actions follow the state matrix in [panel-state-matrix.md](./panel-state-matrix.md).
 - Primary buttons use ledger green.
 - Secondary buttons are neutral with full borders.
 - Destructive buttons use clay text and quiet clay border.

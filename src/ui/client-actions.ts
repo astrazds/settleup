@@ -2,12 +2,9 @@ export const clientActionsScript = String.raw`
 function bindStaticHandlers() {
   app.querySelector('[data-copy-link]').addEventListener('click', async () => {
     await navigator.clipboard.writeText(window.location.href)
-    const button = app.querySelector('[data-copy-link]')
-    button.textContent = 'Event Link copied'
-    window.setTimeout(() => {
-      button.textContent = 'Copy Event Link'
-    }, 1800)
+    showToast('Event Link copied')
   })
+  app.querySelector('[data-start-action]').addEventListener('click', followStartGuidance)
   app.querySelector('[data-switch-participant]').addEventListener('click', () => {
     const select = app.querySelector('[data-current-participant]')
     currentParticipantId = select.value || null
@@ -85,7 +82,7 @@ async function submitExpense(event) {
     expenseDraftDirty = false
     app.querySelector('[data-share-list]').innerHTML = ''
     app.querySelector('[data-exact-shares]').hidden = true
-    app.querySelector('[data-expense-update-warning]').hidden = true
+    app.querySelector('[data-expense-update-warning]').textContent = ''
     await refresh(false)
   } catch (error) {
     showError('[data-expense-error]', error.message)
@@ -108,7 +105,7 @@ async function submitSettlementPayment(event) {
     }
     form.reset()
     settlementDraftDirty = false
-    app.querySelector('[data-settlement-update-warning]').hidden = true
+    app.querySelector('[data-settlement-update-warning]').textContent = ''
     await refresh(false)
   } catch (error) {
     showError('[data-settlement-error]', error.message)
@@ -268,12 +265,12 @@ function updateShareSummary() {
 
 function markExpenseDirty() {
   expenseDraftDirty = true
-  app.querySelector('[data-expense-update-warning]').hidden = true
+  app.querySelector('[data-expense-update-warning]').textContent = ''
 }
 
 function markSettlementDirty() {
   settlementDraftDirty = true
-  app.querySelector('[data-settlement-update-warning]').hidden = true
+  app.querySelector('[data-settlement-update-warning]').textContent = ''
 }
 
 function handlePayerChange() {
@@ -438,11 +435,15 @@ async function copySettlementSummary() {
     return findParticipant(suggestion.senderParticipantId).displayName + ' sends ' + findParticipant(suggestion.recipientParticipantId).displayName + ' ' + money(suggestion.amountMinor)
   })
   await navigator.clipboard.writeText(lines.length > 0 ? lines.join('\n') : 'Everyone is settled.')
-  const button = app.querySelector('[data-copy-summary]')
-  button.textContent = 'Summary copied'
-  window.setTimeout(() => {
-    button.textContent = 'Copy summary'
-  }, 1800)
+  showToast('Summary copied')
+}
+
+function followStartGuidance() {
+  const targetSelector = app.querySelector('[data-start-guidance]').dataset.startTarget
+  const target = targetSelector ? app.querySelector(targetSelector) : null
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const focusTarget = target?.querySelector('input, select, button')
+  focusTarget?.focus({ preventScroll: true })
 }
 
 function cssEscape(value) {

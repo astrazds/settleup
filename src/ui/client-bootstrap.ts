@@ -11,6 +11,7 @@ let settlementFocus = false
 let activeSuggestionKey = null
 let expenseDraftDirty = false
 let settlementDraftDirty = false
+let toastHideId = null
 
 if (app && token) {
   boot()
@@ -23,10 +24,8 @@ async function boot() {
 
 async function refresh(preserveDrafts, completeMessage) {
   const previousEventUpdatedAt = snapshot?.event?.updatedAt || null
-  const refreshNote = app.querySelector('[data-refresh-note]')
-  if (preserveDrafts && refreshNote) {
-    refreshNote.hidden = false
-    refreshNote.textContent = 'Refreshing Event data...'
+  if (preserveDrafts) {
+    showToast('Refreshing Event data...')
   }
   const response = await fetch('/api/events/' + token)
   if (!response.ok) {
@@ -38,12 +37,8 @@ async function refresh(preserveDrafts, completeMessage) {
     currentParticipantId = null
   }
   render(preserveDrafts)
-  const renderedRefreshNote = app.querySelector('[data-refresh-note]')
-  if (preserveDrafts && renderedRefreshNote) {
-    renderedRefreshNote.textContent = completeMessage || 'Event data refreshed. Draft fields stayed unchanged.'
-    window.setTimeout(() => {
-      renderedRefreshNote.hidden = true
-    }, 1800)
+  if (preserveDrafts) {
+    showToast(completeMessage || 'Event data refreshed. Draft fields stayed unchanged.')
   }
   if (shouldShowDraftUpdateWarning(preserveDrafts, previousEventUpdatedAt)) {
     showDraftUpdateWarnings()
@@ -67,6 +62,8 @@ function render(preserveDrafts) {
   renderSuggestedSettlements()
   renderExpenses()
   renderSettlementPayments()
+  renderStartGuidance()
+  renderPanelStates()
   fillParticipantSelects(preserveDrafts)
   renderIncludedParticipants(preserveDrafts)
   updateShareSummary()
@@ -154,6 +151,17 @@ function setRealtimeState(message) {
   if (state) state.textContent = message
 }
 
+function showToast(message) {
+  const toast = app.querySelector('[data-toast-message]')
+  if (!toast) return
+  window.clearTimeout(toastHideId)
+  toast.textContent = message
+  toast.hidden = false
+  toastHideId = window.setTimeout(() => {
+    toast.hidden = true
+  }, 2200)
+}
+
 function hasActiveDraft() {
   return expenseDraftDirty || settlementDraftDirty
 }
@@ -173,14 +181,12 @@ function showDraftUpdateWarnings() {
     const warning = app.querySelector('[data-expense-update-warning]')
     if (warning) {
       warning.textContent = 'Event updated while you were editing. Review before saving.'
-      warning.hidden = false
     }
   }
   if (settlementDraftDirty) {
     const warning = app.querySelector('[data-settlement-update-warning]')
     if (warning) {
       warning.textContent = 'Event updated while you were editing. Review before saving.'
-      warning.hidden = false
     }
   }
 }
