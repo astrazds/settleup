@@ -62,6 +62,12 @@ npx wrangler d1 migrations apply settleup --local
 
 Forgejo Actions runs the same gate on pushes and pull requests. Pushes to `main` deploy production after verification passes, using the Cloudflare secrets documented in [docs/VERIFICATION.md](./docs/VERIFICATION.md).
 
+Production is deployed by Forgejo Actions to:
+
+- `https://settleup.pure-cake8631.workers.dev`
+
+The first successful automated production deploy was Forgejo workflow run `#18` on 2026-05-28, deploying Worker version `bd697169-f462-4dd0-9e47-2cba164a7160`.
+
 ## Cloudflare
 
 `wrangler.jsonc` is the repo-local configuration source. The Worker is `settleup`; current bindings are:

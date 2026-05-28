@@ -53,7 +53,7 @@ Forgejo Actions runs the full gate on pushes to `main` and pull requests. On a s
 Production deploy uses these Forgejo repository secrets:
 
 - `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID that owns the `settleup` Worker and D1 database.
-- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with permission to deploy the Worker, read/apply D1 migrations, and access the configured Durable Object namespace.
+- `CLOUDFLARE_API_TOKEN`: Cloudflare API token scoped to the same account with Account `D1:Edit` and Account `Workers Scripts:Edit`.
 
 The production deploy job runs:
 
@@ -61,6 +61,17 @@ The production deploy job runs:
 npx wrangler d1 migrations apply settleup --remote
 npm run deploy
 ```
+
+Production deploy target:
+
+- Worker: `settleup`
+- URL: `https://settleup.pure-cake8631.workers.dev`
+- D1 database: `settleup`
+- Durable Object binding: `EVENT_REALTIME`
+
+The first successful automated production deploy was Forgejo workflow run `#18` on 2026-05-28. It found no pending D1 migrations, deployed `settleup`, and produced Worker version `bd697169-f462-4dd0-9e47-2cba164a7160`.
+
+If the D1 migration step fails with Cloudflare error `7403`, replace or update `CLOUDFLARE_API_TOKEN`; the token can authenticate but cannot call the D1 API for the configured account.
 
 Use `fj actions tasks` from the repository root to confirm workflow state after pushing.
 
