@@ -70,34 +70,40 @@ function renderSuggestedSettlements() {
   list.querySelectorAll('[data-cancel-suggestion]').forEach((button) => button.addEventListener('click', cancelSuggestion))
 }
 
-function renderExpenses() {
-  const list = app.querySelector('[data-expenses]')
-  if (snapshot.expenses.length === 0) {
-    list.innerHTML = '<p class="empty">No Expenses yet.</p>'
+function renderHistory() {
+  const list = app.querySelector('[data-history]')
+  const items = historyItems(snapshot)
+  if (items.length === 0) {
+    list.innerHTML = '<p class="empty">No Event history yet. Expenses and Settlement Payments will appear here.</p>'
     return
   }
-  list.innerHTML = snapshot.expenses.map((expense) => {
-    const payer = findParticipant(expense.payerParticipantId)
-    const shares = expense.shares.map((share) => escapeHtml(findParticipant(share.participantId).displayName) + ' ' + money(share.amountMinor)).join(', ')
-    return '<div class="ledger-row record-row"><div><h3>' + escapeHtml(expense.description) + '</h3><p class="subtle">' + escapeHtml(payer.displayName) + ' paid ' + money(expense.amountMinor) + ', ' + shares + '</p></div><span class="row-actions"><span class="amount">' + money(expense.amountMinor) + '</span><button class="secondary" type="button" data-edit-expense="' + expense.id + '">Edit</button><button class="danger" type="button" data-delete-expense="' + expense.id + '">Delete</button></span></div>'
+  list.innerHTML = items.map((item) => {
+    if (item.kind === 'expense') {
+      const expense = item.record
+      const payer = findParticipant(expense.payerParticipantId)
+      const shares = expense.shares.map((share) => escapeHtml(findParticipant(share.participantId).displayName) + ' ' + money(share.amountMinor)).join(', ')
+      return '<div class="ledger-row record-row"><div><span class="history-kind">Expense</span><h3>' + escapeHtml(expense.description) + '</h3><p class="subtle">' + escapeHtml(payer.displayName) + ' paid ' + money(expense.amountMinor) + ', ' + shares + '</p></div><span class="row-actions"><span class="amount">' + money(expense.amountMinor) + '</span><button class="secondary" type="button" data-edit-expense="' + expense.id + '">Edit</button><button class="danger" type="button" data-delete-expense="' + expense.id + '">Delete</button></span></div>'
+    }
+    const payment = item.record
+    const sender = findParticipant(payment.senderParticipantId)
+    const recipient = findParticipant(payment.recipientParticipantId)
+    return '<div class="ledger-row record-row row-positive"><div><span class="history-kind">Settlement Payment</span><strong>' + escapeHtml(sender.displayName) + ' sent ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Recorded Settlement Payment</p></div><span class="row-actions"><span class="amount amount-positive">' + money(payment.amountMinor) + '</span><button class="secondary" type="button" data-edit-payment="' + payment.id + '">Edit</button><button class="danger" type="button" data-delete-payment="' + payment.id + '">Delete</button></span></div>'
   }).join('')
   list.querySelectorAll('[data-edit-expense]').forEach((button) => button.addEventListener('click', editExpense))
   list.querySelectorAll('[data-delete-expense]').forEach((button) => button.addEventListener('click', deleteExpense))
-}
-
-function renderSettlementPayments() {
-  const list = app.querySelector('[data-payments]')
-  if (snapshot.settlementPayments.length === 0) {
-    list.innerHTML = '<p class="empty">No Settlement Payments recorded.</p>'
-    return
-  }
-  list.innerHTML = snapshot.settlementPayments.map((payment) => {
-    const sender = findParticipant(payment.senderParticipantId)
-    const recipient = findParticipant(payment.recipientParticipantId)
-    return '<div class="ledger-row record-row row-positive"><div><strong>' + escapeHtml(sender.displayName) + ' sent ' + escapeHtml(recipient.displayName) + '</strong><p class="subtle">Recorded Settlement Payment</p></div><span class="row-actions"><span class="amount amount-positive">' + money(payment.amountMinor) + '</span><button class="secondary" type="button" data-edit-payment="' + payment.id + '">Edit</button><button class="danger" type="button" data-delete-payment="' + payment.id + '">Delete</button></span></div>'
-  }).join('')
   list.querySelectorAll('[data-edit-payment]').forEach((button) => button.addEventListener('click', editPayment))
   list.querySelectorAll('[data-delete-payment]').forEach((button) => button.addEventListener('click', deletePayment))
+}
+
+function historyItems(eventSnapshot) {
+  const expenses = (eventSnapshot.expenses || []).map((record) => ({ kind: 'expense', record, occurredAt: record.createdAt || record.updatedAt || '' }))
+  const settlementPayments = (eventSnapshot.settlementPayments || []).map((record) => ({ kind: 'settlementPayment', record, occurredAt: record.createdAt || record.updatedAt || '' }))
+  return expenses.concat(settlementPayments).sort((left, right) => {
+    const byTime = right.occurredAt.localeCompare(left.occurredAt)
+    if (byTime !== 0) return byTime
+    if (left.kind !== right.kind) return left.kind === 'expense' ? -1 : 1
+    return left.record.id.localeCompare(right.record.id)
+  })
 }
 
 function renderPanelStates() {
@@ -274,9 +280,28 @@ function panelActionState(eventSnapshot, isSettlementFocus) {
       ]))
     },
     eventLink: {
-      showCopy: true
+      showCopy: true,
+      placement: 'expenseDefaults',
+      showPanel: false
+    },
+    layout: {
+      participantPlacement: 'addExpense',
+      showParticipantsPanel: false,
+      eventLinkPlacement: 'expenseDefaults',
+      showEventLinkPanel: false,
+      suggestedSettlementPlacement: 'settlementPayment',
+      showSuggestedSettlementsPanel: false,
+      showHistoryPanel: true,
+      showExpensesPanel: false,
+      showSettlementPaymentsPanel: false,
+      historyOrder: 'newest-first'
     }
   }
+}
+
+function newParticipantId(previousSnapshot, nextSnapshot) {
+  const previousIds = new Set((previousSnapshot?.participants || []).map((participant) => participant.id))
+  return (nextSnapshot?.participants || []).find((participant) => !previousIds.has(participant.id))?.id || null
 }
 
 function participantDeleteState(eventSnapshot, participantId) {

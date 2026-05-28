@@ -12,7 +12,13 @@ function bindStaticHandlers() {
     fillParticipantSelects(false)
     renderParticipants(true)
   })
-  app.querySelector('[data-participant-form]').addEventListener('submit', submitParticipant)
+  const participantForm = app.querySelector('[data-participant-form]')
+  participantForm.querySelector('[data-add-participant]').addEventListener('click', submitParticipant)
+  participantForm.querySelector('[name="displayName"]').addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    submitParticipant({ preventDefault: () => undefined, currentTarget: participantForm })
+  })
   const expenseForm = app.querySelector('[data-expense-form]')
   const settlementForm = app.querySelector('[data-settlement-form]')
   expenseForm.addEventListener('submit', submitExpense)
@@ -43,9 +49,16 @@ function bindStaticHandlers() {
 async function submitParticipant(event) {
   event.preventDefault()
   const form = event.currentTarget
-  await post('/api/events/' + token + '/participants', { displayName: form.displayName.value })
-  form.reset()
-  await refresh(false)
+  const displayNameInput = form.querySelector('[name="displayName"]')
+  const displayName = displayNameInput.value.trim()
+  if (!displayName) return
+  const previousSnapshot = snapshot
+  const nextSnapshot = await post('/api/events/' + token + '/participants', { displayName })
+  const addedParticipantId = newParticipantId(previousSnapshot, nextSnapshot)
+  displayNameInput.value = ''
+  snapshot = nextSnapshot
+  render(true)
+  includeParticipantInExpenseDraft(addedParticipantId)
 }
 
 async function submitExpense(event) {
@@ -436,6 +449,15 @@ async function copySettlementSummary() {
   })
   await navigator.clipboard.writeText(lines.length > 0 ? lines.join('\n') : 'Everyone is settled.')
   showToast('Summary copied')
+}
+
+function includeParticipantInExpenseDraft(participantId) {
+  if (!participantId) return
+  const input = app.querySelector('[name="includedParticipantId"][value="' + cssEscape(participantId) + '"]')
+  if (!input) return
+  input.checked = true
+  syncExactSharesFromIncluded()
+  updateShareSummary()
 }
 
 function followStartGuidance() {

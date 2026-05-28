@@ -52,6 +52,20 @@ describe('client script contract', () => {
     expect(clientScript).not.toContain("button.textContent = 'Summary copied'")
   })
 
+  it('compresses utility actions and histories into task panels', () => {
+    expect(clientScript).toContain('<h2>Add Expense</h2>')
+    expect(clientScript).toContain('<strong>Event Participants</strong>')
+    expect(clientScript).toContain('<button class="secondary" data-copy-link type="button">Copy Event Link</button>')
+    expect(clientScript).toContain('<h2>Record Settlement Payment</h2>')
+    expect(clientScript).toContain('<strong>Suggested Settlements</strong>')
+    expect(clientScript).toContain('<h2>Event History</h2>')
+    expect(clientScript).not.toContain('<h2>Participants</h2>')
+    expect(clientScript).not.toContain('<h2>Event Link</h2>')
+    expect(clientScript).not.toContain('<h2>Suggested Settlements</h2>')
+    expect(clientScript).not.toContain('<h2>Expenses</h2>')
+    expect(clientScript).not.toContain('<h2>Settlement Payments</h2>')
+  })
+
   it('guides a one-Participant empty Event toward adding Participants', () => {
     const panel = fakeElement()
     const title = fakeElement()
@@ -195,6 +209,84 @@ describe('client script contract', () => {
       }
     })
   })
+
+  it('documents the compressed Event-page layout state', () => {
+    const client = loadClientHarness()
+    const state = client.panelActionState(snapshot({
+      participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
+    }), false)
+
+    expect(state).toMatchObject({
+      eventLink: {
+        showCopy: true,
+        placement: 'expenseDefaults',
+        showPanel: false
+      },
+      layout: {
+        participantPlacement: 'addExpense',
+        showParticipantsPanel: false,
+        eventLinkPlacement: 'expenseDefaults',
+        showEventLinkPanel: false,
+        suggestedSettlementPlacement: 'settlementPayment',
+        showSuggestedSettlementsPanel: false,
+        showHistoryPanel: true,
+        showExpensesPanel: false,
+        showSettlementPaymentsPanel: false,
+        historyOrder: 'newest-first'
+      }
+    })
+  })
+
+  it('orders mixed Event History records newest first', () => {
+    const client = loadClientHarness()
+    const event = snapshot({
+      participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)],
+      expenses: [
+        {
+          id: 'expense-1',
+          description: 'Dinner',
+          amountMinor: 8000,
+          payerParticipantId: 'sarah',
+          shares: [{ participantId: 'sarah', amountMinor: 4000 }, { participantId: 'alex', amountMinor: 4000 }],
+          createdAt: '2026-05-28T08:00:00.000Z'
+        },
+        {
+          id: 'expense-2',
+          description: 'Ferry',
+          amountMinor: 2400,
+          payerParticipantId: 'alex',
+          shares: [{ participantId: 'sarah', amountMinor: 1200 }, { participantId: 'alex', amountMinor: 1200 }],
+          createdAt: '2026-05-28T09:00:00.000Z'
+        }
+      ],
+      settlementPayments: [{
+        id: 'payment-1',
+        senderParticipantId: 'alex',
+        recipientParticipantId: 'sarah',
+        amountMinor: 2000,
+        createdAt: '2026-05-28T10:00:00.000Z'
+      }]
+    })
+
+    expect(client.historyItems(event).map((item) => `${item.kind}:${item.record.id}`)).toEqual([
+      'settlementPayment:payment-1',
+      'expense:expense-2',
+      'expense:expense-1'
+    ])
+  })
+
+  it('detects the new Participant so embedded add can include it in the active Expense draft', () => {
+    const client = loadClientHarness()
+    const before = snapshot({
+      participants: [participant('sarah', 'Sarah', 1)]
+    })
+    const after = snapshot({
+      participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
+    })
+
+    expect(client.newParticipantId(before, after)).toBe('alex')
+    expect(client.newParticipantId(after, after)).toBeNull()
+  })
 })
 
 interface ClientHarness {
@@ -208,6 +300,8 @@ interface ClientHarness {
   showToast: (message: string) => void
   renderStartGuidance: () => void
   panelActionState: (value: unknown, settlementFocus: boolean) => unknown
+  historyItems: (value: unknown) => Array<{ kind: string, record: { id: string } }>
+  newParticipantId: (previousSnapshot: unknown, nextSnapshot: unknown) => string | null
   shouldShowDraftUpdateWarning: (preserveDrafts: boolean, previousEventUpdatedAt: string | null) => boolean
 }
 
@@ -228,6 +322,8 @@ return {
   showToast,
   renderStartGuidance,
   panelActionState,
+  historyItems,
+  newParticipantId,
   shouldShowDraftUpdateWarning
 }
 `)
@@ -273,12 +369,14 @@ function snapshot(overrides: {
     amountMinor: number
     payerParticipantId: string
     shares: Array<{ participantId: string, amountMinor: number }>
+    createdAt?: string
   }>
   settlementPayments?: Array<{
     id: string
     senderParticipantId: string
     recipientParticipantId: string
     amountMinor: number
+    createdAt?: string
   }>
   suggestedSettlements?: Array<{
     senderParticipantId: string

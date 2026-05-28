@@ -851,12 +851,12 @@
             <h1>Sydney weekend</h1>
             <p class="muted">AUD, Anyone with this link can view and edit.</p>
           </div>
-          <button type="button" class="secondary">Copy Event Link</button>
         </div>
         <div class="identity">
           <strong>Expense defaults</strong>
           <span class="chip chip-current">Sarah</span>
           <button type="button" class="secondary">Switch</button>
+          <button type="button" class="secondary">Copy Event Link</button>
         </div>
         <div class="app-grid">
           <div class="column-stack">
@@ -871,20 +871,21 @@
                   <label>Description<input type="text" placeholder="Dinner"></label>
                   <label>Amount<input type="text" inputmode="decimal" placeholder="80.00"></label>
                 </div>
+                <div class="embedded-head">
+                  <strong>Event Participants</strong>
+                  <p class="subline">Add the people sharing this Event.</p>
+                </div>
               </div>
             </section>
           </div>
           <div class="column-stack">
             <section class="section">
-              <div class="section-head"><h2>Suggested Settlements</h2></div>
-              <div class="empty-state">Everyone is settled.</div>
-            </section>
-            <section class="section">
-              <div class="section-head"><h2>Participants</h2></div>
-              <div class="ledger-row">
-                <strong>Sarah</strong>
-                <span class="chip chip-current">defaults</span>
+              <div class="section-head"><h2>Record Settlement Payment</h2></div>
+              <div class="embedded-head panel-body">
+                <strong>Suggested Settlements</strong>
+                <p class="subline">Everyone is settled.</p>
               </div>
+              <div class="empty-state">Everyone is settled.</div>
             </section>
           </div>
         </div>
@@ -899,7 +900,11 @@
       <div class="screen">
         <div class="app-grid">
           <section class="section">
-            <div class="section-head"><h2>Suggested Settlements</h2><span class="chip chip-pending">2 payments</span></div>
+            <div class="section-head"><h2>Record Settlement Payment</h2><span class="chip chip-pending">2 payments</span></div>
+            <div class="embedded-head panel-body">
+              <strong>Suggested Settlements</strong>
+              <p class="subline">Record when money moves.</p>
+            </div>
             <div class="ledger-row suggestion subtotal">
               <div>
                 <strong>Alex sends Sarah</strong>
@@ -918,7 +923,7 @@
             </div>
           </section>
           <section class="section">
-            <div class="section-head"><h2>Settlement Payments</h2></div>
+            <div class="section-head"><h2>Event History</h2></div>
             <div class="ledger-row row-positive">
               <div>
                 <strong>Alex sent Sarah</strong>
@@ -945,6 +950,11 @@
             <h1>Sydney weekend</h1>
             <p class="muted">AUD, 4 Participants, 4 Expenses</p>
           </div>
+        </div>
+        <div class="identity">
+          <strong>Expense defaults</strong>
+          <span class="chip chip-current">Sarah</span>
+          <button type="button" class="secondary">Switch</button>
           <button type="button" class="secondary">Copy Event Link</button>
         </div>
         <div class="app-grid">
@@ -969,7 +979,7 @@
               </div>
             </section>
             <section class="section">
-              <div class="section-head"><h2>Expenses</h2></div>
+              <div class="section-head"><h2>Event History</h2></div>
               <div class="ledger-row">
                 <div>
                   <h3>Dinner</h3>
@@ -1033,26 +1043,11 @@
                   <div><span>Remaining</span><strong>$0.00</strong></div>
                   <button type="button" class="secondary small">Equal split</button>
                 </div>
+                <div class="embedded-head">
+                  <strong>Event Participants</strong>
+                  <p class="subline">Sarah, Alex, Priya, Marco</p>
+                </div>
                 <button type="button">Save Expense</button>
-              </div>
-            </section>
-            <section class="section">
-              <div class="section-head"><h2>Participants</h2></div>
-              <div class="ledger-row">
-                <strong>Sarah</strong>
-                <span class="chip chip-current">defaults</span>
-              </div>
-              <div class="ledger-row">
-                <strong>Alex</strong>
-                <span></span>
-              </div>
-              <div class="ledger-row">
-                <strong>Priya</strong>
-                <span></span>
-              </div>
-              <div class="ledger-row">
-                <strong>Marco</strong>
-                <span></span>
               </div>
             </section>
           </div>
@@ -1075,10 +1070,7 @@
             <strong>Expense defaults</strong>
             <span class="chip chip-current">Sarah</span>
             <button type="button" class="secondary">Switch</button>
-          </div>
-          <div class="mobile-actions">
             <button type="button" class="secondary">Copy Event Link</button>
-            <span class="control-note">Anyone with this link can view and edit.</span>
           </div>
           <section class="section">
             <div class="section-head"><h2>Balances</h2></div>
@@ -1124,7 +1116,10 @@
             </div>
           </section>
           <section class="section">
-            <div class="section-head"><h2>Suggested Settlements</h2></div>
+            <div class="section-head"><h2>Record Settlement Payment</h2></div>
+            <div class="embedded-head panel-body">
+              <strong>Suggested Settlements</strong>
+            </div>
             <div class="ledger-row"><span>Alex sends Sarah</span><span class="amount">$84.70</span></div>
           </section>
         </div>

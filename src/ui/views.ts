@@ -402,6 +402,11 @@ h3 {
   gap: 12px;
   padding: 16px;
 }
+.compact-form {
+  padding: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
 .share-list {
   display: grid;
   gap: 8px;
@@ -486,6 +491,36 @@ h3 {
   width: 18px;
   height: 18px;
   accent-color: var(--ledger);
+}
+.embedded-block {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+.embedded-block + .inline-form {
+  border-top: 0;
+}
+.embedded-head {
+  display: grid;
+  gap: 2px;
+}
+.embedded-head p {
+  margin: 0;
+  font-size: var(--text-small);
+}
+.participant-manager {
+  border-top: 1px solid var(--rule);
+  border-bottom: 0;
+}
+.history-kind {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-heavy);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 .assign-remaining label {
   min-width: min(100%, 220px);
@@ -635,6 +670,9 @@ h3 {
     width: 100%;
   }
   .form-grid { grid-template-columns: 1fr; }
+  .compact-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .share-row { grid-template-columns: minmax(0, 1fr) 112px; }
   .share-row button { grid-column: 1 / -1; }
   .share-summary {

@@ -5,18 +5,14 @@ function shell() {
     '<div class="actions"><span class="chip chip-current" data-realtime-state>Live updates connecting</span></div>' +
     '</header>' +
     '<div class="toast-region" aria-live="polite" aria-atomic="true" data-toast-region><p class="toast-message" data-toast-message hidden></p></div>' +
-    '<div class="identity-bar"><strong>Expense defaults</strong><select data-current-participant aria-label="Expense defaults Participant"></select><button class="secondary" type="button" data-switch-participant>Switch</button></div>' +
+    '<div class="identity-bar"><strong>Expense defaults</strong><select data-current-participant aria-label="Expense defaults Participant"></select><button class="secondary" type="button" data-switch-participant>Switch</button><button class="secondary" data-copy-link type="button">Copy Event Link</button></div>' +
     '<section class="start-panel" data-start-guidance hidden><div><strong data-start-title></strong><p class="subtle" data-start-copy></p></div><button type="button" data-start-action></button></section>' +
     '<div class="app-grid"><div class="column-stack">' +
     '<section class="section"><div class="section-head"><h2>Balances</h2><span class="amount amount-positive" data-outstanding></span></div><div data-balances></div></section>' +
     '<section class="section"><div class="section-head"><h2>Add Expense</h2></div>' + expenseForm() + '</section>' +
-    '<section class="section"><div class="section-head"><h2>Expenses</h2></div><div data-expenses></div></section>' +
+    '<section class="section"><div class="section-head"><h2>Event History</h2></div><div data-history></div></section>' +
     '</div><aside class="column-stack">' +
-    '<section class="section" data-settlement-section><div class="section-head"><h2>Suggested Settlements</h2><span class="row-actions"><button class="secondary" type="button" data-copy-summary hidden>Copy summary</button><button class="secondary" type="button" data-settlement-focus>Settle up</button><span class="chip chip-pending" data-suggestion-count></span></span></div><div data-suggestions></div></section>' +
-    '<section class="section"><div class="section-head"><h2>Participants</h2></div><form class="inline-form" data-participant-form><label><span>Display name</span><input type="text" name="displayName" required></label><button type="submit">Add Participant</button></form><div data-participants></div></section>' +
-    '<section class="section"><div class="section-head"><h2>Event Link</h2><button class="secondary" data-copy-link type="button">Copy Event Link</button></div><p class="empty">Anyone with this link can view and edit.</p></section>' +
-    '<section class="section" data-settlement-form-section><div class="section-head"><h2>Record Settlement Payment</h2></div>' + settlementForm() + '</section>' +
-    '<section class="section"><div class="section-head"><h2>Settlement Payments</h2></div><div data-payments></div></section>' +
+    '<section class="section" data-settlement-section data-settlement-form-section><div class="section-head"><h2>Record Settlement Payment</h2><span class="row-actions"><button class="secondary" type="button" data-copy-summary hidden>Copy summary</button><button class="secondary" type="button" data-settlement-focus>Settle up</button><span class="chip chip-pending" data-suggestion-count></span></span></div><div class="embedded-block"><div class="embedded-head"><strong>Suggested Settlements</strong><p class="subtle">Record when money moves.</p></div><div data-suggestions></div></div>' + settlementForm() + '</section>' +
     '</aside></div>'
 }
 
@@ -28,7 +24,7 @@ function expenseForm() {
     '<label><span>Payer</span><select name="payerParticipantId" data-participant-select></select></label>' +
     '</div>' +
     '<input type="hidden" name="expenseId">' +
-    '<fieldset class="included-panel"><legend>Included Participants</legend><p class="subtle">Choose who has a Share on this Expense.</p><div data-included-participants class="included-list"></div><p class="control-note" data-payer-warning hidden></p></fieldset>' +
+    '<fieldset class="included-panel"><legend>Included Participants</legend><p class="subtle">Choose who has a Share on this Expense.</p><div data-included-participants class="included-list"></div><p class="control-note" data-payer-warning hidden></p>' + participantManager() + '</fieldset>' +
     '<div class="actions"><button class="secondary" type="button" data-adjust-shares>Adjust Shares</button></div>' +
     '<div data-exact-shares hidden>' +
     '<div data-share-list class="share-list"></div>' +
@@ -45,6 +41,10 @@ function expenseForm() {
     '<p class="error" data-expense-error hidden></p>' +
     '<button type="submit">Save Expense</button>' +
     '</form>'
+}
+
+function participantManager() {
+  return '<div class="embedded-block participant-manager" data-participant-form><div class="embedded-head"><strong>Event Participants</strong><p class="subtle">Add or correct names without leaving Expense capture.</p></div><div class="inline-form compact-form"><label><span>Display name</span><input type="text" name="displayName" required></label><button type="button" data-add-participant>Add Participant</button></div><div data-participants></div></div>'
 }
 
 function settlementForm(senderId, recipientId, amount) {
