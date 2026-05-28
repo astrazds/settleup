@@ -29,4 +29,4 @@ Raise thresholds when meaningful behavior coverage raises the baseline. Lower th
 
 ## Workflow Assumptions
 
-Forgejo Actions workflows live under `.forgejo/workflows/`. This repo uses the `docker-node-runner` runner label, installs dependencies with `npm ci`, installs the Chromium Playwright browser before the smoke suite, and relies on `pretest:smoke` to apply local D1 migrations.
+Forgejo Actions workflows live under `.forgejo/workflows/`. This repo uses the `docker-node-runner` runner label, installs dependencies with `npm ci`, installs the Chromium Playwright browser and its Linux system dependencies before the smoke suite, and relies on `pretest:smoke` to apply local D1 migrations.
