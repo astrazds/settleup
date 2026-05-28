@@ -99,6 +99,8 @@ test.describe('Event realtime flow', () => {
       await expense.getByLabel('Description').fill('Offline draft')
       await expense.getByLabel('Amount').fill('18.75')
 
+      await addParticipantFromExpense(page, 'Fallback Only')
+
       await fallbackPage.evaluate(async () => {
         if (!window.__settleupTriggerFallbackPoll) {
           throw new Error('Fallback poll trigger was not installed')
@@ -106,9 +108,10 @@ test.describe('Event realtime flow', () => {
         await window.__settleupTriggerFallbackPoll()
       })
 
+      await expect(participantManager(fallbackPage)).toContainText('Fallback Only')
       await expect(expense.getByLabel('Description')).toHaveValue('Offline draft')
       await expect(expense.getByLabel('Amount')).toHaveValue('18.75')
-      await expect(expenseDraftWarning(fallbackPage)).toHaveText('')
+      await expect(expenseDraftWarning(fallbackPage)).toHaveText('Event updated while you were editing. Review before saving.')
       await expect(fallbackPage.getByText('Event data refreshed. Draft fields stayed unchanged.')).toBeVisible()
     } finally {
       await fallbackContext.close()

@@ -46,7 +46,7 @@ npm run deploy:dry-run
 
 The coverage gate uses Vitest's V8 provider over runtime source in `src/**/*.ts`, excluding tests, generated binding declarations, dry-run output, and docs. The initial global thresholds are set to the current behavior-suite baseline: 84% statements, 62% branches, 87% functions, and 84% lines. Treat those thresholds as a regression signal for behavior coverage, not a demand to test implementation details; ratchet them upward when new behavior tests raise the baseline naturally.
 
-The Playwright smoke suite exercises the main Event UI flow against local Wrangler dev and applies local D1 migrations through `pretest:smoke`. HTML validation checks the standalone design mockup. Remove `dist-dry-run/` after direct dry-run checks; it is generated output, and `npm run verify` plus the workflow remove it automatically.
+The Playwright smoke suite exercises browser behavior against local Wrangler dev and applies local D1 migrations before each browser command. Use `npm run test:smoke:critical` for the core Event UI path, `npm run test:smoke:extended` for realtime browser coverage, and `npm run test:smoke` for the full browser gate. Forgejo Actions uploads `playwright-report/` and `test-results/` when the browser suite fails. HTML validation checks the standalone design mockup. Remove `dist-dry-run/` after direct dry-run checks; it is generated output, and `npm run verify` plus the workflow remove it automatically. `coverage/`, `playwright-report/`, `test-results/`, `.wrangler/`, and `dist-dry-run/` should stay out of commits.
 
 ## Deployment
 

@@ -4,7 +4,11 @@ export default defineConfig({
   testDir: './test/e2e',
   fullyParallel: false,
   workers: 1,
-  reporter: [['list']],
+  outputDir: 'test-results',
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'playwright-report', open: 'never' }]
+  ],
   webServer: {
     command: 'npm run dev -- --port 8791',
     url: 'http://127.0.0.1:8791',
@@ -18,7 +22,13 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'critical',
+      testMatch: /event-flow\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] }
+    },
+    {
+      name: 'extended',
+      testMatch: /realtime-flow\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] }
     }
   ]
