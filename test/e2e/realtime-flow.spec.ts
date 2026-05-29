@@ -40,7 +40,7 @@ test.describe('Event realtime flow', () => {
       const editingExpense = addExpensePanel(editingPage)
       await editingExpense.getByLabel('Description').fill('Unsent dinner')
       await editingExpense.getByLabel('Amount').fill('42.50')
-      await recordSettlementPanel(editingPage).getByRole('button', { name: 'Manual Payment' }).click()
+      await recordSettlementPanel(editingPage).getByRole('button', { name: 'Record outside payment' }).click()
       await recordSettlementPanel(editingPage).getByLabel('Amount').fill('5.00')
 
       await addParticipantFromExpense(page, 'Priya')
@@ -77,7 +77,7 @@ test.describe('Event realtime flow', () => {
       await addParticipantFromExpense(page, 'First Event Only')
 
       await expect(participantRows(sameEventPage)).toContainText('First Event Only')
-      await expect(participantRows(unrelatedPage)).not.toContainText('First Event Only')
+      await expect(addExpensePanel(unrelatedPage)).not.toContainText('First Event Only')
       await expect(unrelatedPage.getByRole('heading', { name: unrelatedTitle })).toBeVisible()
     } finally {
       await sameEventContext.close()
@@ -87,6 +87,7 @@ test.describe('Event realtime flow', () => {
 
   test('preserves drafts during deterministic fallback polling after reconnect starts', async ({ browser, page }) => {
     const eventPath = await createEvent(page, `Realtime fallback ${Date.now()}`, 'Sarah')
+    await addParticipantFromExpense(page, 'Alex')
     await expectLiveUpdatesOn(page)
 
     const fallbackContext = await browser.newContext()

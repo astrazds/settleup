@@ -11,6 +11,8 @@ Key files:
 - `src/d1-event-record-persistence.ts`: D1 Event Record row mapping and persistence.
 - `src/event-realtime-protocol.ts`: shared realtime protocol constants and browser helpers.
 - `src/ui/client-expense-draft.ts`, `src/ui/client-event-page-policy.ts`: DOM-free browser behavior policy/composition modules for equal split draft behavior and Event page state.
+- `src/ui/react-client.tsx`: React Event page client bundled into `/static/client.js`.
+- `src/ui/generated-client.ts`: generated checked-in browser bundle; regenerate with `npm run build:client`.
 - `wrangler.jsonc`: Worker name `settleup`, D1 binding `DB`, Durable Object binding `EVENT_REALTIME`, compatibility flags, and Durable Object migrations.
 - `migrations/`: D1 migrations.
 - `worker-configuration.d.ts`: generated Cloudflare binding types.
@@ -19,6 +21,7 @@ Key files:
 ## Commands
 
 - `npm install`: install dependencies.
+- `npm run build:client`: bundle the React Event page client.
 - `npm run dev`: start local Wrangler dev.
 - `npm test`: run Vitest behavior tests.
 - `npm run test:coverage`: run Vitest coverage thresholds.

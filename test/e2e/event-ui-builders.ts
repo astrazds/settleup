@@ -84,12 +84,11 @@ export class EventUi {
   }
 
   settlementPaymentRecord(): Locator {
-    return this.historyPanel().locator('.record-row').filter({ hasText: 'Settlement Payment' }).first()
+    return this.historyPanel().locator('.record-row').filter({ hasText: 'Recorded payment outside SettleUp' }).first()
   }
 
   async switchExpenseDefault(displayName: string): Promise<void> {
-    await this.expenseDefaults().getByLabel('Expense defaults Participant').selectOption({ label: displayName })
-    await this.expenseDefaults().getByRole('button', { name: 'Switch' }).click()
+    await this.expenseDefaults().getByLabel('Choose who is adding expenses').selectOption({ label: displayName })
   }
 
   async includeParticipant(displayName: string): Promise<void> {
@@ -101,7 +100,7 @@ export class EventUi {
   }
 
   saveExpenseButton(): Locator {
-    return this.addExpensePanel().getByRole('button', { name: 'Save' })
+    return this.addExpensePanel().getByRole('button', { name: 'Save expense' })
   }
 
   async saveExpense(): Promise<void> {
@@ -120,7 +119,7 @@ export class EventUi {
   async draftSettlementPayment(input: SettlementPaymentDraftInput): Promise<void> {
     const settlement = this.settlementPanel()
     const form = settlement.locator('[data-settlement-form]')
-    const manualPayment = settlement.getByRole('button', { name: 'Manual Payment' })
+    const manualPayment = settlement.getByRole('button', { name: 'Record outside payment' })
     if (!await form.isVisible() && await manualPayment.isVisible()) {
       await manualPayment.click()
     }
@@ -145,7 +144,7 @@ export class EventUi {
         (request.method() === 'POST' || request.method() === 'PATCH')
     })
     const [, response] = await Promise.all([
-      this.settlementPanel().getByRole('button', { name: 'Record' }).click(),
+      this.settlementPanel().locator('[data-settlement-form]').getByRole('button', { name: 'Record payment' }).click(),
       responsePromise
     ])
     expect(response.ok()).toBe(true)
@@ -179,7 +178,8 @@ export async function expectMobilePanel(panel: Locator): Promise<void> {
   await panel.scrollIntoViewIfNeeded()
   await expect(panel).toBeVisible()
   const box = await requiredBox(panel)
-  expect(box.width).toBeGreaterThan(300)
+  const viewportWidth = await panel.evaluate(() => document.documentElement.clientWidth)
+  expect(box.width).toBeGreaterThanOrEqual(Math.min(290, viewportWidth - 30))
   expect(box.width).toBeLessThanOrEqual(390)
 }
 

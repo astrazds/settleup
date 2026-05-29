@@ -6,7 +6,8 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 
 - Use Cloudflare Workers with Hono for the Worker runtime.
 - Serve the frontend and JSON API from one Worker until the UI complexity justifies a separate frontend app.
-- Use plain TypeScript, JavaScript, and CSS for the first frontend instead of React, Vite, Hono JSX, or another frontend framework.
+- Use React for Event page interaction while keeping the frontend served by the Worker as a bundled `/static/client.js` asset.
+- Keep CSS and route-owned document shells in the Worker; do not introduce a separate frontend app until the UI complexity justifies it.
 
 ## Data
 
@@ -20,7 +21,7 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 ## Runtime Shape
 
 - Route handlers adapt HTTP details into Saved Event Commands; `src/event-command-runtime.ts` owns saved mutation execution, validation error mapping, and success-only realtime notification.
-- UI state that can be described without the DOM belongs in plain TypeScript policy/composition modules before it is mirrored into browser script helpers.
+- UI state that can be described without the DOM belongs in plain TypeScript policy/composition modules before it is consumed by React components.
 
 ## Access And Privacy
 

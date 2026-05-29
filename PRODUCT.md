@@ -56,8 +56,8 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Presence, viewer counts, edit attribution, locks, merge conflict UI, and audit history.
 - Whole-Event deletion, token rotation, and automatic expiry.
 - Offline mutation support, public API guarantees, CAPTCHA, or explicit rate limiting.
-- A separate frontend app or frontend framework.
+- A separate frontend app detached from the Worker.
 
 ## Test Direction
 
-Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed D1 tests, realtime protocol/notifier seams, DOM-free UI policy helpers, and Playwright-visible Event behavior over private implementation assertions.
+Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed D1 tests, realtime protocol/notifier seams, DOM-free UI policy helpers, React-visible Event behavior, and Playwright-visible Event behavior over private implementation assertions.

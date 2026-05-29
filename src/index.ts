@@ -30,13 +30,49 @@ interface AppDeps {
   realtimeNotifierFactory?: RealtimeNotifierFactory
 }
 
+const immutableAssetCacheControl = 'public, max-age=31556952, immutable'
+const fallbackAssetCacheControl = 'no-store'
+const clientScriptVersion = assetVersion(clientScript)
+const stylesheetVersion = assetVersion(stylesheet)
+const clientScriptAssetName = `client.${clientScriptVersion}.js`
+const stylesheetAssetName = `styles.${stylesheetVersion}.css`
+const pageAssets = {
+  clientScriptPath: `/static/${clientScriptAssetName}`,
+  stylesheetPath: `/static/${stylesheetAssetName}`
+}
+const staticAssets = [
+  {
+    fallbackName: 'client.js',
+    versionedName: clientScriptAssetName,
+    version: clientScriptVersion,
+    body: clientScript,
+    contentType: 'application/javascript; charset=utf-8'
+  },
+  {
+    fallbackName: 'styles.css',
+    versionedName: stylesheetAssetName,
+    version: stylesheetVersion,
+    body: stylesheet,
+    contentType: 'text/css; charset=utf-8'
+  }
+] as const
+
+function assetVersion(content: string): string {
+  let hash = 2166136261
+  for (let index = 0; index < content.length; index += 1) {
+    hash ^= content.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
+}
+
 export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   const app = new Hono<{ Bindings: Bindings }>()
   const storeFactory = deps.storeFactory ?? ((env: Bindings) => new D1Store(env.DB))
   const realtimeNotifierFactory = deps.realtimeNotifierFactory ?? defaultRealtimeNotifierFactory
 
   app.get('/', (c) => {
-    return c.html(renderCreatePage(), 200, {
+    return c.html(renderCreatePage('', {}, pageAssets), 200, {
       'x-robots-tag': 'noindex'
     })
   })
@@ -45,7 +81,7 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
     const body = await c.req.parseBody()
     const input = parseCreateEventInput(body)
     if (!input.ok) {
-      return c.html(renderCreatePage(input.message), 400, {
+      return c.html(renderCreatePage(input.message, createPageValuesFromBody(body), pageAssets), 400, {
         'x-robots-tag': 'noindex'
       })
     }
@@ -57,29 +93,33 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.get('/e/:token', async (c) => {
     const snapshot = await storeFactory(c.env).getEventByToken(c.req.param('token'))
     if (!snapshot) {
-      return c.html(renderNotFoundPage(), 404, {
+      return c.html(renderNotFoundPage(pageAssets), 404, {
         'x-robots-tag': 'noindex'
       })
     }
 
-    return c.html(renderEventPage(snapshot.event), 200, {
+    return c.html(renderEventPage(snapshot.event, pageAssets), 200, {
       'x-robots-tag': 'noindex'
     })
   })
 
-  app.get('/static/client.js', (c) => {
-    return c.text(clientScript, 200, {
-      'content-type': 'application/javascript; charset=utf-8',
-      'cache-control': 'no-store'
+  app.get('/static/:asset', (c) => {
+    const assetName = c.req.param('asset')
+    const asset = staticAssets.find((candidate) =>
+      candidate.versionedName === assetName || candidate.fallbackName === assetName
+    )
+    if (!asset) {
+      return new Response('Not found', { status: 404 })
+    }
+
+    return c.text(asset.body, 200, {
+      'content-type': asset.contentType,
+      'cache-control': asset.versionedName === assetName ? immutableAssetCacheControl : fallbackAssetCacheControl,
+      etag: `"${asset.version}"`
     })
   })
 
-  app.get('/static/styles.css', (c) => {
-    return c.text(stylesheet, 200, {
-      'content-type': 'text/css; charset=utf-8',
-      'cache-control': 'no-store'
-    })
-  })
+  app.get('/favicon.ico', () => new Response(null, { status: 204 }))
 
   app.post('/api/events', async (c) => {
     let body: unknown
@@ -285,6 +325,22 @@ function jsonError(code: string, message: string, status: number): Response {
 
 function jsonCreated(value: unknown): Response {
   return Response.json(value, { status: 201 })
+}
+
+function createPageValuesFromBody(body: unknown): { title?: string; currency?: string; displayName?: string } {
+  return {
+    title: textField(body, 'title'),
+    currency: textField(body, 'currency'),
+    displayName: textField(body, 'displayName')
+  }
+}
+
+function textField(body: unknown, key: string): string | undefined {
+  if (!body || typeof body !== 'object' || !(key in body)) {
+    return undefined
+  }
+  const value = (body as Record<string, unknown>)[key]
+  return typeof value === 'string' ? value : undefined
 }
 
 function defaultRealtimeNotifierFactory(env: Bindings | undefined): EventRealtimeNotifier {

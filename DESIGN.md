@@ -6,7 +6,7 @@ The standalone design mockup is [docs/design/mockups.html](./docs/design/mockups
 
 ## Create Page Shape
 
-The create page is a compact task form, not a landing page. It uses the headline "Split costs, easy...done..." with supporting copy "Share the link. Add people and expenses. Pay them.", followed immediately by Event Title, Currency, Your name, and Create Event.
+The create page is a compact task form, not a landing page. It uses the headline "Create a shared expense Event" with supporting copy "Use it for a trip, dinner, or shared cost.", followed by Event Title, Currency, Your name, and a receipt-like submit band with the private Event Link note and Create Event. On phones it top-aligns, stacks fields, uses 44px controls, and makes the Create Event action full width. Validation errors preserve submitted text, mark and focus the relevant field, and keep long or mixed-direction text from breaking the layout.
 
 ## Visual System
 
@@ -23,11 +23,11 @@ The create page is a compact task form, not a landing page. It uses the headline
 
 The Event page uses three durable panels:
 
-- Balances, including direct Pay actions for owed rows and the folded Manual Payment form.
-- Add Expense, including the current default selector and compact Participant rows for split selection and Participant correction.
-- Event History for saved Expenses and Settlement Payments.
+- Balances, including direct Pay actions for owed rows and the folded Record outside payment form.
+- Add Expense, including a one-Participant onboarding state, the current acting Participant selector once split selection is possible, and compact Participant rows for split selection and Participant correction.
+- Event History for saved Expenses and payments.
 
-Utility actions stay compact. Event Link sharing belongs beside the Event title, not as a full panel. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Manual Payment action.
+Utility actions stay compact. Event Link sharing belongs beside the Event title, not as a full panel. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Record outside payment action.
 
 The Event page state policy lives outside DOM rendering. Keep placement, visibility, empty guidance, history ordering, and Participant deletion availability in a plain policy layer so renderer changes do not redefine the product shape.
 
@@ -37,17 +37,19 @@ The Event page state policy lives outside DOM rendering. Keep placement, visibil
 - Realtime status should communicate connection and update behavior, not presence.
 - Do not show named presence, viewer counts, edit attribution, or lock language.
 - If saved Event data changes while a draft is active, show a calm review warning near the form without blocking save.
-- Current Participant copy should use defaults language, not account, owner, or permission language.
-- Expense defaults live in the Add Expense header, aligned opposite the panel title.
+- Current Participant copy should say who is adding and paying for the expense, without account, owner, or permission language.
+- In a one-Participant empty Event, Add Expense shows a compact Add Participant onboarding state and withholds expense-entry controls until at least two Participants exist.
+- The current acting Participant selector lives in the Add Expense header, aligned opposite the panel title once there are at least two Participants.
 - Add Expense uses the current Participant default as payer; do not duplicate it as a separate Payer field.
-- Participant rows combine split selection, display name, status, and correction actions.
+- Participant rows use a ledger line: split checkbox, display name with inclusion/reference status below it, then correction actions. Participant rename stays inline in the row with validation, keyboard submit, cancel, and no browser prompt.
 - The payer is included by default, but may be removed with a calm warning.
 - Add Expense ends at the Add Participant row; do not add secondary controls below it until custom Share editing returns.
+- Disabled Save expense states explain the missing action near the button.
 - Submitting an Expense sends the selected Included Participants; equal Share amounts are derived by the Worker.
 - Balance rows with negative amounts show a compact Pay button immediately before the owes amount.
-- Manual Payment stays folded inside Balances; when open, Sender and Recipient share one row, and Amount, Record, and Cancel share the second row.
+- Record outside payment stays folded inside Balances; when open, it states that money already moved outside SettleUp, Who paid and Who received share one row, Amount, Record payment, and Cancel share the second row, and a preview sentence confirms the payment record before submit.
 - Validation errors appear near the relevant form.
 - Buttons and inputs use explicit HTML types.
 - Focus rings must be visible.
 - Empty states teach the next useful action.
-- Event History combines saved Expenses and Settlement Payments in newest-first order.
+- Event History combines saved Expenses and payments in newest-first order. Each row leads with the record kind and human action, then supporting split or outside-payment detail, with amount and correction actions aligned separately.

@@ -122,6 +122,34 @@ describe('Event creation and access', () => {
     expect(response.status).toBe(400)
     expect(html).toContain('Currency must be AUD, USD, EUR, GBP, or NZD')
   })
+
+  it('keeps safe submitted HTML Event values on validation errors', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request(formRequest('/events', {
+      title: 'Dinner "crew" <script>',
+      currency: 'AUD',
+      displayName: ' '
+    }))
+    const html = await response.text()
+
+    expect(response.status).toBe(400)
+    expect(html).toContain('Participant display name is required')
+    expect(html).toContain('value="Dinner &quot;crew&quot; &lt;script&gt;"')
+    expect(html).toContain('<option value="AUD" selected>AUD</option>')
+    expect(html).toContain('name="displayName" required autocomplete="name" dir="auto"')
+    expect(html).toContain('aria-invalid="true" aria-describedby="create-display-name-error" autofocus')
+    expect(html).toContain('id="create-display-name-error"')
+    expect(html).not.toContain('Dinner "crew" <script>')
+  })
+
+  it('serves a quiet favicon response for browser polish', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const response = await app.request('/favicon.ico')
+
+    expect(response.status).toBe(204)
+  })
 })
 
 describe('Event workflows', () => {
@@ -922,28 +950,78 @@ describe('Frontend design contract', () => {
     const html = await response.text()
 
     expect(response.status).toBe(200)
-    expect(html).toContain('Split costs, easy...done...')
-    expect(html).toContain('Share the link. Add people and expenses. Pay them.')
+    expect(html).toContain('Create a shared expense Event')
+    expect(html).toContain('Use it for a trip, dinner, or shared cost.')
+    expect(html).toContain('Next, share the private Event Link. Anyone with the link can view and edit.')
     expect(html).toContain('class="brand"')
     expect(html).toContain('class="privacy-note"')
+    expect(html).toContain('class="create-submit-row"')
+    expect(html).toContain('data-create-readiness')
+    expect(html).toContain('data-create-submit')
     expect(html).not.toContain('Private-by-Link')
-    expect(html).toContain('<input type="text" name="title"')
+    expect(html).toContain('novalidate data-create-form')
+    expect(html).toContain('<input type="text" name="title" required autocomplete="off" dir="auto"')
+    expect(html).toContain('id="create-title-error"')
+    expect(html).toContain('Enter an Event Title.')
+    expect(html).toContain('id="create-privacy-note"')
     expect(html).toContain('<option value="AUD">AUD</option>')
     expect(html).toContain('<option value="NZD">NZD</option>')
+    expect(html).toMatch(/href="\/static\/styles\.[a-z0-9]+\.css"/)
   })
 
-  it('serves frontend assets aligned to the documented visual system', async () => {
-    const app = createApp({ storeFactory: () => new MemoryStore() })
+  it('serves versioned frontend assets with immutable caching', async () => {
+    const store = new MemoryStore()
+    const app = createApp({ storeFactory: () => store })
 
-    const styles = await (await app.request('/static/styles.css')).text()
-    const client = await (await app.request('/static/client.js')).text()
+    const createHtml = await (await app.request('/')).text()
+    const stylesheetPath = requiredMatch(createHtml, /href="(\/static\/styles\.[a-z0-9]+\.css)"/)
+    const created = await createEvent(app)
+    const eventHtml = await (await app.request(created.event.eventLinkPath)).text()
+    const clientScriptPath = requiredMatch(eventHtml, /src="(\/static\/client\.[a-z0-9]+\.js)"/)
 
+    const styleResponse = await app.request(stylesheetPath)
+    const clientResponse = await app.request(clientScriptPath)
+    const styles = await styleResponse.text()
+    const client = await clientResponse.text()
+
+    expect(styleResponse.status).toBe(200)
+    expect(styleResponse.headers.get('cache-control')).toBe('public, max-age=31556952, immutable')
+    expect(styleResponse.headers.get('etag')).toMatch(/^"[a-z0-9]+"$/)
     expect(styles).toContain('--on-ledger')
+    expect(styles).toContain('min-height: 100svh')
+    expect(styles).toContain('.create-form button')
+    expect(styles).toContain('@media (max-height: 560px) and (orientation: landscape)')
+    expect(styles).toContain('overflow-wrap: anywhere')
+    expect(styles).toContain('.event-title-line [data-event-title]')
+    expect(styles).toContain('.history-actions button')
+    expect(styles).toContain('input[aria-invalid="true"]')
+    expect(styles).toContain('.field-error')
+    expect(styles).toContain('input::placeholder')
+    expect(styles).toContain('text-wrap: balance')
+    expect(styles).toContain('.create-readiness')
+    expect(styles).toContain('data-create-submit')
     expect(styles).toContain('.ledger-row.row-positive')
     expect(styles).toContain('@media (max-width: 820px)')
-    expect(client).toContain('Expense defaults')
+    expect(clientResponse.status).toBe(200)
+    expect(clientResponse.headers.get('cache-control')).toBe('public, max-age=31556952, immutable')
+    expect(clientResponse.headers.get('etag')).toMatch(/^"[a-z0-9]+"$/)
+    expect(client).toContain('Adding as')
     expect(client).toContain('data-included-participants')
     expect(client).toContain('Event Link copied')
+  })
+
+  it('keeps legacy static asset paths conservative and rejects unknown versions', async () => {
+    const app = createApp({ storeFactory: () => new MemoryStore() })
+
+    const legacyStyles = await app.request('/static/styles.css')
+    const legacyClient = await app.request('/static/client.js')
+    const missingAsset = await app.request('/static/client.missing.js')
+
+    expect(legacyStyles.status).toBe(200)
+    expect(legacyStyles.headers.get('cache-control')).toBe('no-store')
+    expect(legacyClient.status).toBe(200)
+    expect(legacyClient.headers.get('cache-control')).toBe('no-store')
+    expect(missingAsset.status).toBe(404)
   })
 })
 
@@ -954,6 +1032,14 @@ async function createEvent(app: ReturnType<typeof createApp>) {
     displayName: 'Sarah'
   }))
   return responseJson<EventSnapshot>(response)
+}
+
+function requiredMatch(value: string, pattern: RegExp): string {
+  const match = value.match(pattern)
+  if (!match?.[1]) {
+    throw new Error(`Expected value to match ${pattern}`)
+  }
+  return match[1]
 }
 
 function testApp(): { app: ReturnType<typeof createApp>; notifier: FakeRealtimeNotifier } {

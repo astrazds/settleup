@@ -4,6 +4,9 @@ dist/
 # dev
 .yarn/
 !.yarn/releases
+.agents/
+.codex/
+.impeccable/
 playwright-report/
 test-results/
 coverage/

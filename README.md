@@ -22,17 +22,18 @@ Core docs:
 - `src/money.ts`: two-decimal Currency parsing and formatting.
 - `src/ui/client-expense-draft.ts`: DOM-free Expense Draft equal split composition.
 - `src/ui/client-event-page-policy.ts`: DOM-free Event page state policy.
-- `src/ui/client*.ts`: plain TypeScript browser client modules, bundled into `/static/client.js`.
+- `src/ui/react-client.tsx`: React Event page client served by the Worker as `/static/client.js`.
+- `src/ui/generated-client.ts`: generated bundled browser asset. Regenerate with `npm run build:client`.
 - `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
 
 ## Current UI
 
-- Create page copy: "Split costs, easy...done..." and "Share the link. Add people and expenses. Pay them."
+- Create page copy: "Create a shared expense Event", "Use it for a trip, dinner, or shared cost.", and the private Event Link note before Create Event.
 - Event header: Event Title, copy-link icon, Currency note, and realtime status.
 - Balances: net Balance rows, with a `Pay` action on rows where a Participant owes money.
-- Add Expense: header defaults selector, Description, Amount, Save, compact Participant rows, and a one-row Add Participant form. The payer is the current Participant default; selected Participants split the Expense equally.
-- Manual Payment: folded form inside Balances for Sender, Recipient, Amount, Record, and Cancel.
-- Event History: newest-first Expenses and Settlement Payments with Edit and Delete controls.
+- Add Expense: one-Participant onboarding, header acting-Participant selector once available, Description, Amount, Save expense, compact Participant rows, and a one-row Add Participant form. The payer is the current Participant default; selected Participants split the Expense equally.
+- Record outside payment: folded form inside Balances for Who paid, Who received, Amount, Record payment, and Cancel.
+- Event History: newest-first Expenses and payments with Edit and Delete controls.
 
 ## Runtime Scope
 
@@ -42,6 +43,7 @@ The UI and saved Event HTTP commands expose Expense capture as Description, Amou
 
 ```sh
 npm install
+npm run build:client
 npm run dev
 npm test
 npm run test:coverage

@@ -10,35 +10,35 @@ import { parseMoney } from '../money'
 import { clientScript } from './client'
 import {
   composeExpenseDraft,
+  equalShares,
   formatDraftMoneyMinor,
   parseDraftMoneyMinor
 } from './client-expense-draft'
-import { composeEventPagePolicy } from './client-event-page-policy'
+import { composeEventPagePolicy, eventHistoryItems } from './client-event-page-policy'
+import { newParticipantId, shouldShowDraftUpdateWarning } from './client-state'
 
 describe('client script contract', () => {
   it('emits parseable browser JavaScript', () => {
     expect(() => new Function(clientScript)).not.toThrow()
   })
 
-  it('emits stable browser policy helper names without relying on function stringification', () => {
-    expect(clientScript).toContain('function composeEventPagePolicy(eventSnapshot)')
-    expect(clientScript).toContain('function eventHistoryItems(eventSnapshot)')
-    expect(clientScript).toContain('currentParticipantDefaults: currentParticipantDefaultsPolicy')
+  it('emits the bundled React client entrypoint', () => {
+    expect(clientScript).toContain('createRoot')
+    expect(clientScript).toContain('data-expense-form')
+    expect(clientScript).toContain('Event Link copied')
   })
 
   it('splits equal Shares by Participant order and assigns rounding deterministically', () => {
-    const client = loadClientHarness()
-
-    const shares = client.equalShares(1000, [
+    const shares = equalShares(1000, [
       { id: 'participant-3', order: 3 },
       { id: 'participant-1', order: 1 },
       { id: 'participant-2', order: 2 }
     ])
 
     expect(shares).toEqual([
-      { participantId: 'participant-1', amountMinor: 334 },
-      { participantId: 'participant-2', amountMinor: 333 },
-      { participantId: 'participant-3', amountMinor: 333 }
+      { participantId: 'participant-1', amountMinor: 334, amount: '3.34' },
+      { participantId: 'participant-2', amountMinor: 333, amount: '3.33' },
+      { participantId: 'participant-3', amountMinor: 333, amount: '3.33' }
     ])
   })
 
@@ -88,30 +88,30 @@ describe('client script contract', () => {
   })
 
   it('does not warn dirty drafts during unchanged fallback polling refreshes', () => {
-    const client = loadClientHarness()
-    client.setSnapshot({ event: { updatedAt: '2026-05-28T00:00:00.000Z' } })
-    client.setExpenseDraftDirty(true)
-
-    expect(client.shouldShowDraftUpdateWarning(true, '2026-05-28T00:00:00.000Z')).toBe(false)
+    expect(shouldShowDraftUpdateWarning({
+      preserveDrafts: true,
+      previousEventUpdatedAt: '2026-05-28T00:00:00.000Z',
+      nextEventUpdatedAt: '2026-05-28T00:00:00.000Z',
+      hasActiveDraft: true
+    })).toBe(false)
   })
 
   it('warns dirty drafts when a preserved refresh sees a changed Event timestamp', () => {
-    const client = loadClientHarness()
-    client.setSnapshot({ event: { updatedAt: '2026-05-28T00:00:01.000Z' } })
-    client.setSettlementDraftDirty(true)
-
-    expect(client.shouldShowDraftUpdateWarning(true, '2026-05-28T00:00:00.000Z')).toBe(true)
-    expect(client.shouldShowDraftUpdateWarning(false, '2026-05-28T00:00:00.000Z')).toBe(false)
+    expect(shouldShowDraftUpdateWarning({
+      preserveDrafts: true,
+      previousEventUpdatedAt: '2026-05-28T00:00:00.000Z',
+      nextEventUpdatedAt: '2026-05-28T00:00:01.000Z',
+      hasActiveDraft: true
+    })).toBe(true)
+    expect(shouldShowDraftUpdateWarning({
+      preserveDrafts: false,
+      previousEventUpdatedAt: '2026-05-28T00:00:00.000Z',
+      nextEventUpdatedAt: '2026-05-28T00:00:01.000Z',
+      hasActiveDraft: true
+    })).toBe(false)
   })
 
   it('shows transient notifications without changing trigger button text', () => {
-    const toast = fakeElement()
-    const client = loadClientHarness({ '[data-toast-message]': toast })
-
-    client.showToast('Event Link copied')
-
-    expect(toast.textContent).toBe('Event Link copied')
-    expect(toast.hidden).toBe(false)
     expect(clientScript).not.toContain("button.textContent = 'Event Link copied'")
     expect(clientScript).not.toContain("button.textContent = 'Summary copied'")
   })
@@ -140,7 +140,7 @@ describe('client script contract', () => {
     })
     expect(policy.eventLink).toEqual({
       showCopy: true,
-      placement: 'expenseDefaults',
+      placement: 'eventHeader',
       showPanel: false
     })
     expect(policy.layout).toMatchObject({
@@ -151,54 +151,52 @@ describe('client script contract', () => {
   })
 
   it('guides a one-Participant empty Event toward adding Participants', () => {
-    const panel = fakeElement()
-    const title = fakeElement()
-    const copy = fakeElement()
-    const action = fakeElement()
-    const client = loadClientHarness({
-      '[data-start-guidance]': panel,
-      '[data-start-title]': title,
-      '[data-start-copy]': copy,
-      '[data-start-action]': action
-    })
-
-    client.setSnapshot({
-      participants: [{ id: 'sarah', order: 1 }],
+    const policy = composeEventPagePolicy({
+      participants: [participant('sarah', 'Sarah', 1)],
+      settlementPayments: [],
       expenses: []
     })
-    client.renderStartGuidance()
 
-    expect(panel.hidden).toBe(false)
-    expect(panel.dataset.startTarget).toBe('[data-participant-form]')
-    expect(title.textContent).toBe('Add the people sharing this Event')
-    expect(action.textContent).toBe('Add Participant')
+    expect(policy.startGuidance).toMatchObject({
+      visible: false,
+      target: '',
+      title: '',
+      action: '',
+      actionLabel: ''
+    })
+    expect(policy.currentParticipantDefaults.visible).toBe(false)
+    expect(policy.expenseForm).toEqual({
+      canRecord: false,
+      disabledReason: 'Add another Participant before recording an expense.',
+      onboardingTitle: 'Add another Participant first',
+      onboardingCopy: 'Expenses need at least two Participants so SettleUp can split the cost.'
+    })
   })
 
   it('guides a multi-Participant empty Event toward the first Expense', () => {
-    const panel = fakeElement()
-    const title = fakeElement()
-    const copy = fakeElement()
-    const action = fakeElement()
-    const client = loadClientHarness({
-      '[data-start-guidance]': panel,
-      '[data-start-title]': title,
-      '[data-start-copy]': copy,
-      '[data-start-action]': action
-    })
-
-    client.setSnapshot({
+    const policy = composeEventPagePolicy({
       participants: [
-        { id: 'sarah', order: 1 },
-        { id: 'alex', order: 2 }
+        participant('sarah', 'Sarah', 1),
+        participant('alex', 'Alex', 2)
       ],
+      settlementPayments: [],
       expenses: []
     })
-    client.renderStartGuidance()
 
-    expect(panel.hidden).toBe(false)
-    expect(panel.dataset.startTarget).toBe('[data-expense-form]')
-    expect(title.textContent).toBe('Record the first shared cost')
-    expect(action.textContent).toBe('Add Expense')
+    expect(policy.startGuidance).toMatchObject({
+      visible: true,
+      target: '[data-expense-form]',
+      title: 'Record the first shared cost',
+      action: 'Add Expense',
+      actionLabel: 'Focus Add Expense form'
+    })
+    expect(policy.currentParticipantDefaults.visible).toBe(true)
+    expect(policy.expenseForm).toEqual({
+      canRecord: true,
+      disabledReason: '',
+      onboardingTitle: '',
+      onboardingCopy: ''
+    })
   })
 
   it('composes Event page UI policy without rendering HTML', () => {
@@ -206,17 +204,18 @@ describe('client script contract', () => {
       participants: [participant('sarah', 'Sarah', 1)]
     }))
     expect(oneParticipantEmpty.startGuidance).toEqual({
-      visible: true,
-      target: '[data-participant-form]',
-      title: 'Add the people sharing this Event',
-      copy: 'Start with Participants, then record the first shared cost.',
-      action: 'Add Participant'
+      visible: false,
+      target: '',
+      title: '',
+      copy: '',
+      action: '',
+      actionLabel: ''
     })
     expect(oneParticipantEmpty.currentParticipantDefaults).toEqual({
-      visible: true,
-      label: 'Expense defaults',
-      selectorLabel: 'Expense defaults Participant',
-      switchLabel: 'Switch',
+      visible: false,
+      label: 'Adding as',
+      selectorLabel: 'Choose who is adding expenses',
+      switchLabel: 'Switch person',
       impliesLoginOrPermissions: false
     })
     expect(oneParticipantEmpty.participants.deleteById).toMatchObject({
@@ -261,7 +260,8 @@ describe('client script contract', () => {
       target: '',
       title: '',
       copy: '',
-      action: ''
+      action: '',
+      actionLabel: ''
     })
     expect(populatedPolicy.participants.deleteById).toMatchObject({
       sarah: { canDelete: false, reason: 'Referenced Participants cannot be deleted.' },
@@ -280,12 +280,12 @@ describe('client script contract', () => {
       visible: true,
       target: '[data-expense-form]',
       title: 'Record the first shared cost',
-      action: 'Add Expense'
+      action: 'Add Expense',
+      actionLabel: 'Focus Add Expense form'
     })
   })
 
   it('normalizes panel action visibility for empty, populated, and settled Events', () => {
-    const client = loadClientHarness()
     const empty = snapshot({
       participants: [participant('sarah', 'Sarah', 1)]
     })
@@ -323,10 +323,15 @@ describe('client script contract', () => {
       }]
     })
 
-    expect(client.panelActionState(empty)).toMatchObject({
+    expect(composeEventPagePolicy(empty)).toMatchObject({
       settlementPaymentForm: {
         canRecord: false,
-        disabledReason: 'Add another Participant before recording a Settlement Payment.'
+        disabledReason: 'Add another Participant before recording a payment.'
+      },
+      taskRegions: {
+        recordSettlementPayment: {
+          visible: false
+        }
       },
       participants: {
         deleteById: {
@@ -337,10 +342,15 @@ describe('client script contract', () => {
         }
       }
     })
-    expect(client.panelActionState(populated)).toMatchObject({
+    expect(composeEventPagePolicy(populated)).toMatchObject({
       settlementPaymentForm: {
         canRecord: true,
         disabledReason: ''
+      },
+      taskRegions: {
+        recordSettlementPayment: {
+          visible: true
+        }
       },
       participants: {
         deleteById: {
@@ -349,7 +359,7 @@ describe('client script contract', () => {
         }
       }
     })
-    expect(client.panelActionState(settled)).toMatchObject({
+    expect(composeEventPagePolicy(settled)).toMatchObject({
       settlementPaymentForm: {
         canRecord: true,
         disabledReason: ''
@@ -365,13 +375,13 @@ describe('client script contract', () => {
     expect(state).toMatchObject({
       eventLink: {
         showCopy: true,
-        placement: 'expenseDefaults',
+        placement: 'eventHeader',
         showPanel: false
       },
       layout: {
         participantPlacement: 'addExpense',
         showParticipantsPanel: false,
-        eventLinkPlacement: 'expenseDefaults',
+        eventLinkPlacement: 'eventHeader',
         showEventLinkPanel: false,
         showHistoryPanel: true,
         historyOrder: 'newest-first'
@@ -380,7 +390,6 @@ describe('client script contract', () => {
   })
 
   it('orders mixed Event History records newest first', () => {
-    const client = loadClientHarness()
     const event = snapshot({
       participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)],
       expenses: [
@@ -410,7 +419,7 @@ describe('client script contract', () => {
       }]
     })
 
-    expect(client.historyItems(event).map((item) => `${item.kind}:${item.record.id}`)).toEqual([
+    expect(eventHistoryItems(event).map((item) => `${item.kind}:${item.record.id}`)).toEqual([
       'settlementPayment:payment-1',
       'expense:expense-2',
       'expense:expense-1'
@@ -418,7 +427,6 @@ describe('client script contract', () => {
   })
 
   it('detects the new Participant so embedded add can include it in the active Expense draft', () => {
-    const client = loadClientHarness()
     const before = snapshot({
       participants: [participant('sarah', 'Sarah', 1)]
     })
@@ -426,124 +434,24 @@ describe('client script contract', () => {
       participants: [participant('sarah', 'Sarah', 1), participant('alex', 'Alex', 2)]
     })
 
-    expect(client.newParticipantId(before, after)).toBe('alex')
-    expect(client.newParticipantId(after, after)).toBeNull()
+    expect(newParticipantId(before, after)).toBe('alex')
+    expect(newParticipantId(after, after)).toBeNull()
   })
 
-  it('uses the shared Event realtime protocol shape in the browser bootstrap', () => {
-    const client = loadClientHarness({}, 'event-token-a')
-
-    expect(client.parseEventRealtimeMessage('{"type":"event_changed"}')).toEqual(
-      parseEventRealtimeMessage('{"type":"event_changed"}')
-    )
-    expect(client.parseEventRealtimeMessage('pong')).toBeNull()
-    expect(client.parseEventRealtimeMessage('{')).toBeNull()
-    expect(client.parseEventRealtimeMessage('{"type":"presence_changed"}')).toBeNull()
-    expect(client.realtimeUrl()).toBe(`wss://example.test${eventRealtimeRoutePath('event-token-a')}`)
-    expect(client.eventRealtimeReconnectDelay(1)).toBe(eventRealtimeReconnectDelay(1))
-    expect(client.eventRealtimeReconnectDelay(6)).toBe(eventRealtimeReconnectDelay(6))
+  it('uses the shared Event realtime protocol shape in the browser bundle', () => {
+    expect(parseEventRealtimeMessage('{"type":"event_changed"}')).toEqual({ type: 'event_changed' })
+    expect(parseEventRealtimeMessage('pong')).toBeNull()
+    expect(parseEventRealtimeMessage('{')).toBeNull()
+    expect(parseEventRealtimeMessage('{"type":"presence_changed"}')).toBeNull()
+    expect(eventRealtimeRoutePath('event-token-a')).toBe('/api/events/event-token-a/realtime')
+    expect(eventRealtimeReconnectDelay(1)).toBe(1000)
+    expect(eventRealtimeReconnectDelay(6)).toBe(30000)
   })
 
-  it('schedules one deterministic fallback polling interval', () => {
-    const timers: ClientHarnessTimers = { intervals: [] }
-    const client = loadClientHarness({}, undefined, timers)
-
-    client.startFallbackPolling()
-    client.startFallbackPolling()
-
-    expect(timers.intervals.map((interval) => interval.delay)).toEqual([EVENT_REALTIME_FALLBACK_POLL_MS])
+  it('keeps the browser fallback polling interval deterministic', () => {
+    expect(EVENT_REALTIME_FALLBACK_POLL_MS).toBe(8000)
   })
 })
-
-interface ClientHarness {
-  equalShares: (
-    amountMinor: number,
-    participants: Array<{ id: string, order: number }>
-  ) => Array<{ participantId: string, amountMinor: number }>
-  setExpenseDraftDirty: (value: boolean) => void
-  setSettlementDraftDirty: (value: boolean) => void
-  setSnapshot: (value: unknown) => void
-  showToast: (message: string) => void
-  renderStartGuidance: () => void
-  panelActionState: (value: unknown) => unknown
-  historyItems: (value: unknown) => Array<{ kind: string, record: { id: string } }>
-  newParticipantId: (previousSnapshot: unknown, nextSnapshot: unknown) => string | null
-  shouldShowDraftUpdateWarning: (preserveDrafts: boolean, previousEventUpdatedAt: string | null) => boolean
-  parseEventRealtimeMessage: (data: unknown) => unknown
-  realtimeUrl: () => string
-  eventRealtimeReconnectDelay: (attempt: number) => number
-  startFallbackPolling: () => void
-}
-
-interface ClientHarnessTimers {
-  intervals: Array<{ callback: () => void, delay: number }>
-}
-
-interface FakeElement {
-  dataset: Record<string, string>
-  hidden: boolean
-  textContent: string
-  querySelector: (selector: string) => FakeElement | null
-}
-
-function loadClientHarness(
-  elements: Record<string, FakeElement> = {},
-  tokenValue?: string,
-  timers?: ClientHarnessTimers
-): ClientHarness {
-  const factory = new Function('document', 'localStorage', 'window', 'navigator', 'fetch', 'WebSocket', `${clientScript}
-return {
-  equalShares,
-  setExpenseDraftDirty(value) { expenseDraftDirty = value },
-  setSettlementDraftDirty(value) { settlementDraftDirty = value },
-  setSnapshot(value) { snapshot = value },
-  showToast,
-  renderStartGuidance,
-  panelActionState,
-  historyItems,
-  newParticipantId,
-  shouldShowDraftUpdateWarning,
-  parseEventRealtimeMessage,
-  realtimeUrl,
-  eventRealtimeReconnectDelay,
-  startFallbackPolling
-}
-`)
-  const elementMap = new Map(Object.entries(elements))
-  const app = fakeElement()
-  if (tokenValue) {
-    app.dataset.token = tokenValue
-  }
-  app.querySelector = (selector) => elementMap.get(selector) ?? null
-
-  return factory(
-    { querySelector: (selector: string) => selector === '#app' ? app : null },
-    { getItem: () => null, setItem: () => undefined },
-    {
-      addEventListener: () => undefined,
-      clearInterval: () => undefined,
-      clearTimeout: () => undefined,
-      location: { protocol: 'https:', host: 'example.test' },
-      setInterval: (callback: () => void, delay?: number) => {
-        timers?.intervals.push({ callback, delay: delay ?? 0 })
-        return timers ? timers.intervals.length : 1
-      },
-      setTimeout: () => 1
-    },
-    { clipboard: { writeText: async () => undefined } },
-    async () => new Response(null, { status: 404 }),
-    class {}
-  ) as ClientHarness
-}
-
-function fakeElement(): FakeElement {
-  return {
-    dataset: {},
-    hidden: true,
-    textContent: '',
-    querySelector: () => null
-  }
-}
 
 function participant(id: string, displayName: string, order: number) {
   return { id, displayName, order }

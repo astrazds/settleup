@@ -16,6 +16,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
+        'src/ui/generated-client.ts',
         'worker-configuration.d.ts',
         'dist-dry-run/**',
         'docs/**'
