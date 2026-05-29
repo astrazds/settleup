@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { executeSavedEventCommand } from './event-command-runtime'
-import { createApp } from './index'
+import worker, { createApp } from './index'
 import type { EventSnapshot, Expense, Participant, SettlementPayment } from './domain'
 import type { EventRealtimeNotifier } from './event-realtime'
 import { MemoryStore } from './store'
@@ -149,6 +149,10 @@ describe('Event creation and access', () => {
     const response = await app.request('/favicon.ico')
 
     expect(response.status).toBe(204)
+  })
+
+  it('exposes scheduled cleanup for Cloudflare Cron Triggers', () => {
+    expect(worker.scheduled).toEqual(expect.any(Function))
   })
 })
 

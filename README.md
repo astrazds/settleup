@@ -16,6 +16,7 @@ Core docs:
 - `src/event-command-runtime.ts`: saved Event mutation lifecycle, validation mapping, and success-only realtime notification.
 - `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, stored Shares, and Settlement Payments.
 - `src/d1-event-record-persistence.ts`: D1 row mapping and all-or-nothing Event Record persistence.
+- `src/event-retention.ts`: short-lived Event retention policy.
 - `src/store.ts`: `MemoryStore` for tests and `D1Store` for Cloudflare D1.
 - `src/event-realtime-protocol.ts`: shared Event realtime message shape, route path, fallback interval, and reconnect policy.
 - `src/event-realtime.ts`: Durable Object WebSocket notifications scoped by Event token.
@@ -79,5 +80,6 @@ The first successful automated production deploy was Forgejo workflow run `#18` 
 - `DB`: D1 database named `settleup`.
 - `EVENT_REALTIME`: Durable Object namespace for Event-scoped WebSocket notifications.
 - `VERSION_METADATA`: Worker version metadata used for deployment diagnostics.
+- Cron Trigger: daily UTC Event cleanup for records older than five days.
 
 Treat local config as intent, not proof of deployed state. Verify live Cloudflare resources before remote migrations, deployments, or production debugging.

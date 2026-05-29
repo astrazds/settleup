@@ -287,6 +287,72 @@ describe('D1Store with migrations', () => {
     })
   })
 
+  it('expires Events three days after creation', async () => {
+    const { db } = await createD1Store()
+    const store = new D1Store(db, () => new Date('2026-05-23T00:00:00.000Z'))
+    const persistence = new D1EventRecordPersistence(db)
+    const expired = createEventRecord(
+      {
+        title: 'Expired weekend',
+        currency: 'AUD',
+        displayName: 'Sarah'
+      },
+      {
+        eventId: 'event-expired-weekend',
+        participantId: 'participant-expired-sarah',
+        token: 'expired-weekend-token',
+        now: '2026-05-20T00:00:00.000Z'
+      }
+    )
+
+    await persistence.create(expired)
+
+    await expect(store.getEventByToken(expired.event.token)).resolves.toBeNull()
+    await expect(store.addParticipant(expired.event.token, 'Alex')).rejects.toMatchObject({
+      message: 'Event not found',
+      status: 404
+    })
+  })
+
+  it('cleans up Events five days after creation while retaining newer expired Events', async () => {
+    const { store, db } = await createD1Store()
+    const persistence = new D1EventRecordPersistence(db)
+    const cleanupCandidate = createEventRecord(
+      {
+        title: 'Cleanup weekend',
+        currency: 'AUD',
+        displayName: 'Sarah'
+      },
+      {
+        eventId: 'event-cleanup-weekend',
+        participantId: 'participant-cleanup-sarah',
+        token: 'cleanup-weekend-token',
+        now: '2026-05-20T00:00:00.000Z'
+      }
+    )
+    const retainedExpired = createEventRecord(
+      {
+        title: 'Retained weekend',
+        currency: 'AUD',
+        displayName: 'Mia'
+      },
+      {
+        eventId: 'event-retained-weekend',
+        participantId: 'participant-retained-mia',
+        token: 'retained-weekend-token',
+        now: '2026-05-22T00:00:00.000Z'
+      }
+    )
+
+    await persistence.create(cleanupCandidate)
+    await persistence.create(retainedExpired)
+    await store.cleanupExpiredEvents(new Date('2026-05-25T00:00:00.000Z'))
+
+    await expect(persistence.findByToken(cleanupCandidate.event.token)).resolves.toBeNull()
+    await expect(persistence.findByToken(retainedExpired.event.token)).resolves.not.toBeNull()
+    await expect(countRows(db, 'participants', 'event_id = ?', cleanupCandidate.event.id)).resolves.toBe(0)
+  })
+
   it.each(rollbackCases())('rolls back %s when D1 rejects the final Event touch', async (_name, exercise) => {
     await exercise()
   })
@@ -529,4 +595,9 @@ function requireRecord(record: EventRecord | null): EventRecord {
     throw new Error('Expected Event Record')
   }
   return record
+}
+
+async function countRows(db: D1Database, tableName: string, where: string, value: string): Promise<number> {
+  const row = await db.prepare(`select count(*) as count from ${tableName} where ${where}`).bind(value).first<{ count: number }>()
+  return row?.count ?? 0
 }

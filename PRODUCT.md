@@ -19,6 +19,7 @@ Shipped MVP behavior:
 - Record manual Settlement Payments.
 - Refresh saved Event state through realtime notifications, with polling fallback.
 - Preserve active draft forms when saved Event state changes.
+- Expire Events three days after creation and clean up persisted Event data five days after creation.
 
 ## Next Product Work
 
@@ -45,6 +46,7 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Concurrent edits are last-write-wins for the MVP.
 - Event data is Private-by-Link, not public and not account-private.
 - Event Link tokens are opaque, URL-safe, lowercase, and avoid visually ambiguous characters.
+- Event retention is intentionally short for the MVP: Event Links stop resolving after three days, and scheduled cleanup deletes Event data after five days.
 
 ## Out Of Scope
 
@@ -54,7 +56,7 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Natural-language Expense parsing.
 - Receipt photos, OCR, attachments, comments, chat, categories, tags, exports, print views, recurring Events, templates, forgiveness, or waiver records.
 - Presence, viewer counts, edit attribution, locks, merge conflict UI, and audit history.
-- Whole-Event deletion, token rotation, and automatic expiry.
+- Manual whole-Event deletion and token rotation.
 - Offline mutation support, public API guarantees, CAPTCHA, or explicit rate limiting.
 - A separate frontend app detached from the Worker.
 

@@ -17,6 +17,7 @@ export interface EventRecordPersistence {
   create(record: EventRecord): Promise<void>
   replace(record: EventRecord): Promise<void>
   findByToken(token: string): Promise<EventRecord | null>
+  deleteCreatedBefore(cutoff: string): Promise<void>
 }
 
 export class D1EventRecordPersistence implements EventRecordPersistence {
@@ -61,6 +62,32 @@ export class D1EventRecordPersistence implements EventRecordPersistence {
       expenses: await this.expensesForEvent(row.id),
       settlementPayments: await this.settlementPaymentsForEvent(row.id)
     }
+  }
+
+  async deleteCreatedBefore(cutoff: string): Promise<void> {
+    await this.db.batch([
+      this.db
+        .prepare(
+          `delete from shares
+          where expense_id in (
+            select expenses.id
+            from expenses
+            inner join events on events.id = expenses.event_id
+            where events.created_at <= ?
+          )`
+        )
+        .bind(cutoff),
+      this.db
+        .prepare('delete from settlement_payments where event_id in (select id from events where created_at <= ?)')
+        .bind(cutoff),
+      this.db
+        .prepare('delete from expenses where event_id in (select id from events where created_at <= ?)')
+        .bind(cutoff),
+      this.db
+        .prepare('delete from participants where event_id in (select id from events where created_at <= ?)')
+        .bind(cutoff),
+      this.db.prepare('delete from events where created_at <= ?').bind(cutoff)
+    ])
   }
 
   private async participantsForEvent(eventId: string): Promise<Participant[]> {

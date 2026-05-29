@@ -296,7 +296,16 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
 
 const app = createApp()
 
-export default app
+export default {
+  fetch: app.fetch,
+  scheduled(controller, env, ctx) {
+    ctx.waitUntil(cleanupExpiredEvents(env, new Date(controller.scheduledTime)))
+  }
+} satisfies ExportedHandler<Bindings>
+
+export async function cleanupExpiredEvents(env: Bindings, now = new Date()): Promise<void> {
+  await new D1Store(env.DB).cleanupExpiredEvents(now)
+}
 
 async function readJson(request: Request): Promise<unknown> {
   try {

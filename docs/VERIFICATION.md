@@ -47,6 +47,7 @@ rm -rf dist-dry-run
 - Run `npm run cf-typegen` after changing bindings or Wrangler configuration.
 - Use Cloudflare MCP tools for account inventory, current docs, build diagnostics, and observability before assuming remote state.
 - Wrangler config enables `nodejs_compat`, Worker source-map upload, Smart Placement, explicit Workers Logs and Traces sampling, and `VERSION_METADATA` for deployment diagnostics.
+- Wrangler config includes a daily UTC Cron Trigger that runs Event cleanup for records older than five days.
 - `package.json` includes Cloudflare binding descriptions for `DB`, `EVENT_REALTIME`, and `VERSION_METADATA` so deploy tooling can present resource intent.
 
 Before creating, deleting, or mutating remote Cloudflare resources, confirm the intended resource name, binding name, and environment match `wrangler.jsonc` and the task.

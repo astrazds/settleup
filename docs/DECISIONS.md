@@ -17,6 +17,7 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 - Keep Event mutation rules centralized in `src/event-record.ts`; storage adapters load and persist Event Records.
 - Keep D1 row mapping and all-or-nothing Event Record replacement behind `src/d1-event-record-persistence.ts`.
 - D1 adapter tests use Miniflare with checked-in migrations rather than a handwritten SQL fake.
+- Treat MVP Events as short-lived data: expire access after three days and delete persisted records after five days through the Worker Cron Trigger.
 
 ## Runtime Shape
 
