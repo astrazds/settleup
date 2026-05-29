@@ -10,6 +10,7 @@ dist/
 playwright-report/
 test-results/
 coverage/
+worker-startup.cpuprofile
 .vscode/*
 !.vscode/launch.json
 !.vscode/*.code-snippets

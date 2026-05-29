@@ -43,8 +43,10 @@ The UI and saved Event HTTP commands expose Expense capture as Description, Amou
 
 ```sh
 npm install
+npm run build
 npm run build:client
 npm run dev
+npm run db:migrations:apply:local
 npm test
 npm run test:coverage
 npm run typecheck
@@ -57,7 +59,7 @@ npm run deploy
 Local D1 migrations:
 
 ```sh
-npx wrangler d1 migrations apply settleup --local
+npm run db:migrations:apply:local
 ```
 
 `npm run verify` is the full local confidence gate. It runs behavior tests, coverage, typecheck, Playwright smoke tests, HTML validation, and a Wrangler deploy dry run, then cleans `dist-dry-run/`.
@@ -76,5 +78,6 @@ The first successful automated production deploy was Forgejo workflow run `#18` 
 
 - `DB`: D1 database named `settleup`.
 - `EVENT_REALTIME`: Durable Object namespace for Event-scoped WebSocket notifications.
+- `VERSION_METADATA`: Worker version metadata used for deployment diagnostics.
 
 Treat local config as intent, not proof of deployed state. Verify live Cloudflare resources before remote migrations, deployments, or production debugging.

@@ -2,7 +2,15 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "settleup",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-27",
+  "compatibility_date": "2026-05-29",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "upload_source_maps": true,
+  "placement": {
+    "mode": "smart"
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -19,6 +27,9 @@
       }
     ]
   },
+  "version_metadata": {
+    "binding": "VERSION_METADATA"
+  },
   "migrations": [
     {
       "tag": "v1_event_realtime_room",
@@ -27,36 +38,18 @@
       ]
     }
   ],
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+      "persist": true
+    }
   }
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
-  // "ai": {
-  //   "binding": "AI"
-  // },
 }

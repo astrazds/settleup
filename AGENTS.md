@@ -34,7 +34,7 @@ Key files:
 - `npm run cf-typegen`: regenerate Cloudflare binding types.
 - `npm run deploy:dry-run`: verify Worker packaging without deployment.
 - `npm run deploy`: deploy with Wrangler.
-- `npx wrangler d1 migrations apply settleup --local`: apply local D1 migrations.
+- `npm run db:migrations:apply:local`: apply local D1 migrations through the `DB` binding.
 
 ## Style
 

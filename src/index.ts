@@ -18,8 +18,9 @@ import { renderCreatePage, renderEventPage, renderNotFoundPage, stylesheet } fro
 
 export { EventRealtimeRoom }
 
-type Bindings = CloudflareBindings & {
+type Bindings = Omit<CloudflareBindings, 'EVENT_REALTIME' | 'VERSION_METADATA'> & {
   EVENT_REALTIME?: DurableObjectNamespace<EventRealtimeRoom>
+  VERSION_METADATA?: WorkerVersionMetadata
 }
 
 type StoreFactory = (env: Bindings) => AppStore
@@ -70,6 +71,14 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   const app = new Hono<{ Bindings: Bindings }>()
   const storeFactory = deps.storeFactory ?? ((env: Bindings) => new D1Store(env.DB))
   const realtimeNotifierFactory = deps.realtimeNotifierFactory ?? defaultRealtimeNotifierFactory
+
+  app.use('*', async (c, next) => {
+    await next()
+    const workerVersion = c.env?.VERSION_METADATA?.id
+    if (workerVersion) {
+      c.header('x-worker-version', workerVersion)
+    }
+  })
 
   app.get('/', (c) => {
     return c.html(renderCreatePage('', {}, pageAssets), 200, {

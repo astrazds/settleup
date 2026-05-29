@@ -20,14 +20,17 @@
   "author": "Andrejs Strazds <andrejs@astrazds.com>",
   "type": "module",
   "scripts": {
+    "build": "npm run build:client",
     "build:client": "node scripts/build-client.mjs",
     "predev": "npm run build:client",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
+    "db:migrations:apply:local": "wrangler d1 migrations apply DB --local",
+    "db:migrations:apply:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy": "npm run db:migrations:apply:remote && wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "pretest:smoke": "npm run build:client && wrangler d1 migrations apply settleup --local",
-    "pretest:smoke:critical": "npm run build:client && wrangler d1 migrations apply settleup --local",
-    "pretest:smoke:extended": "npm run build:client && wrangler d1 migrations apply settleup --local",
+    "pretest:smoke": "npm run build:client && npm run db:migrations:apply:local",
+    "pretest:smoke:critical": "npm run build:client && npm run db:migrations:apply:local",
+    "pretest:smoke:extended": "npm run build:client && npm run db:migrations:apply:local",
     "test:smoke": "playwright test",
     "test:smoke:critical": "playwright test --project=critical",
     "test:smoke:extended": "playwright test --project=extended",
@@ -41,6 +44,19 @@
     "predeploy:dry-run": "npm run build:client",
     "deploy:dry-run": "wrangler deploy --dry-run --minify --outdir dist-dry-run",
     "verify": "npm test && npm run test:coverage && npm run typecheck && npm run test:smoke && npm run validate:html && sh -c 'trap \"rm -rf dist-dry-run\" EXIT; npm run deploy:dry-run'"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "Cloudflare D1 database for Events, Participants, Expenses, Shares, Settlement Payments, Balances, and Suggested Settlements. Wrangler config binds this as `DB` and migrations live in `migrations/`."
+      },
+      "EVENT_REALTIME": {
+        "description": "Durable Object namespace for Event-scoped WebSocket fan-out. The class is `EventRealtimeRoom` and migrations create it with SQLite storage."
+      },
+      "VERSION_METADATA": {
+        "description": "Worker version metadata used for deployment diagnostics and the `x-worker-version` response header."
+      }
+    }
   },
   "dependencies": {
     "hono": "^4.12.23",

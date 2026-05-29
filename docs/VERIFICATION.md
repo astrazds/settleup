@@ -27,6 +27,8 @@ rm -rf dist-dry-run
 - `npm run test:smoke:extended`: Playwright realtime browser project.
 - `npm run test:smoke`: both Playwright projects against local Wrangler dev and local D1.
 - `npm run validate:html`: validates `docs/design/mockups.html`.
+- `npm run db:migrations:apply:local`: applies D1 migrations to the local D1 database through the `DB` binding.
+- `npm run db:migrations:apply:remote`: applies D1 migrations to the remote D1 database through the `DB` binding.
 - `npm run deploy:dry-run`: Wrangler packaging check without deployment.
 - `npm run build:client`: bundles the React Event page into `src/ui/generated-client.ts`; it is also run by the relevant npm pre-scripts.
 
@@ -41,9 +43,11 @@ rm -rf dist-dry-run
 
 - `wrangler.jsonc` defines the Worker name, compatibility date, D1 binding, Durable Object binding, and Durable Object migration.
 - D1 migrations live in `migrations/`.
-- Run local D1 migrations with `npx wrangler d1 migrations apply settleup --local`.
+- Run local D1 migrations with `npm run db:migrations:apply:local`.
 - Run `npm run cf-typegen` after changing bindings or Wrangler configuration.
 - Use Cloudflare MCP tools for account inventory, current docs, build diagnostics, and observability before assuming remote state.
+- Wrangler config enables `nodejs_compat`, Worker source-map upload, Smart Placement, explicit Workers Logs and Traces sampling, and `VERSION_METADATA` for deployment diagnostics.
+- `package.json` includes Cloudflare binding descriptions for `DB`, `EVENT_REALTIME`, and `VERSION_METADATA` so deploy tooling can present resource intent.
 
 Before creating, deleting, or mutating remote Cloudflare resources, confirm the intended resource name, binding name, and environment match `wrangler.jsonc` and the task.
 
@@ -59,9 +63,10 @@ Production deploy uses these Forgejo repository secrets:
 The production deploy job runs:
 
 ```sh
-npx wrangler d1 migrations apply settleup --remote
 npm run deploy
 ```
+
+`npm run deploy` builds the checked-in client bundle, applies remote D1 migrations through the `DB` binding, and deploys the Worker.
 
 Production deploy target:
 
