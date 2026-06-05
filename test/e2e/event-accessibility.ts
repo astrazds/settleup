@@ -36,7 +36,7 @@ export function describeEventAccessibility(): void {
       await event.settlementPanel().getByRole('button', { name: 'Record outside payment' }).click()
       await expectFormControlNames(event.settlementPanel(), ['Who paid', 'Who received', 'Amount'])
       await expect(event.settlementPanel()).toContainText('Record money that already moved outside SettleUp. This updates balances only.')
-      await expect(event.settlementPanel().locator('[data-settlement-preview]')).toContainText(/Sarah paid Sarah outside SettleUp/)
+      await expect(event.settlementPanel().locator('[data-settlement-preview]')).toContainText('Payment preview will appear after all fields are filled.')
       await event.settlementPanel().getByRole('button', { name: 'Cancel' }).click()
 
       await event.draftExpense({ description: 'Dinner', amount: '90.00' })

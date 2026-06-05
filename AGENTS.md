@@ -58,7 +58,7 @@ For broad runtime, UI, storage, realtime, or deployment packaging changes, run `
 
 - TypeScript work: use `typescript-expert`.
 - Hono-specific questions: check official Hono LLM docs first: `https://hono.dev/llms.txt`, `https://hono.dev/llms-full.txt`, and `https://hono.dev/llms-small.txt`.
-- Frontend, UI, design, accessibility, responsive behavior, copy, or interaction polish: use `impeccable` and read `PRODUCT.md` plus `DESIGN.md`.
+- Frontend, UI, design, accessibility, responsive behavior, copy, or interaction polish: use the repo shadcn workflow and read `PRODUCT.md` plus `DESIGN.md`.
 - shadcn/ui work: use the project shadcn skill, run `npx shadcn@latest info --json`, fetch component docs with `npx shadcn@latest docs <component>`, and prefer `npx shadcn@latest add <component> --dry-run` before writing generated components.
 - TDD or behavior changes: use `tdd` and keep tests behavior-first.
 

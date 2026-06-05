@@ -3,1535 +3,333 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SettleUp Mockups</title>
+  <title>SettleUp shadcn preset mockup</title>
+  <link rel="icon" href="../../assets/icons/settleup-icon.svg" type="image/svg+xml">
   <style>
     :root {
+      --background: oklch(1 0 0);
+      --foreground: oklch(0.153 0.006 107.1);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0.153 0.006 107.1);
+      --primary: oklch(0.228 0.013 107.4);
+      --primary-foreground: oklch(0.988 0.003 106.5);
+      --secondary: oklch(0.966 0.005 106.5);
+      --secondary-foreground: oklch(0.228 0.013 107.4);
+      --muted: oklch(0.966 0.005 106.5);
+      --muted-foreground: oklch(0.58 0.031 107.3);
+      --destructive: oklch(0.577 0.245 27.325);
+      --border: oklch(0.93 0.007 106.5);
+      --input: oklch(0.93 0.007 106.5);
+      --ring: oklch(0.737 0.021 106.9);
+      --radius: 0.625rem;
       color-scheme: light;
-      --paper: oklch(97.5% 0.008 82);
-      --sheet: oklch(99% 0.005 82);
-      --wash: oklch(94.5% 0.012 82);
-      --ink: oklch(22% 0.018 70);
-      --muted: oklch(49% 0.02 70);
-      --rule: oklch(84.5% 0.014 82);
-      --ledger: oklch(46% 0.12 157);
-      --ledger-deep: oklch(35% 0.11 157);
-      --ledger-wash: oklch(94.5% 0.035 157);
-      --ledger-rule: oklch(78% 0.055 157);
-      --on-ledger: oklch(98% 0.006 157);
-      --clay: oklch(49% 0.13 31);
-      --clay-deep: oklch(38% 0.12 31);
-      --clay-wash: oklch(95% 0.028 31);
-      --clay-rule: oklch(78% 0.055 31);
-      --amber: oklch(67% 0.12 78);
-      --amber-deep: oklch(43% 0.095 78);
-      --amber-wash: oklch(94.5% 0.035 78);
-      --amber-rule: oklch(80% 0.065 78);
-      --focus: oklch(62% 0.16 157);
-      --shadow: 0 4px 8px color-mix(in oklch, var(--ink), transparent 88%);
-      --space-sm: 10px;
-      --space-md: 14px;
-      --space-lg: 20px;
-      --space-xl: 28px;
-      --space-2xl: 40px;
-      --space-3xl: 56px;
-      --text-caption: 0.75rem;
-      --text-small: 0.875rem;
-      --text-body: 1rem;
-      --text-subheading: 1.125rem;
-      --text-heading: 1.5rem;
-      --text-display: 1.875rem;
-      --weight-strong: 700;
-      --weight-heavy: 750;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      font-kerning: normal;
-      text-rendering: optimizeLegibility;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
-      background: var(--paper);
-      color: var(--ink);
-      font-size: var(--text-body);
-      line-height: 1.5;
       min-width: 320px;
+      background: var(--background);
+      color: var(--foreground);
+      font-size: 1rem;
+      line-height: 1.5;
     }
 
-    h1, h2, h3, p { margin-top: 0; }
+    main {
+      display: grid;
+      gap: 1.5rem;
+      width: min(100%, 72rem);
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .mockup-section {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--muted-foreground);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .brand-mark {
+      width: 2rem;
+      height: 2rem;
+      border-radius: calc(var(--radius) * 1.8);
+      object-fit: contain;
+      box-shadow: 0 0 0 1px var(--border);
+    }
+
+    .page-header {
+      display: grid;
+      gap: 0.75rem;
+      max-width: 42rem;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
     h1 {
-      font-size: var(--text-heading);
-      line-height: 1.16;
-      margin-bottom: var(--space-sm);
-      font-weight: var(--weight-heavy);
+      font-size: 1.875rem;
+      font-weight: 500;
       letter-spacing: 0;
-      text-wrap: balance;
+      line-height: 1.2;
     }
 
-    h2 {
-      font-size: var(--text-subheading);
-      line-height: 1.25;
-      margin-bottom: 12px;
-      font-weight: var(--weight-strong);
-      letter-spacing: 0;
-    }
-
+    h2,
     h3 {
-      font-size: var(--text-body);
+      font-size: 1rem;
+      font-weight: 500;
       line-height: 1.25;
-      margin-bottom: 4px;
-      font-weight: var(--weight-strong);
-      letter-spacing: 0;
     }
 
-    button, input, select {
-      font: inherit;
+    .muted {
+      color: var(--muted-foreground);
     }
 
-    button {
-      min-height: 40px;
-      border: 1px solid var(--ledger);
-      border-radius: 8px;
-      background: var(--ledger);
-      color: var(--on-ledger);
-      padding: 0 14px;
-      font-weight: var(--weight-strong);
-      transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, transform 120ms ease-out;
+    .grid {
+      display: grid;
+      gap: 1rem;
     }
 
-    button:hover,
-    button.is-hovered {
-      background: var(--ledger-deep);
-      border-color: var(--ledger-deep);
+    .dashboard {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    button:active,
-    button.is-active {
-      transform: translateY(1px);
+    .card {
+      display: grid;
+      gap: 1rem;
+      overflow: hidden;
+      border-radius: min(calc(var(--radius) * 2.6), 24px);
+      background: var(--card);
+      color: var(--card-foreground);
+      padding: 1rem;
+      box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground), transparent 94%);
+      outline: 1px solid color-mix(in oklch, var(--foreground), transparent 95%);
     }
 
-    button.secondary {
-      background: var(--sheet);
-      color: var(--ink);
-      border-color: var(--rule);
+    .card-header {
+      display: grid;
+      gap: 0.375rem;
     }
 
-    button.secondary:hover,
-    button.secondary.is-hovered {
-      background: var(--wash);
-      border-color: color-mix(in oklch, var(--rule), var(--ink) 18%);
+    .row {
+      display: grid;
+      gap: 0.75rem;
+      padding: 0.875rem 0;
+      border-top: 1px solid var(--border);
     }
 
-    button.is-loading {
-      background: var(--ledger-deep);
-      border-color: var(--ledger-deep);
-      color: color-mix(in oklch, var(--on-ledger), transparent 10%);
+    .row:first-child {
+      border-top: 0;
+      padding-top: 0;
     }
 
-    button.small {
-      min-height: 32px;
-      padding-inline: 10px;
-      font-size: var(--text-small);
+    .amount {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      white-space: nowrap;
     }
 
-    button.danger {
-      background: var(--sheet);
-      color: var(--clay);
-      border-color: color-mix(in oklch, var(--clay), var(--rule) 70%);
+    .amount.positive {
+      color: var(--primary);
     }
 
-    button.danger:hover,
-    button.danger.is-hovered {
-      background: var(--clay-wash);
-      border-color: var(--clay-rule);
-      color: var(--clay-deep);
+    .amount.negative {
+      color: var(--destructive);
     }
 
-    button[disabled] {
-      background: var(--wash);
-      border-color: var(--rule);
-      color: color-mix(in oklch, var(--muted), transparent 18%);
-      cursor: not-allowed;
-    }
-
-    input, select {
-      width: 100%;
-      min-width: 0;
-      min-height: 40px;
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      background: var(--sheet);
-      color: var(--ink);
-      padding: 8px 10px;
-    }
-
-    input::placeholder {
-      color: color-mix(in oklch, var(--ink), transparent 36%);
-      opacity: 1;
-    }
-
-    input:focus, select:focus, button:focus {
-      outline: 3px solid color-mix(in oklch, var(--focus), transparent 68%);
-      outline-offset: 2px;
-    }
-
-    input[aria-invalid="true"],
-    select[aria-invalid="true"] {
-      border-color: var(--clay);
+    form {
+      display: grid;
+      gap: 1rem;
     }
 
     label {
       display: grid;
-      gap: 6px;
-      min-width: 0;
-      color: var(--muted);
-      font-size: var(--text-caption);
-      font-weight: var(--weight-strong);
-      line-height: 1.2;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
     }
 
-    .control-note {
-      margin: 0;
-      color: var(--muted);
-      font-size: var(--text-caption);
-      line-height: 1.35;
-    }
-
-    .mockups {
-      display: grid;
-      gap: var(--space-2xl);
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      padding: 32px 28px var(--space-3xl);
-    }
-
-    .artifact-header {
-      display: grid;
-      gap: var(--space-sm);
-      max-width: 760px;
-    }
-
-    .artifact-header h1 {
-      margin-bottom: 0;
-      font-size: var(--text-display);
-      line-height: 1.12;
-    }
-
-    .artifact-header p {
-      max-width: 68ch;
-    }
-
-    .mockup-stack {
-      display: grid;
-      gap: var(--space-xl);
-    }
-
-    .mockup-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: var(--space-xl);
-      align-items: start;
-    }
-
-    .mockup-row.supporting {
-      grid-template-columns: minmax(340px, 0.82fr) minmax(0, 1.18fr);
-    }
-
-    .mockup {
-      background: var(--sheet);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .mockup-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-md);
-      min-height: 54px;
-      padding: 12px 16px;
-      background: var(--wash);
-      border-bottom: 1px solid var(--rule);
-    }
-
-    .mockup-title p {
-      margin: 0;
-      color: var(--muted);
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .screen {
-      padding: 18px;
-      background: var(--paper);
-    }
-
-    .featured .screen {
-      padding: 24px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--ink);
-      font-weight: var(--weight-heavy);
-    }
-
-    .mark {
-      display: grid;
-      gap: 4px;
-      width: 24px;
-    }
-
-    .mark span {
-      display: block;
-      height: 5px;
-      border-radius: 4px;
-      background: var(--ledger);
-    }
-
-    .mark span:first-child {
-      width: 18px;
-      margin-left: 6px;
-    }
-
-    .mark span:last-child {
-      width: 18px;
-    }
-
-    .eyebrow {
-      margin-bottom: 8px;
-      color: var(--ledger-deep);
-      font-size: var(--text-caption);
-      font-weight: var(--weight-heavy);
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .muted { color: var(--muted); }
-    .amount {
-      font-variant-numeric: tabular-nums;
-      font-weight: var(--weight-heavy);
-      white-space: nowrap;
-    }
-    .positive { color: var(--ledger-deep); }
-    .negative { color: var(--clay); }
-    .zero { color: var(--muted); }
-
-    .create-layout {
-      display: grid;
-      justify-items: center;
-      padding: var(--space-lg) 0 var(--space-xl);
-    }
-
-    .create-card {
-      display: grid;
-      gap: 16px;
-      width: min(460px, 100%);
-      min-width: 0;
-    }
-
-    .create-card > h1 {
-      max-width: 16ch;
-      font-size: var(--text-display);
-      line-height: 1.12;
-    }
-
-    .create-card > .muted {
-      max-width: 34ch;
-      text-wrap: pretty;
-    }
-
-    .panel {
-      background: var(--sheet);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-    }
-
-    .panel-body {
-      padding: 16px;
-    }
-
-    .form {
-      display: grid;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .create-form {
-      overflow: hidden;
-    }
-
-    .create-form input,
-    .create-form select,
-    .create-form button {
-      min-height: 44px;
-    }
-
-    .create-form input,
-    .create-form select {
-      font-size: 1rem;
-    }
-
-    .create-form button {
+    input,
+    select {
       width: 100%;
-    }
-
-    .create-submit-row {
-      display: grid;
-      gap: 10px;
-      margin: 2px -16px -16px;
-      border-top: 1px solid var(--rule);
-      background: color-mix(in oklch, var(--wash), var(--sheet) 56%);
-      padding: 12px 16px 16px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
       min-width: 0;
+      height: 2.25rem;
+      border: 1px solid var(--input);
+      border-radius: calc(var(--radius) * 1.8);
+      background: var(--background);
+      color: var(--foreground);
+      padding: 0.25rem 0.75rem;
+      font: inherit;
     }
 
-    .expense-entry-row {
-      grid-template-columns: minmax(0, 1fr) minmax(96px, 120px) auto;
-      align-items: end;
-    }
-
-    .expense-onboarding {
-      display: grid;
-      gap: 4px;
-      border: 1px solid var(--ledger-rule);
-      border-radius: 8px;
-      background: color-mix(in oklch, var(--ledger-wash), var(--sheet) 45%);
-      color: var(--ledger-deep);
-      padding: 12px;
-    }
-
-    .expense-onboarding strong {
-      color: var(--ink);
-    }
-
-    .expense-onboarding p {
-      margin: 0;
-      color: var(--ledger-deep);
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .compact-form {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .privacy-note {
-      border: 1px solid var(--amber-rule);
-      border-radius: 8px;
-      background: var(--amber-wash);
-      padding: 10px 12px;
-      color: var(--amber-deep);
-      font-size: var(--text-small);
-      line-height: 1.4;
-      overflow-wrap: anywhere;
-      text-wrap: pretty;
-    }
-
-    .error {
-      border: 1px solid var(--clay-rule);
-      border-radius: 8px;
-      background: var(--clay-wash);
-      color: var(--clay-deep);
-      padding: 10px 12px;
-      font-size: var(--text-small);
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-      text-wrap: pretty;
-    }
-
-    .app-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: var(--space-md);
-    }
-
-    .app-top h1 {
-      margin-bottom: 4px;
-    }
-
-    .event-title-line {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .event-title-line h1 {
-      margin: 0;
-    }
-
-    .event-title-line span {
-      min-width: 0;
-    }
-
-    .icon-button {
-      flex: 0 0 auto;
-      width: 40px;
-      min-height: 40px;
-      padding: 0;
-      border-color: var(--rule);
-      background: var(--sheet);
-      color: var(--ink);
-    }
-
-    .copy-icon {
-      position: relative;
-      display: block;
-      width: 17px;
-      height: 17px;
-      margin: 0 auto;
-    }
-
-    .copy-icon::before,
-    .copy-icon::after {
-      content: "";
-      position: absolute;
-      width: 11px;
-      height: 13px;
-      border: 2px solid currentColor;
-      border-radius: 3px;
-      background: var(--sheet);
-    }
-
-    .copy-icon::before {
-      top: 0;
-      right: 0;
-    }
-
-    .copy-icon::after {
-      left: 0;
-      bottom: 0;
-    }
-
-    .identity {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--space-sm);
-      width: fit-content;
-      max-width: 100%;
-      margin-bottom: var(--space-md);
-      padding: 10px 12px;
-      background: var(--ledger-wash);
-      border: 1px solid var(--ledger-rule);
-      border-radius: 8px;
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .row-actions,
-    .mobile-actions,
-    .state-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-sm);
-      align-items: center;
-    }
-
-    .expense-defaults {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      max-width: 100%;
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .expense-defaults > span {
-      color: var(--muted);
-      font-weight: var(--weight-strong);
-    }
-
-    .actor-summary {
-      margin: 0;
-      color: var(--muted);
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .actor-summary strong { color: var(--ink); }
-
-    .expense-defaults select {
-      width: auto;
-      min-width: 116px;
-      min-height: 36px;
-    }
-
-    .expense-defaults button {
-      min-height: 36px;
-    }
-
-    .app-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(330px, 0.88fr);
-      gap: var(--space-md);
-      align-items: start;
-    }
-
-    .mockup-row .app-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .column-stack {
-      display: grid;
-      gap: var(--space-md);
-    }
-
-    .section {
-      background: var(--sheet);
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .section + .section {
-      margin-top: var(--space-md);
-    }
-
-    .column-stack .section + .section,
-    .app-grid > .section + .section {
-      margin-top: 0;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--rule);
-      background: color-mix(in oklch, var(--wash), var(--sheet) 50%);
-    }
-
-    .section-head h2 {
-      margin: 0;
-    }
-
-    .section-head .amount,
-    .section-head .chip {
-      font-size: var(--text-small);
-    }
-
-    .ledger-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      align-items: center;
-      padding: 11px 14px;
-      border-top: 1px solid color-mix(in oklch, var(--rule), transparent 28%);
-    }
-
-    .ledger-row > div {
-      min-width: 0;
-    }
-
-    .ledger-row:first-child {
-      border-top: 0;
-    }
-
-    .ledger-row strong {
-      font-weight: var(--weight-strong);
-    }
-
-    .included-panel {
-      display: grid;
-      gap: 0;
-      min-inline-size: 0;
-      margin: 12px 0 0;
-      border: 0;
-      border-top: 1px solid var(--rule);
-      padding: 10px 0 0;
-    }
-
-    .included-panel legend {
-      padding: 0 6px 0 0;
-      color: var(--muted);
-      font-size: var(--text-small);
-      font-weight: var(--weight-strong);
-    }
-
-    .included-list {
-      display: grid;
-      gap: 0;
-    }
-
-    .participant-row {
-      grid-template-columns: auto minmax(0, 1fr) auto;
-      gap: 10px;
-      min-height: 56px;
-      padding: 8px 0;
-    }
-
-    .participant-row:first-child {
-      border-top: 0;
-    }
-
-    .participant-split {
-      display: flex;
+    button,
+    .button {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      min-height: 44px;
-      margin: 0;
+      min-height: 2.25rem;
+      border: 1px solid transparent;
+      border-radius: calc(var(--radius) * 1.8);
+      background: var(--primary);
+      color: var(--primary-foreground);
+      padding: 0 1rem;
+      font: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
     }
 
-    .participant-split input {
-      width: 18px;
-      height: 18px;
-      min-height: 0;
-      margin: 0;
-      padding: 0;
-      border: 0;
-      border-radius: 4px;
-      accent-color: var(--ledger);
+    .button.secondary,
+    button.secondary {
+      border-color: var(--border);
+      background: var(--background);
+      color: var(--foreground);
     }
 
-    .participant-summary {
-      display: grid;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .participant-summary strong {
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-
-    .participant-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      color: var(--muted);
-      font-size: var(--text-caption);
-      font-weight: var(--weight-strong);
-      line-height: 1.35;
-    }
-
-    .participant-inclusion.included {
-      color: var(--ledger-deep);
-    }
-
-    .participant-actions {
-      justify-content: flex-end;
-    }
-
-    .participant-actions button {
-      min-height: 36px;
-      padding-inline: 10px;
-    }
-
-    .participant-row-editing {
-      align-items: end;
-    }
-
-    .participant-rename-label {
-      gap: 4px;
-    }
-
-    .participant-correction-error {
-      grid-column: 2 / -1;
-      margin: 0;
-    }
-
-    .subline {
-      color: var(--muted);
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .ledger-row.row-positive { background: color-mix(in oklch, var(--ledger-wash), var(--sheet) 62%); }
-    .ledger-row.row-negative { background: color-mix(in oklch, var(--clay-wash), var(--sheet) 30%); }
-    .ledger-row.row-reviewing { align-items: start; background: var(--amber-wash); }
-    .subtotal { background: var(--ledger-wash); }
-
-    .manual-payment {
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      background: var(--amber-wash);
-    }
-
-    .manual-payment .amount {
-      color: var(--amber-deep);
-    }
-
-    .history-kind {
-      display: inline-block;
-      flex: 0 0 auto;
-      color: var(--muted);
-      font-size: var(--text-caption);
-      font-weight: var(--weight-heavy);
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    .history-record {
-      align-items: start;
-      gap: 14px;
-    }
-
-    .history-main {
-      display: grid;
-      gap: 5px;
-      min-width: 0;
-    }
-
-    .history-title-line {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 7px;
-      min-width: 0;
-    }
-
-    .history-title-line h3 {
-      margin: 0;
-    }
-
-    .record-row h3,
-    .record-row strong {
-      display: block;
-      min-width: 0;
-      overflow-wrap: anywhere;
-    }
-
-    .history-summary,
-    .history-detail {
-      margin: 0;
-      color: var(--muted);
-      font-size: var(--text-small);
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .history-summary strong {
-      display: inline;
-      color: var(--ink);
-    }
-
-    .history-detail span {
-      color: var(--ink);
-      font-weight: var(--weight-strong);
-    }
-
-    .history-side {
-      display: grid;
-      justify-items: end;
-      gap: 8px;
-    }
-
-    .history-actions {
-      justify-content: flex-end;
-      flex-wrap: nowrap;
-    }
-
-    .history-actions button {
-      min-height: 36px;
-      padding-inline: 10px;
-    }
-
-    .settlement-form {
-      border-top: 1px solid var(--amber-rule);
-      background: color-mix(in oklch, var(--sheet), var(--amber-wash) 42%);
-    }
-
-    .settlement-party-row,
-    .settlement-action-row {
-      display: grid;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .settlement-party-row {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .settlement-action-row {
-      grid-template-columns: minmax(0, 1fr) auto auto;
-    }
-
-    .settlement-action-row button {
-      min-width: 76px;
-    }
-
-    .settlement-intent {
-      margin: 0;
-    }
-
-    .settlement-preview {
-      margin: 0;
-      border: 1px solid var(--amber-rule);
-      border-radius: 8px;
-      background: var(--amber-wash);
-      color: var(--amber-deep);
-      padding: 8px 10px;
-      font-size: var(--text-small);
-      font-weight: var(--weight-strong);
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
-
-    .refresh-note {
-      border: 1px solid var(--amber-rule);
-      border-radius: 8px;
-      background: var(--amber-wash);
-      color: var(--amber-deep);
-      padding: 10px 12px;
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .empty-state {
-      padding: 18px 14px;
-      color: var(--muted);
-      font-size: var(--text-small);
-    }
-
-    .chip {
+    .badge {
       display: inline-flex;
-      align-items: center;
-      border-radius: 4px;
-      padding: 2px 7px;
-      background: var(--wash);
-      color: var(--muted);
-      font-size: var(--text-caption);
-      font-weight: var(--weight-strong);
-      line-height: 1.35;
+      width: fit-content;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 0.8);
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      padding: 0.125rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
     }
 
-    .chip-current,
-    .chip-success {
-      background: var(--ledger-wash);
-      color: var(--ledger-deep);
-    }
-
-    .chip-pending {
-      background: var(--amber-wash);
-      color: var(--amber-deep);
-    }
-
-    .error {
-      margin-bottom: var(--space-sm);
-      border: 1px solid var(--clay-rule);
-      border-radius: 8px;
-      background: var(--clay-wash);
-      color: var(--clay-deep);
-      padding: 8px 10px;
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .success-note {
-      border: 1px solid var(--ledger-rule);
-      border-radius: 8px;
-      background: var(--ledger-wash);
-      color: var(--ledger-deep);
-      padding: 8px 10px;
-      font-size: var(--text-small);
-      line-height: 1.35;
-    }
-
-    .state-strip {
+    .split {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: var(--space-md);
-      align-content: start;
+      gap: 0.75rem;
     }
 
-    .state-box {
-      border: 1px solid var(--rule);
-      border-radius: 8px;
-      padding: 12px;
-      background: var(--sheet);
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
 
-    .state-box h3 {
-      margin-bottom: var(--space-sm);
+    .create {
+      min-height: 100svh;
+      align-content: center;
+      max-width: 36rem;
     }
 
-    .state-box p:last-child {
-      margin-bottom: 0;
-    }
-
-    .state-actions + .control-note {
-      margin-top: 8px;
-    }
-
-    .mobile-frame {
-      width: 390px;
-      max-width: 100%;
-      margin: 0 auto;
-      border: 1px solid var(--rule);
-      border-radius: 24px;
-      background: var(--paper);
-      padding: 12px;
-    }
-
-    .mobile-frame .app-grid,
-    .mobile-frame .create-layout,
-    .mobile-frame .form-grid {
-      display: block;
-    }
-
-    .mobile-frame .app-top {
-      display: block;
-    }
-
-    .mobile-frame .section,
-    .mobile-frame .identity {
-      margin-bottom: 12px;
-    }
-
-    .mobile-frame .mobile-actions {
-      margin-bottom: 12px;
-    }
-
-    @media (max-width: 820px) {
-      .mockups { padding: 14px; gap: var(--space-xl); }
-      .mockup-stack { gap: var(--space-lg); }
-      .mockup-row, .mockup-row.supporting { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
-      .create-layout, .app-grid, .form-grid, .state-strip { display: block; }
-      .create-card { gap: 14px; }
-      .create-card > h1 { max-width: 14ch; }
-      .state-box { margin-bottom: 10px; }
-      .app-top { display: block; }
-      .manual-payment { grid-template-columns: minmax(0, 1fr); }
-      .settlement-party-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .settlement-action-row { grid-template-columns: minmax(0, 1fr) auto auto; }
-      .participant-row-editing { grid-template-columns: auto minmax(0, 1fr); }
-      .participant-row-editing .participant-actions,
-      .participant-correction-error { grid-column: 2 / -1; }
-      .participant-row-editing .participant-actions { justify-content: start; }
-      .record-row { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-      .history-side { justify-items: stretch; }
-      .history-side .amount { justify-self: start; }
-      .history-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .history-actions button { width: 100%; }
-      .expense-entry-row { grid-template-columns: minmax(0, 1fr) auto; }
-      .expense-entry-row label:first-child { grid-column: 1 / -1; }
-      .expense-defaults {
-        flex: 1 1 100%;
-        justify-content: stretch;
-      }
-      .expense-defaults > span {
-        width: 100%;
-      }
-      .expense-defaults select {
-        flex: 1 1 120px;
-      }
-      .featured .screen, .screen { padding: 14px; }
-    }
-
-    @media (max-width: 640px), (pointer: coarse) {
-      button,
-      button.small,
-      input,
-      select {
-        min-height: 44px;
-      }
-    }
-
-    @media (max-height: 560px) and (orientation: landscape) {
-      .create-card {
-        gap: 8px;
+    @media (min-width: 52rem) {
+      main {
+        padding: 2rem;
       }
 
-      .create-card > h1 {
-        max-width: none;
-        font-size: var(--text-heading);
+      .dashboard {
+        grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr);
       }
 
-      .create-form {
-        grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(96px, 1fr));
-        gap: 8px 10px;
+      .history {
+        grid-column: 1 / -1;
+      }
+
+      .row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+      }
+
+      .split {
+        grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem) auto;
         align-items: end;
-        padding: 12px;
-      }
-
-      .create-form .form-grid {
-        grid-column: 2 / -1;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .create-submit-row {
-        grid-column: 1 / -1;
-        grid-template-columns: minmax(0, 1fr) minmax(132px, auto);
-        align-items: stretch;
-        margin: 0;
-        border-top: 0;
-        background: transparent;
-        padding: 0;
-      }
-
-      .create-submit-row .privacy-note {
-        align-self: stretch;
-      }
-
-      .create-submit-row button {
-        width: auto;
-        min-width: 132px;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .mockup-title {
-        display: grid;
-        justify-content: start;
-        gap: 4px;
-        min-height: 0;
-        padding: 12px 14px;
-      }
-
-      .state-strip {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 10px;
-      }
-
-      .state-box {
-        margin-bottom: 0;
-        padding: 12px;
-      }
-
-      .state-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        align-items: stretch;
-      }
-
-      .state-actions button {
-        width: 100%;
-        padding-inline: 10px;
-      }
-
-      .state-actions button:last-child {
-        grid-column: 1 / -1;
-      }
-
-      .state-edit-row,
-      .state-delete-row {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 10px;
-        align-items: start;
-        padding: 12px;
-      }
-
-      .state-box .row-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        gap: 8px;
-      }
-
-      .state-box .row-actions button,
-      .state-delete-row button {
-        width: 100%;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
       }
     }
   </style>
 </head>
 <body>
-  <main class="mockups">
-    <header class="artifact-header">
-      <div class="brand">
-        <span class="mark" aria-hidden="true"><span></span><span></span></span>
-        <span>SettleUp</span>
-      </div>
-      <h1>Product Brandkit Mockups</h1>
-      <p class="muted">One canonical direction using receipt-grid structure, warm paper neutrals, ledger green, and low-drama copy.</p>
-    </header>
-
-    <div class="mockup-stack">
-    <section class="mockup featured">
-      <div class="mockup-title">
-        <strong>Create Event</strong>
-        <p>Form-first, no marketing hero</p>
-      </div>
-      <div class="screen">
-        <div class="create-layout">
-          <div class="create-card">
-            <div class="brand">
-              <span class="mark" aria-hidden="true"><span></span><span></span></span>
-              <span>SettleUp</span>
-            </div>
-            <h1>Create a shared expense Event</h1>
-            <p class="muted">Use it for a trip, dinner, or shared cost.</p>
-            <div class="panel">
-              <div class="panel-body">
-                <div class="form create-form">
-                  <label>Event Title<input type="text" dir="auto" value="Sydney weekend"></label>
-                  <div class="form-grid">
-                    <label>Currency<select><option>AUD</option></select></label>
-                    <label>Your name<input type="text" dir="auto" value="Sarah"></label>
-                  </div>
-                  <div class="create-submit-row">
-                    <div id="create-privacy-note" class="privacy-note">Next, share the private Event Link. Anyone with the link can view and edit.</div>
-                    <button type="button">Create Event</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="mockup-row">
-    <section class="mockup">
-      <div class="mockup-title">
-        <strong>Empty Event</strong>
-        <p>Balances first, next action clear</p>
-      </div>
-      <div class="screen">
-        <div class="app-top">
-          <div>
-            <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
-            <div class="event-title-line"><h1><span>Sydney weekend</span></h1><button class="icon-button" type="button" aria-label="Copy Event Link" title="Copy Event Link"><span class="copy-icon" aria-hidden="true"></span></button></div>
-            <p class="muted">AUD, Anyone with this link can edit.</p>
-          </div>
-        </div>
-        <div class="app-grid">
-          <section class="section">
-            <div class="section-head"><h2>Balances</h2><span class="chip">0 Expenses</span></div>
-            <div class="ledger-row"><strong>Sarah</strong><span class="amount zero">is settled</span></div>
-          </section>
-          <section class="section">
-            <div class="section-head">
-              <h2>Add Expense</h2>
-            </div>
-              <div class="panel-body">
-                <div class="expense-onboarding">
-                  <strong>Add another Participant first</strong>
-                  <p>Expenses need at least two Participants so SettleUp can split the cost.</p>
-                </div>
-                <div class="compact-form">
-                  <label><span class="sr-only">Display name</span><input type="text" placeholder="Name"></label>
-                  <button type="button">Add</button>
-                </div>
-              </div>
-            </section>
-          <section class="section">
-            <div class="section-head"><h2>Event History</h2></div>
-            <div class="empty-state">No Event history yet.</div>
-          </section>
-        </div>
-      </div>
-    </section>
-
-    <section class="mockup">
-      <div class="mockup-title">
-        <strong>Balance Pay State</strong>
-        <p>Owed rows can settle directly from Balances</p>
-      </div>
-      <div class="screen">
-        <div class="app-grid">
-          <section class="section">
-            <div class="section-head"><h2>Balances</h2><span class="amount positive">Outstanding $137.40</span></div>
-            <div class="ledger-row row-positive">
-              <strong>Sarah</strong>
-              <span class="amount positive">is owed $84.70</span>
-            </div>
-            <div class="ledger-row row-negative">
-              <strong>Alex</strong>
-              <span class="row-actions"><button type="button" class="secondary">Pay</button><span class="amount negative">owes $84.70</span></span>
-            </div>
-            <div class="ledger-row row-negative row-reviewing">
-              <div>
-                <strong>Alex</strong>
-                <p class="control-note">Alex pays Sarah $84.70</p>
-              </div>
-              <span class="row-actions"><button type="button">Record payment</button><button type="button" class="secondary">Cancel</button></span>
-            </div>
-            <div class="panel-body form">
-              <button type="button" class="secondary">Record outside payment</button>
-              <form class="inline-form settlement-form">
-                <p class="control-note settlement-intent">Record money that already moved outside SettleUp. This updates balances only.</p>
-                <div class="settlement-party-row">
-                  <label>Who paid<select><option>Alex</option></select></label>
-                  <label>Who received<select><option>Sarah</option></select></label>
-                </div>
-                <div class="settlement-action-row">
-                  <label><span class="sr-only">Amount</span><input type="text" inputmode="decimal" aria-label="Amount" value="40.00"></label>
-                  <button type="submit">Record payment</button>
-                  <button type="button" class="secondary">Cancel</button>
-                </div>
-                <p class="settlement-preview">Alex paid Sarah $40.00 outside SettleUp.</p>
-              </form>
-            </div>
-          </section>
-          <section class="section">
-            <div class="section-head"><h2>Event History</h2></div>
-            <div class="ledger-row record-row history-record row-positive">
-              <div class="history-main">
-                <div class="history-title-line"><span class="history-kind">Payment</span><strong>Alex paid Sarah</strong></div>
-                <p class="history-summary">Recorded payment outside SettleUp</p>
-              </div>
-              <div class="history-side"><span class="amount positive">$42.50</span></div>
-            </div>
-            <div class="empty-state">Record a payment when money moves outside SettleUp.</div>
-          </section>
-        </div>
-      </div>
-    </section>
+  <main aria-labelledby="document-title">
+    <h1 id="document-title">SettleUp shadcn preset mockup</h1>
+  <section class="create mockup-section" aria-labelledby="create-title">
+    <div class="brand"><img class="brand-mark" src="../../assets/icons/settleup-icon.svg" alt="" aria-hidden="true"><span>SettleUp</span></div>
+    <div class="page-header">
+      <h2 id="create-title">Create a shared expense Event</h2>
+      <p class="muted">Use it for a trip, dinner, or shared cost.</p>
     </div>
+    <form class="card">
+      <label>Event Title<input type="text" value="Sydney weekend"></label>
+      <div class="split">
+        <label>Currency<select><option>AUD</option></select></label>
+        <label>Your name<input type="text" value="Sarah"></label>
+        <button type="submit">Create Event</button>
+      </div>
+      <p class="muted">Next, share the private Event Link. Anyone with the link can view and edit.</p>
+    </form>
+  </section>
 
-    <section class="mockup featured">
-      <div class="mockup-title">
-        <strong>Populated Event</strong>
-        <p>Receipt-grid records and aligned amounts</p>
-      </div>
-      <div class="screen">
-        <div class="app-top">
-          <div>
-            <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
-            <div class="event-title-line"><h1><span>Sydney weekend</span></h1><button class="icon-button" type="button" aria-label="Copy Event Link" title="Copy Event Link"><span class="copy-icon" aria-hidden="true"></span></button></div>
-            <p class="muted">AUD, 4 Participants, 4 Expenses</p>
-          </div>
-        </div>
-        <div class="app-grid">
-          <div class="column-stack">
-            <section class="section">
-              <div class="section-head"><h2>Balances</h2><span class="amount positive">Outstanding $137.40</span></div>
-              <div class="ledger-row subtotal row-positive">
-                <strong>Sarah</strong>
-                <span class="amount positive">is owed $84.70</span>
-              </div>
-              <div class="ledger-row row-positive">
-                <strong>Marco</strong>
-                <span class="amount positive">is owed $52.70</span>
-              </div>
-              <div class="ledger-row row-negative">
-                <strong>Alex</strong>
-                <span class="row-actions"><button type="button" class="secondary">Pay</button><span class="amount negative">owes $91.20</span></span>
-              </div>
-              <div class="ledger-row row-negative">
-                <strong>Priya</strong>
-                <span class="row-actions"><button type="button" class="secondary">Pay</button><span class="amount negative">owes $46.20</span></span>
-              </div>
-            </section>
-            <section class="section">
-              <div class="section-head"><h2>Event History</h2></div>
-              <div class="ledger-row record-row history-record">
-                <div class="history-main">
-                  <div class="history-title-line"><span class="history-kind">Expense</span><h3>Dinner</h3></div>
-                  <p class="history-summary"><strong>Sarah</strong> paid $180.00</p>
-                  <p class="history-detail"><span>Split between</span> Sarah $52.50, Alex $61.20, Priya $46.20, Marco $20.10</p>
-                </div>
-                <div class="history-side"><span class="amount">$180.00</span></div>
-              </div>
-              <div class="ledger-row record-row history-record">
-                <div class="history-main">
-                  <div class="history-title-line"><span class="history-kind">Expense</span><h3>Ferry tickets</h3></div>
-                  <p class="history-summary"><strong>Marco</strong> paid $86.40</p>
-                  <p class="history-detail"><span>Split between</span> Sarah $21.60, Alex $21.60, Priya $21.60, Marco $21.60</p>
-                </div>
-                <div class="history-side"><span class="amount">$86.40</span></div>
-              </div>
-              <div class="ledger-row record-row history-record">
-                <div class="history-main">
-                  <div class="history-title-line"><span class="history-kind">Expense</span><h3>Groceries</h3></div>
-                  <p class="history-summary"><strong>Sarah</strong> paid $74.80</p>
-                  <p class="history-detail"><span>Split between</span> Sarah $18.70, Alex $18.70, Priya $18.70, Marco $18.70</p>
-                </div>
-                <div class="history-side"><span class="amount">$74.80</span></div>
-              </div>
-              <div class="ledger-row record-row history-record">
-                <div class="history-main">
-                  <div class="history-title-line"><span class="history-kind">Expense</span><h3>Petrol</h3></div>
-                  <p class="history-summary"><strong>Marco</strong> paid $54.00</p>
-                  <p class="history-detail"><span>Split between</span> Alex $27.00, Priya $27.00</p>
-                </div>
-                <div class="history-side"><span class="amount">$54.00</span></div>
-              </div>
-            </section>
-          </div>
-          <div class="column-stack">
-            <section class="section">
-              <div class="section-head">
-                <div><h2>Add Expense</h2><p class="actor-summary">Paid by <strong>Sarah</strong></p></div>
-                <div class="expense-defaults"><span>Adding as</span><select aria-label="Choose who is adding expenses"><option>Sarah</option></select></div>
-              </div>
-              <div class="panel-body form">
-                <p class="control-note payer-note">Paid by Sarah.</p>
-                <div class="form-grid expense-entry-row">
-                  <label>Description<input type="text" value="Parking"></label>
-                  <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
-                  <button type="button">Save expense</button>
-                </div>
-                <fieldset class="included-panel">
-                  <legend>Split between</legend>
-                  <div class="included-list">
-                    <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Sarah"></label><div class="participant-summary"><strong>Sarah</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                    <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Alex"></label><div class="participant-summary"><strong>Alex</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                    <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Priya"></label><div class="participant-summary"><strong>Priya</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                    <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Marco"></label><div class="participant-summary"><strong>Marco</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                  </div>
-                </fieldset>
-                <div class="compact-form">
-                  <label><span class="sr-only">Display name</span><input type="text" placeholder="Name"></label>
-                  <button type="button">Add</button>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="mockup-row supporting">
-    <section class="mockup">
-      <div class="mockup-title">
-        <strong>Mobile Event Page</strong>
-        <p>Single column with tap-safe density</p>
-      </div>
-      <div class="screen">
-        <div class="mobile-frame">
-          <div class="brand"><span class="mark" aria-hidden="true"><span></span><span></span></span><span>SettleUp</span></div>
-          <div class="event-title-line"><h1><span>Sydney weekend</span></h1><button class="icon-button" type="button" aria-label="Copy Event Link" title="Copy Event Link"><span class="copy-icon" aria-hidden="true"></span></button></div>
-          <p class="muted">AUD, 4 Participants</p>
-          <section class="section">
-            <div class="section-head"><h2>Balances</h2></div>
-            <div class="ledger-row row-positive"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
-            <div class="ledger-row row-negative"><strong>Alex</strong><span class="row-actions"><button type="button" class="secondary">Pay</button><span class="amount negative">owes $91.20</span></span></div>
-            <div class="ledger-row row-negative"><strong>Priya</strong><span class="row-actions"><button type="button" class="secondary">Pay</button><span class="amount negative">owes $46.20</span></span></div>
-            <div class="panel-body form">
-              <button type="button" class="secondary">Record outside payment</button>
-            </div>
-          </section>
-          <section class="section">
-            <div class="section-head">
-              <div><h2>Add Expense</h2><p class="actor-summary">Paid by <strong>Sarah</strong></p></div>
-              <div class="expense-defaults"><span>Adding as</span><select aria-label="Choose who is adding expenses"><option>Sarah</option></select></div>
-            </div>
-            <div class="panel-body form">
-              <p class="control-note payer-note">Paid by Sarah.</p>
-                <div class="form-grid expense-entry-row">
-                <label>Description<input type="text" value="Parking"></label>
-                <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
-                <button type="button">Save expense</button>
-              </div>
-              <fieldset class="included-panel">
-                <legend>Split between</legend>
-                <div class="included-list">
-                  <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Sarah"></label><div class="participant-summary"><strong>Sarah</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                  <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Alex"></label><div class="participant-summary"><strong>Alex</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                  <div class="ledger-row participant-row"><label class="participant-split"><input type="checkbox" checked aria-label="Split with Priya"></label><div class="participant-summary"><strong>Priya</strong><span class="participant-meta"><span class="participant-inclusion included">Included in split</span><span>used in records</span></span></div><span class="row-actions participant-actions"><button type="button" class="secondary">Rename</button></span></div>
-                </div>
-              </fieldset>
-              <div class="compact-form">
-                <label><span class="sr-only">Display name</span><input type="text" placeholder="Name"></label>
-                <button type="button">Add</button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </section>
-
-    <section class="mockup">
-      <div class="mockup-title">
-        <strong>Interaction States</strong>
-        <p>Controls and money states</p>
-      </div>
-      <div class="screen">
-        <div class="state-strip">
-          <div class="state-box">
-            <h3>Buttons</h3>
-            <div class="state-actions">
-              <button type="button">Primary</button>
-              <button type="button" class="is-hovered">Hover</button>
-              <button type="button" class="is-active">Active</button>
-              <button type="button" class="is-loading">Saving...</button>
-              <button type="button" disabled>Save expense</button>
-            </div>
-            <p class="control-note">Choose at least one Participant to split this expense.</p>
-          </div>
-          <div class="state-box">
-            <h3>Focus And Validation</h3>
-            <p class="error">Choose at least one Participant to split between.</p>
-            <label>Amount<input type="text" inputmode="decimal" value="18.00"></label>
-          </div>
-          <div class="state-box">
-            <h3>Rows</h3>
-            <div class="ledger-row row-positive">
-              <span>Sarah</span>
-              <span class="amount positive">is owed $24.00</span>
-            </div>
-            <div class="ledger-row row-negative">
-              <span>Alex</span>
-              <span class="row-actions"><button type="button" class="secondary small">Pay</button><span class="amount negative">owes $24.00</span></span>
-            </div>
-          </div>
-          <div class="state-box">
-            <h3>Edit And Delete</h3>
-            <div class="ledger-row participant-row participant-row-editing">
-              <label class="participant-split"><input type="checkbox" checked aria-label="Split with Avery"></label>
-              <div class="participant-summary">
-                <label class="participant-rename-label">Participant name<input type="text" dir="auto" value="Avery אלכס Traveler With A Very Long Shared Name 😊"></label>
-              </div>
-              <span class="row-actions participant-actions">
-                <button type="button" class="small">Save name</button>
-                <button type="button" class="secondary small">Cancel</button>
-              </span>
-              <p class="error participant-correction-error">Participant name is required.</p>
-            </div>
-            <div class="ledger-row state-edit-row">
-              <div>
-                <strong>Dinner</strong>
-                <p class="subline">Editing amount and included Participants</p>
-              </div>
-              <div class="row-actions">
-                <button type="button" class="secondary small">Cancel</button>
-                <button type="button" class="small">Save</button>
-              </div>
-            </div>
-            <div class="ledger-row state-delete-row">
-              <div>
-                <strong>Delete Dinner?</strong>
-                <p class="subline">This removes the Expense from Balances.</p>
-              </div>
-              <button type="button" class="danger small">Delete</button>
-            </div>
-          </div>
-          <div class="state-box">
-            <h3>Feedback</h3>
-            <p class="chip chip-success">Event Link copied</p>
-            <p class="success-note">Expense saved. Balances refreshed.</p>
-            <p class="control-note">Copied feedback clears after a moment.</p>
-          </div>
-          <div class="state-box">
-            <h3>Refresh</h3>
-            <p class="refresh-note">Refreshing Event data...</p>
-            <p class="control-note">Draft fields stay unchanged while new rows arrive.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+  <section class="mockup-section" aria-labelledby="event-title">
+    <div class="brand"><img class="brand-mark" src="../../assets/icons/settleup-icon.svg" alt="" aria-hidden="true"><span>SettleUp</span></div>
+    <div class="page-header">
+      <h2 id="event-title">Sydney weekend</h2>
+      <p class="muted">AUD Event Link shared privately.</p>
     </div>
+    <div class="dashboard grid">
+      <section class="card" aria-labelledby="balances-title">
+        <div class="card-header">
+          <h2 id="balances-title">Balances</h2>
+          <p class="muted">Suggested payments update as records are saved.</p>
+        </div>
+        <div>
+          <div class="row"><strong>Sarah</strong><span class="amount positive">is owed $84.70</span></div>
+          <div class="row"><strong>Alex</strong><span class="actions"><button class="secondary" type="button">Pay</button><span class="amount negative">owes $91.20</span></span></div>
+          <div class="row"><strong>Priya</strong><span class="actions"><button class="secondary" type="button">Pay</button><span class="amount negative">owes $46.20</span></span></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="expense-title">
+        <div class="card-header">
+          <h2 id="expense-title">Add Expense</h2>
+          <p class="muted">Adding as Sarah.</p>
+        </div>
+        <form>
+          <div class="split">
+            <label>Description<input type="text" value="Dinner"></label>
+            <label>Amount<input type="text" value="120.00"></label>
+            <button type="submit">Save expense</button>
+          </div>
+          <div class="row"><strong>Sarah</strong><span class="badge">Included in split</span></div>
+          <div class="row"><strong>Alex</strong><span class="badge">Included in split</span></div>
+          <div class="row"><strong>Priya</strong><span class="badge">Included in split</span></div>
+        </form>
+      </section>
+
+      <section class="card history" aria-labelledby="history-title">
+        <div class="card-header">
+          <h2 id="history-title">Event History</h2>
+          <p class="muted">Newest records first.</p>
+        </div>
+        <div>
+          <div class="row">
+            <span><span class="badge">Expense</span> Dinner</span>
+            <span class="actions"><span class="amount">$120.00</span><button class="secondary" type="button">Edit</button><button class="secondary" type="button">Delete</button></span>
+          </div>
+          <div class="row">
+            <span><span class="badge">Payment</span> Alex paid Sarah</span>
+            <span class="actions"><span class="amount positive">$30.00</span><button class="secondary" type="button">Edit</button><button class="secondary" type="button">Delete</button></span>
+          </div>
+        </div>
+      </section>
     </div>
+  </section>
   </main>
 </body>
 </html>

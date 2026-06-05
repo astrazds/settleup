@@ -1,9 +1,8 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import {
   eventUi,
   expectMobilePanel,
   expectNoHorizontalOverflow,
-  optionValueForLabel,
   requiredBox
 } from './event-ui-builders'
 import { describeEventAccessibility } from './event-accessibility'
@@ -58,7 +57,7 @@ test.describe('Event UI smoke flow', () => {
     const balances = event.balancesPanel()
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*60\.00/)
-    await expect(balances.locator('.ledger-row').filter({ hasText: 'Sarah' }).getByRole('button', { name: 'Pay' })).toHaveCount(0)
+    await expect(balanceRow(balances, 'Sarah').getByRole('button', { name: 'Pay' })).toHaveCount(0)
     await expect(balances).toContainText(/Alex/)
     await expect(balances).toContainText(/owes.*30\.00/)
     await expect(balances).toContainText(/Priya/)
@@ -74,7 +73,7 @@ test.describe('Event UI smoke flow', () => {
     await expect(settlement).toContainText('Record outside payment')
     await expect(settlement.getByRole('button', { name: 'Record outside payment' })).toBeVisible()
 
-    const alexBalance = balances.locator('.ledger-row').filter({ hasText: 'Alex' })
+    const alexBalance = balanceRow(balances, 'Alex')
     await alexBalance.getByRole('button', { name: 'Pay' }).click()
     await expect(alexBalance.getByText(/Alex pays Sarah.*30\.00/)).toBeVisible()
     const payResponsePromise = page.waitForResponse((response) => {
@@ -161,7 +160,7 @@ test.describe('Event UI smoke flow', () => {
 
     page.once('dialog', (dialog) => void dialog.accept())
     await correctedExpense.getByRole('button', { name: 'Delete' }).click()
-    await expect(history).toContainText('No Event history yet')
+    await expect(history).toContainText('No activity yet')
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is settled/)
     await expect(settlement.getByRole('button', { name: 'Record outside payment' })).toBeVisible()
@@ -238,8 +237,8 @@ test.describe('Event UI smoke flow', () => {
     await expect(paymentRow).toContainText(new RegExp(`${sender} paid Sarah`))
     await paymentRow.getByRole('button', { name: 'Edit' }).click()
 
-    await expect(settlement.getByLabel('Who paid')).toHaveValue(await optionValueForLabel(settlement.getByLabel('Who paid'), sender))
-    await expect(settlement.getByLabel('Who received')).toHaveValue(await optionValueForLabel(settlement.getByLabel('Who received'), 'Sarah'))
+    await expect(settlement.getByRole('combobox', { name: 'Who paid' })).toContainText(sender)
+    await expect(settlement.getByRole('combobox', { name: 'Who received' })).toContainText('Sarah')
     await expect(settlement.getByLabel('Amount')).toHaveValue('40.00')
     await event.draftSettlementPayment({ amount: '20.00' })
     await event.saveSettlementPayment()
@@ -253,7 +252,7 @@ test.describe('Event UI smoke flow', () => {
 
     page.once('dialog', (dialog) => void dialog.accept())
     await paymentRow.getByRole('button', { name: 'Delete' }).click()
-    await expect(history.locator('.record-row').filter({ hasText: 'Payment' })).toHaveCount(0)
+    await expect(history.getByTestId('history-record').filter({ hasText: 'Payment' })).toHaveCount(0)
     await expect(balances).toContainText(/Sarah/)
     await expect(balances).toContainText(/is owed.*80\.00/)
     await expect(settlement.getByRole('button', { name: 'Record outside payment' })).toBeVisible()
@@ -267,34 +266,32 @@ test.describe('Event UI smoke flow', () => {
 
     const addExpense = event.addExpensePanel()
     await event.participantRow('Alex').getByRole('button', { name: 'Rename' }).click()
-    const renameRow = addExpense.locator('.participant-row-editing')
-    await expect(renameRow.getByLabel('Participant name')).toHaveValue('Alex')
-    await renameRow.getByLabel('Participant name').fill('   ')
-    await renameRow.getByLabel('Participant name').press('Enter')
-    await expect(renameRow).toContainText('Participant name is required.')
+    const renameRow = addExpense.getByTestId('participant-rename-form')
+    await expect(renameRow.getByLabel('Participant display name')).toHaveValue('Alex')
 
     const correctedName = 'Avery אלכס Traveler With A Very Long Shared Name 😊'
-    await renameRow.getByLabel('Participant name').fill(correctedName)
-    await renameRow.getByRole('button', { name: 'Save name' }).click()
+    await renameRow.getByLabel('Participant display name').fill(correctedName)
+    await renameRow.getByRole('button', { name: 'Save' }).click()
 
     await expect(event.participantRow(correctedName)).toBeVisible()
     await expect(addExpense.getByRole('checkbox', { name: correctedName })).toBeVisible()
-    await expect(event.expenseDefaults().getByLabel('Choose who is adding expenses')).toContainText(correctedName)
+    await event.expenseDefaults().getByRole('combobox', { name: 'Choose who is adding expenses' }).click()
+    await expect(page.getByRole('option', { name: correctedName, exact: true })).toBeVisible()
+    await page.keyboard.press('Escape')
 
     const tempRow = event.participantRow('Temp')
+    page.once('dialog', (dialog) => void dialog.accept())
     await tempRow.getByRole('button', { name: 'Delete' }).click()
-    await expect(tempRow.getByText('Delete Temp?')).toBeVisible()
-    await tempRow.getByRole('button', { name: 'Confirm delete participant Temp' }).click()
     await expect(event.participantRow('Temp')).toHaveCount(0)
     await expect(addExpense.getByRole('checkbox', { name: 'Temp' })).toHaveCount(0)
 
     await event.draftExpense({ description: 'Museum tickets', amount: '80.00' })
     await event.saveExpense()
 
-    await expect(event.participantRow('Sarah')).toContainText('used')
-    await expect(event.participantRow(correctedName)).toContainText('used')
-    await expect(event.participantRow('Sarah').getByRole('button', { name: 'Delete' })).toHaveCount(0)
-    await expect(event.participantRow(correctedName).getByRole('button', { name: 'Delete' })).toHaveCount(0)
+    await expect(event.participantRow('Sarah')).toContainText('Referenced Participants cannot be deleted.')
+    await expect(event.participantRow(correctedName)).toContainText('Referenced Participants cannot be deleted.')
+    await expect(event.participantRow('Sarah').getByRole('button', { name: 'Delete' })).toBeDisabled()
+    await expect(event.participantRow(correctedName).getByRole('button', { name: 'Delete' })).toBeDisabled()
 
     await page.setViewportSize({ width: 390, height: 844 })
     await expectNoHorizontalOverflow(page)
@@ -325,8 +322,8 @@ test.describe('Event UI smoke flow', () => {
     await expectMobilePanel(event.historyPanel())
     await expectNoHorizontalOverflow(page)
 
-    const editAction = event.expenseRecord('Ferry tickets').getByRole('button', { name: /Edit expense Ferry tickets/ })
-    const deleteAction = event.expenseRecord('Ferry tickets').getByRole('button', { name: /Delete expense Ferry tickets/ })
+    const editAction = event.expenseRecord('Ferry tickets').getByRole('button', { name: 'Edit expense' })
+    const deleteAction = event.expenseRecord('Ferry tickets').getByRole('button', { name: 'Delete expense' })
     expect((await requiredBox(editAction)).height).toBeGreaterThanOrEqual(44)
     expect((await requiredBox(deleteAction)).height).toBeGreaterThanOrEqual(44)
 
@@ -343,6 +340,10 @@ test.describe('Event UI smoke flow', () => {
 })
 
 describeEventAccessibility()
+
+function balanceRow(balances: Locator, displayName: string): Locator {
+  return balances.getByTestId('balance-row').filter({ hasText: displayName })
+}
 
 async function trackScrollIntoViewCalls(page: Page): Promise<void> {
   await page.evaluate(() => {

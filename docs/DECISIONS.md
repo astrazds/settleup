@@ -24,6 +24,7 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 - Route handlers adapt HTTP details into Saved Event Commands; `src/event-command-runtime.ts` owns saved mutation execution, validation error mapping, and success-only realtime notification.
 - UI state that can be described without the DOM belongs in plain TypeScript policy/composition modules before it is consumed by React components.
 - Use checked-in shadcn/ui source components for the React Event page. Keep the app server-rendered and app-served; do not introduce a separate frontend build app just to use shadcn.
+- Use shadcn preset `b6u0ULvrE` (`radix-rhea`, olive base color, Inter variable font, Lucide icons) as the UI styling baseline.
 - `npm run build:client` owns both generated browser assets: the React client bundle and the compiled shadcn/Tailwind stylesheet module.
 
 ## Access And Privacy

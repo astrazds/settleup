@@ -25,9 +25,10 @@ Core docs:
 - `src/money.ts`: two-decimal Currency parsing and formatting.
 - `src/ui/client-expense-draft.ts`: DOM-free Expense Draft equal split composition.
 - `src/ui/client-event-page-policy.ts`: DOM-free Event page state policy.
+- `src/ui/app-icons.ts` and `assets/icons/`: app icon, favicon, touch icon, and manifest assets served by the Node app.
 - `src/ui/react-client.tsx`: React Event page client composed with shadcn/ui source components and served by the app as `/static/client.js`.
 - `src/components/ui/`: checked-in shadcn/ui source components used by the React Event page.
-- `src/ui/shadcn.css`: Tailwind v4 and shadcn theme input for browser styles.
+- `src/ui/shadcn.css`: Tailwind v4 and shadcn preset `b6u0ULvrE` theme input for browser styles.
 - `src/ui/generated-client.ts`: generated bundled browser asset. Regenerate with `npm run build:client`.
 - `src/ui/generated-shadcn-styles.ts`: generated bundled stylesheet asset. Regenerate with `npm run build:client`.
 - `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
@@ -35,13 +36,13 @@ Core docs:
 ## Current UI
 
 - Create page copy: "Create a shared expense Event", "Use it for a trip, dinner, or shared cost.", and the private Event Link note before Create Event.
-- Event header: Event Title, copy-link icon, Currency note, and realtime status.
+- Event header: Event Title, Copy Event Link action, Currency note, realtime status, and current acting Participant selector once split selection is possible.
 - Balances: net Balance rows, with a `Pay` action on rows where a Participant owes money.
 - Add Expense: one-Participant onboarding, header acting-Participant selector once available, Description, Amount, Save expense, compact Participant rows, and a one-row Add Participant form. The payer is the current Participant default; selected Participants split the Expense equally.
-- Record outside payment: folded form inside Balances for Who paid, Who received, Amount, Record payment, and Cancel.
+- Record outside payment: folded shadcn panel beside Balances for Who paid, Who received, Amount, Record payment, and Cancel.
 - Event History: newest-first Expenses and payments with Edit and Delete controls.
 
-The Event page uses shadcn/ui source components for panels, fields, buttons, badges, alerts, and loading states while retaining native selects and checkboxes where the browser control behavior is part of the workflow.
+The UI uses shadcn preset `b6u0ULvrE` as the styling baseline. The Event page uses checked-in shadcn/ui source components for panels, fields, buttons, badges, alerts, Radix Select, Radix Checkbox, and loading states.
 
 ## Runtime Scope
 

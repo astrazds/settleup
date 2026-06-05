@@ -10,12 +10,13 @@ The create page is a compact task form, not a landing page. It uses the headline
 
 ## Visual System
 
+- Use shadcn preset `b6u0ULvrE` as the visual source of truth. It resolves to the `radix-rhea` style with the olive base color, Inter variable font, Lucide icons, default radius, default menu color, and subtle menu accent.
 - Use a text-first `SettleUp` wordmark with a simple code-native mark if needed.
 - Avoid generic money imagery: coins, dollar signs, wallets, banks, calculators, and receipt mascots.
-- Use system sans-serif, fixed `rem` type sizes, and tabular numerals for money.
-- Keep the palette warm and restrained: paper surfaces, ink text, ledger green for action/owed state, clay for error/owes state, and amber for caution.
+- Use preset typography and fixed `rem` type sizes; use tabular numerals for money.
+- Use shadcn semantic tokens (`background`, `foreground`, `card`, `muted`, `primary`, `destructive`, `border`, `input`, and `ring`) rather than a repo-specific palette.
 - Compose Event page controls with checked-in shadcn/ui source components and semantic tokens before adding bespoke UI markup.
-- Use 8px radii for panels and controls, 4px for compact tags.
+- Use the preset radius scale from `src/ui/shadcn.css`; do not recreate a separate radius system.
 - Use receipt-grid structure: rows, dividers, subtotal bands, aligned amounts, and compact grouped forms.
 - Repeated records should read as ledger rows, not floating cards.
 - Touch targets on mobile and coarse pointers should be at least 44px.
@@ -24,11 +25,11 @@ The create page is a compact task form, not a landing page. It uses the headline
 
 The Event page uses three durable panels:
 
-- Balances, including direct Pay actions for owed rows and the folded Record outside payment form.
-- Add Expense, including a one-Participant onboarding state, the current acting Participant selector once split selection is possible, and compact Participant rows for split selection and Participant correction.
+- Balances, including direct Pay actions for owed rows and Suggested Settlement review.
+- Add Expense, including a one-Participant onboarding state, compact Participant rows for split selection, and Participant correction.
 - Event History for saved Expenses and payments.
 
-Utility actions stay compact. Event Link sharing belongs beside the Event title, not as a full panel. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Record outside payment action.
+Utility actions stay compact. Event Link sharing and the current acting Participant selector belong beside the Event title, not as separate full panels. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Record outside payment panel.
 
 The Event page state policy lives outside DOM rendering. Keep placement, visibility, empty guidance, history ordering, and Participant deletion availability in a plain policy layer so renderer changes do not redefine the product shape.
 
@@ -40,15 +41,15 @@ The Event page state policy lives outside DOM rendering. Keep placement, visibil
 - If saved Event data changes while a draft is active, show a calm review warning near the form without blocking save.
 - Current Participant copy should say who is adding and paying for the expense, without account, owner, or permission language.
 - In a one-Participant empty Event, Add Expense shows a compact Add Participant onboarding state and withholds expense-entry controls until at least two Participants exist.
-- The current acting Participant selector lives in the Add Expense header, aligned opposite the panel title once there are at least two Participants.
-- Add Expense uses the current Participant default as payer; do not duplicate it as a separate Payer field.
-- Participant rows use a ledger line: split checkbox, display name with inclusion/reference status below it, then correction actions. Participant rename stays inline in the row with validation, keyboard submit, cancel, and no browser prompt.
+- The current acting Participant selector lives in the Event header once there are at least two Participants.
+- Add Expense uses shadcn Field, Input, Radix Select, and Radix Checkbox controls. The payer can be changed for the draft, and the current Participant default seeds new drafts.
+- Participant rows use compact shadcn rows: split checkbox, display name with inclusion/reference status below it, then correction actions. Participant rename stays inline in the row; Participant delete uses an explicit browser confirmation only when deletion is allowed.
 - The payer is included by default, but may be removed with a calm warning.
 - Add Expense ends at the Add Participant row; do not add secondary controls below it until custom Share editing returns.
 - Disabled Save expense states explain the missing action near the button.
 - Submitting an Expense sends the selected Included Participants; equal Share amounts are derived by the Worker.
 - Balance rows with negative amounts show a compact Pay button immediately before the owes amount.
-- Record outside payment stays folded inside Balances; when open, it states that money already moved outside SettleUp, Who paid and Who received share one row, Amount, Record payment, and Cancel share the second row, and a preview sentence confirms the payment record before submit.
+- Record outside payment stays folded in its own panel beside Balances; when open, it states that money already moved outside SettleUp, Who paid and Who received share one row, Amount follows, and Record payment plus Cancel close the form action row.
 - Validation errors appear near the relevant form.
 - Buttons and inputs use explicit HTML types.
 - Focus rings must be visible.

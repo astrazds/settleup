@@ -143,12 +143,36 @@ describe('Event creation and access', () => {
     expect(html).not.toContain('Dinner "crew" <script>')
   })
 
-  it('serves a quiet favicon response for browser polish', async () => {
+  it('serves favicon and platform icon assets for browser polish', async () => {
     const app = createApp({ storeFactory: () => new MemoryStore() })
 
-    const response = await app.request('/favicon.ico')
+    const faviconResponse = await app.request('/favicon.ico')
+    const svgResponse = await app.request('/icon.svg')
+    const manifestResponse = await app.request('/site.webmanifest')
+    const touchIconResponse = await app.request('/apple-touch-icon.png')
+    const faviconBytes = await faviconResponse.arrayBuffer()
+    const touchIconBytes = await touchIconResponse.arrayBuffer()
+    const svg = await svgResponse.text()
+    const manifest = await manifestResponse.json() as {
+      icons: Array<{ src: string; sizes: string; type: string; purpose: string }>
+    }
 
-    expect(response.status).toBe(204)
+    expect(faviconResponse.status).toBe(200)
+    expect(faviconResponse.headers.get('content-type')).toContain('image/x-icon')
+    expect(faviconResponse.headers.get('cache-control')).toBe('public, max-age=86400')
+    expect(faviconBytes.byteLength).toBeGreaterThan(0)
+    expect(svgResponse.status).toBe(200)
+    expect(svgResponse.headers.get('content-type')).toContain('image/svg+xml')
+    expect(svg).toContain('<svg')
+    expect(svg).toContain('#7b7c45')
+    expect(manifestResponse.status).toBe(200)
+    expect(manifest.icons).toEqual([
+      { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    ])
+    expect(touchIconResponse.status).toBe(200)
+    expect(touchIconResponse.headers.get('content-type')).toContain('image/png')
+    expect(touchIconBytes.byteLength).toBeGreaterThan(0)
   })
 
   it('exposes cleanup for independent runtime scheduling', async () => {
@@ -956,7 +980,7 @@ describe('Settlement Payment mutation route contracts', () => {
 })
 
 describe('Frontend design contract', () => {
-  it('serves the create flow with the brandkit layout and copy', async () => {
+  it('serves the create flow with shadcn preset classes and copy', async () => {
     const app = createApp({ storeFactory: () => new MemoryStore() })
 
     const response = await app.request('/')
@@ -966,19 +990,25 @@ describe('Frontend design contract', () => {
     expect(html).toContain('Create a shared expense Event')
     expect(html).toContain('Use it for a trip, dinner, or shared cost.')
     expect(html).toContain('Next, share the private Event Link. Anyone with the link can view and edit.')
-    expect(html).toContain('class="brand"')
-    expect(html).toContain('class="privacy-note"')
-    expect(html).toContain('class="create-submit-row"')
+    expect(html).toContain('bg-card')
+    expect(html).toContain('text-muted-foreground')
+    expect(html).toContain('rounded-2xl')
     expect(html).toContain('data-create-readiness')
     expect(html).toContain('data-create-submit')
     expect(html).not.toContain('Private-by-Link')
     expect(html).toContain('novalidate data-create-form')
-    expect(html).toContain('<input type="text" name="title" required autocomplete="off" dir="auto"')
+    expect(html).toContain('name="title" required autocomplete="off" dir="auto"')
     expect(html).toContain('id="create-title-error"')
     expect(html).toContain('Enter an Event Title.')
     expect(html).toContain('id="create-privacy-note"')
     expect(html).toContain('<option value="AUD">AUD</option>')
     expect(html).toContain('<option value="NZD">NZD</option>')
+    expect(html).toContain('<meta name="theme-color" content="#20211d">')
+    expect(html).toContain('<link rel="icon" href="/favicon.ico" sizes="any">')
+    expect(html).toContain('<link rel="icon" type="image/svg+xml" href="/icon.svg">')
+    expect(html).toContain('<link rel="apple-touch-icon" href="/apple-touch-icon.png">')
+    expect(html).toContain('<link rel="manifest" href="/site.webmanifest">')
+    expect(html).toContain('src="/icon.svg" alt="" aria-hidden="true"')
     expect(html).toMatch(/href="\/static\/styles\.[a-z0-9]+\.css"/)
   })
 
@@ -1000,21 +1030,16 @@ describe('Frontend design contract', () => {
     expect(styleResponse.status).toBe(200)
     expect(styleResponse.headers.get('cache-control')).toBe('public, max-age=31556952, immutable')
     expect(styleResponse.headers.get('etag')).toMatch(/^"[a-z0-9]+"$/)
-    expect(styles).toContain('--on-ledger')
-    expect(styles).toContain('min-height: 100svh')
-    expect(styles).toContain('.create-form button')
-    expect(styles).toContain('@media (max-height: 560px) and (orientation: landscape)')
-    expect(styles).toContain('overflow-wrap: anywhere')
-    expect(styles).toContain('.event-title-line [data-event-title]')
-    expect(styles).toContain('.history-actions button')
-    expect(styles).toContain('input[aria-invalid="true"]')
-    expect(styles).toContain('.field-error')
-    expect(styles).toContain('input::placeholder')
-    expect(styles).toContain('text-wrap: balance')
-    expect(styles).toContain('.create-readiness')
-    expect(styles).toContain('data-create-submit')
-    expect(styles).toContain('.ledger-row.row-positive')
-    expect(styles).toContain('@media (max-width: 820px)')
+    expect(styles).toContain('--font-sans')
+    expect(styles).toContain('--color-primary')
+    expect(styles).toContain('--radius-4xl')
+    expect(styles).toContain('--primary:oklch(22.8% .013 107.4)')
+    expect(styles).toContain('--muted:oklch(96.6% .005 106.5)')
+    expect(styles).toContain('.min-h-svh')
+    expect(styles).toContain('.rounded-2xl')
+    expect(styles).toContain('.text-muted-foreground')
+    expect(styles).toContain('.aria-invalid\\:border-destructive')
+    expect(styles).toContain('.sm\\:grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\]')
     expect(clientResponse.status).toBe(200)
     expect(clientResponse.headers.get('cache-control')).toBe('public, max-age=31556952, immutable')
     expect(clientResponse.headers.get('etag')).toMatch(/^"[a-z0-9]+"$/)

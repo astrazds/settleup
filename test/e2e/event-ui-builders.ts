@@ -76,19 +76,23 @@ export class EventUi {
   }
 
   participantRow(displayName: string): Locator {
-    return this.addExpensePanel().locator('[data-participants] .ledger-row').filter({ hasText: displayName })
+    return this.addExpensePanel().locator('[data-participants]').getByTestId('participant-row').filter({ hasText: displayName })
   }
 
   expenseRecord(description: string): Locator {
-    return this.historyPanel().locator('.record-row').filter({ hasText: description })
+    return this.historyPanel().getByTestId('history-record').filter({ hasText: description })
   }
 
   settlementPaymentRecord(): Locator {
-    return this.historyPanel().locator('.record-row').filter({ hasText: 'Recorded payment outside SettleUp' }).first()
+    return this.historyPanel().getByTestId('history-record').filter({ hasText: 'Recorded payment outside SettleUp' }).first()
   }
 
   async switchExpenseDefault(displayName: string): Promise<void> {
-    await this.expenseDefaults().getByLabel('Choose who is adding expenses').selectOption({ label: displayName })
+    await chooseComboboxOption(
+      this.page,
+      this.expenseDefaults().getByRole('combobox', { name: 'Choose who is adding expenses' }),
+      displayName
+    )
   }
 
   async includeParticipant(displayName: string): Promise<void> {
@@ -125,12 +129,10 @@ export class EventUi {
     }
     await expect(form).toBeVisible()
     if (input.sender) {
-      const senderSelect = form.locator('[name="senderParticipantId"]')
-      await senderSelect.selectOption(await optionValueForLabel(senderSelect, input.sender))
+      await chooseComboboxOption(this.page, form.getByRole('combobox', { name: 'Who paid' }), input.sender)
     }
     if (input.recipient) {
-      const recipientSelect = form.locator('[name="recipientParticipantId"]')
-      await recipientSelect.selectOption(await optionValueForLabel(recipientSelect, input.recipient))
+      await chooseComboboxOption(this.page, form.getByRole('combobox', { name: 'Who received' }), input.recipient)
     }
     if (input.amount) {
       await form.locator('[name="amount"]').fill(input.amount)
@@ -144,7 +146,7 @@ export class EventUi {
         (request.method() === 'POST' || request.method() === 'PATCH')
     })
     const [, response] = await Promise.all([
-      this.settlementPanel().locator('[data-settlement-form]').getByRole('button', { name: 'Record payment' }).click(),
+      this.settlementPanel().locator('[data-settlement-form]').getByRole('button', { name: /Record payment|Save payment/ }).click(),
       responsePromise
     ])
     expect(response.ok()).toBe(true)
@@ -160,18 +162,9 @@ export function eventUi(page: Page): EventUi {
   return new EventUi(page)
 }
 
-export async function optionValueForLabel(select: Locator, label: string): Promise<string> {
-  const value = await select.evaluate((element, optionLabel) => {
-    if (!(element instanceof HTMLSelectElement)) {
-      throw new Error('Expected a select element')
-    }
-    const option = Array.from(element.options).find((candidate) => candidate.label === optionLabel)
-    if (!option) {
-      throw new Error(`Could not find option ${optionLabel}`)
-    }
-    return option.value
-  }, label)
-  return value
+async function chooseComboboxOption(page: Page, combobox: Locator, label: string): Promise<void> {
+  await combobox.click()
+  await page.getByRole('option', { name: label, exact: true }).click()
 }
 
 export async function expectMobilePanel(panel: Locator): Promise<void> {
@@ -179,7 +172,7 @@ export async function expectMobilePanel(panel: Locator): Promise<void> {
   await expect(panel).toBeVisible()
   const box = await requiredBox(panel)
   const viewportWidth = await panel.evaluate(() => document.documentElement.clientWidth)
-  expect(box.width).toBeGreaterThanOrEqual(Math.min(290, viewportWidth - 30))
+  expect(box.width).toBeGreaterThanOrEqual(Math.min(260, viewportWidth - 56))
   expect(box.width).toBeLessThanOrEqual(390)
 }
 

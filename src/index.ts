@@ -9,6 +9,8 @@ import { NoopEventRealtimeNotifier } from './event-realtime'
 import type { EventRealtimeNotifier } from './event-realtime'
 import { MemoryStore } from './store'
 import type { AppStore } from './store'
+import { appIconAssets } from './ui/app-icons'
+import type { AppIconAsset } from './ui/app-icons'
 import { clientScript } from './ui/client'
 import { renderCreatePage, renderEventPage, renderNotFoundPage, stylesheet } from './ui/views'
 
@@ -21,6 +23,7 @@ interface AppDeps {
 }
 
 const immutableAssetCacheControl = 'public, max-age=31556952, immutable'
+const appIconAssetCacheControl = 'public, max-age=86400'
 const fallbackAssetCacheControl = 'no-store'
 const clientScriptVersion = assetVersion(clientScript)
 const stylesheetVersion = assetVersion(stylesheet)
@@ -28,6 +31,7 @@ const clientScriptAssetName = `client.${clientScriptVersion}.js`
 const stylesheetAssetName = `styles.${stylesheetVersion}.css`
 const pageAssets = {
   clientScriptPath: `/static/${clientScriptAssetName}`,
+  iconPath: '/icon.svg',
   stylesheetPath: `/static/${stylesheetAssetName}`
 }
 const staticAssets = [
@@ -56,11 +60,54 @@ function assetVersion(content: string): string {
   return (hash >>> 0).toString(36)
 }
 
+const decodedAppIconAssets = new Map<string, Uint8Array>()
+
+function appIconAssetResponse(asset: AppIconAsset): Response {
+  return new Response(appIconAssetBody(asset), {
+    status: 200,
+    headers: {
+      'content-type': asset.contentType,
+      'cache-control': appIconAssetCacheControl,
+      etag: `"${assetVersion(asset.body)}"`
+    }
+  })
+}
+
+function appIconAssetBody(asset: AppIconAsset): BodyInit {
+  if (asset.encoding === 'text') {
+    return asset.body
+  }
+
+  const bytes = decodeAppIconAsset(asset.body)
+  const body = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(body).set(bytes)
+  return body
+}
+
+function decodeAppIconAsset(base64: string): Uint8Array {
+  const cached = decodedAppIconAssets.get(base64)
+  if (cached) {
+    return cached
+  }
+
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+  decodedAppIconAssets.set(base64, bytes)
+  return bytes
+}
+
 export function createApp(deps: AppDeps = {}): Hono {
   const app = new Hono()
   const defaultStore = new MemoryStore()
   const storeFactory = deps.storeFactory ?? (() => defaultStore)
   const realtimeNotifierFactory = deps.realtimeNotifierFactory ?? defaultRealtimeNotifierFactory
+
+  for (const asset of appIconAssets) {
+    app.get(asset.path, () => appIconAssetResponse(asset))
+  }
 
   app.get('/', (c) => {
     return c.html(renderCreatePage('', {}, pageAssets), 200, {
@@ -109,8 +156,6 @@ export function createApp(deps: AppDeps = {}): Hono {
       etag: `"${asset.version}"`
     })
   })
-
-  app.get('/favicon.ico', () => new Response(null, { status: 204 }))
 
   app.post('/api/events', async (c) => {
     let body: unknown
