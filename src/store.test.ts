@@ -1,8 +1,8 @@
 import { readdir } from 'node:fs/promises'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { Miniflare } from 'miniflare'
-import { createMigratedD1Store } from '../test/d1-store'
-import { D1EventRecordPersistence } from './d1-event-record-persistence'
+import { createMigratedSqliteStore } from '../test/sqlite-store'
+import type { NodeSqliteDatabase } from './node-sqlite'
+import { SqliteEventRecordPersistence } from './sqlite-event-record-persistence'
 import type { EventSnapshot, ExpenseInput, Participant, SettlementPayment } from './domain'
 import {
   addParticipantToEvent,
@@ -12,18 +12,20 @@ import {
   eventSnapshot
 } from './event-record'
 import type { EventRecord } from './event-record'
-import { D1Store } from './store'
+import { SqliteStore } from './store'
 
-const miniflareInstances: Miniflare[] = []
+const sqliteDatabases: NodeSqliteDatabase[] = []
 
-afterEach(async () => {
-  await Promise.all(miniflareInstances.splice(0).map((miniflare) => miniflare.dispose()))
+afterEach(() => {
+  for (const db of sqliteDatabases.splice(0)) {
+    db.close()
+  }
 })
 
-describe('D1Store with migrations', () => {
-  it('hydrates Event Records written through the D1 Event Record persistence mapper', async () => {
-    const { db } = await createD1Store()
-    const persistence = new D1EventRecordPersistence(db)
+describe('SqliteStore with migrations', () => {
+  it('hydrates Event Records written through the SQLite Event Record persistence mapper', async () => {
+    const { db } = await createSqliteStore()
+    const persistence = new SqliteEventRecordPersistence(db)
     const createdAt = '2026-05-28T02:00:00.000Z'
     const withAlexAt = '2026-05-28T02:01:00.000Z'
     const expenseAt = '2026-05-28T02:02:00.000Z'
@@ -82,8 +84,8 @@ describe('D1Store with migrations', () => {
     expect(eventSnapshot(requireRecord(persisted))).toEqual(eventSnapshot(record))
   })
 
-  it('applies every checked-in migration to a fresh D1 database', async () => {
-    const { store, migrationFiles } = await createD1Store()
+  it('applies every checked-in migration to a fresh SQLite database', async () => {
+    const { store, migrationFiles } = await createSqliteStore()
     const checkedInMigrationFiles = await readdir(new URL('../migrations/', import.meta.url))
 
     expect(migrationFiles).toEqual(checkedInMigrationFiles.filter((file) => file.endsWith('.sql')).sort())
@@ -104,7 +106,7 @@ describe('D1Store with migrations', () => {
   })
 
   it('persists Participants, Expenses, Settlement Payments, Balances, and Suggested Settlements', async () => {
-    const { store } = await createD1Store()
+    const { store } = await createSqliteStore()
     const created = await store.createEvent({
       title: 'Sydney weekend',
       currency: 'AUD',
@@ -149,8 +151,8 @@ describe('D1Store with migrations', () => {
     expect(persisted.settlementPayments).toHaveLength(1)
   })
 
-  it('round trips Event Records through a fresh D1Store instance', async () => {
-    const { store, db } = await createD1Store()
+  it('round trips Event Records through a fresh SqliteStore instance', async () => {
+    const { store, db } = await createSqliteStore()
     const created = await store.createEvent({
       title: 'Road trip',
       currency: 'NZD',
@@ -167,7 +169,7 @@ describe('D1Store with migrations', () => {
       amountMinor: 2000
     })
 
-    const reopened = new D1Store(db)
+    const reopened = new SqliteStore(db)
     const persisted = await requireSnapshot(reopened, token)
 
     expect(persisted.event).toEqual(expect.objectContaining({
@@ -204,8 +206,8 @@ describe('D1Store with migrations', () => {
     ])
   })
 
-  it('updates and deletes Expenses and Settlement Payments through D1', async () => {
-    const { store } = await createD1Store()
+  it('updates and deletes Expenses and Settlement Payments through SQLite', async () => {
+    const { store } = await createSqliteStore()
     const created = await store.createEvent({
       title: 'Sydney weekend',
       currency: 'AUD',
@@ -268,7 +270,7 @@ describe('D1Store with migrations', () => {
   })
 
   it('blocks deletion of referenced Participants through the shared Event rule', async () => {
-    const { store } = await createD1Store()
+    const { store } = await createSqliteStore()
     const created = await store.createEvent({
       title: 'Sydney weekend',
       currency: 'AUD',
@@ -288,9 +290,9 @@ describe('D1Store with migrations', () => {
   })
 
   it('expires Events three days after creation', async () => {
-    const { db } = await createD1Store()
-    const store = new D1Store(db, () => new Date('2026-05-23T00:00:00.000Z'))
-    const persistence = new D1EventRecordPersistence(db)
+    const { db } = await createSqliteStore()
+    const store = new SqliteStore(db, () => new Date('2026-05-23T00:00:00.000Z'))
+    const persistence = new SqliteEventRecordPersistence(db)
     const expired = createEventRecord(
       {
         title: 'Expired weekend',
@@ -315,8 +317,8 @@ describe('D1Store with migrations', () => {
   })
 
   it('cleans up Events five days after creation while retaining newer expired Events', async () => {
-    const { store, db } = await createD1Store()
-    const persistence = new D1EventRecordPersistence(db)
+    const { store, db } = await createSqliteStore()
+    const persistence = new SqliteEventRecordPersistence(db)
     const cleanupCandidate = createEventRecord(
       {
         title: 'Cleanup weekend',
@@ -353,7 +355,7 @@ describe('D1Store with migrations', () => {
     await expect(countRows(db, 'participants', 'event_id = ?', cleanupCandidate.event.id)).resolves.toBe(0)
   })
 
-  it.each(rollbackCases())('rolls back %s when D1 rejects the final Event touch', async (_name, exercise) => {
+  it.each(rollbackCases())('rolls back %s when SQLite rejects the final Event touch', async (_name, exercise) => {
     await exercise()
   })
 })
@@ -363,7 +365,7 @@ type RollbackCase = readonly [string, () => Promise<void>]
 function rollbackCases(): RollbackCase[] {
   return [
     ['adding a Participant', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const created = await store.createEvent({
         title: 'Rollback lunch',
         currency: 'AUD',
@@ -377,7 +379,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.participants.map((participant) => participant.displayName)).toEqual(['Sarah'])
     }],
     ['renaming a Participant', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah } = await createTwoParticipantEvent(store)
 
       await rejectEventTouches(db)
@@ -387,7 +389,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.participants.map((participant) => participant.displayName)).toEqual(['Sarah', 'Alex'])
     }],
     ['deleting a Participant', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token } = await createTwoParticipantEvent(store)
       const alex = requireParticipant(await requireSnapshot(store, token), 'Alex')
 
@@ -398,7 +400,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.participants.map((participant) => participant.displayName)).toEqual(['Sarah', 'Alex'])
     }],
     ['creating an Expense', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
 
       await rejectEventTouches(db)
@@ -408,7 +410,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.expenses).toEqual([])
     }],
     ['updating an Expense', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
       const withExpense = await store.createExpense(token, dinnerInput(sarah.id, alex.id))
       const expense = withExpense.expenses[0]
@@ -442,7 +444,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.expenses[0]?.shares).toHaveLength(2)
     }],
     ['deleting an Expense', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
       const withExpense = await store.createExpense(token, dinnerInput(sarah.id, alex.id))
       const expense = withExpense.expenses[0]
@@ -459,7 +461,7 @@ function rollbackCases(): RollbackCase[] {
       ])
     }],
     ['creating a Settlement Payment', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
 
       await rejectEventTouches(db)
@@ -475,7 +477,7 @@ function rollbackCases(): RollbackCase[] {
       expect(persisted.settlementPayments).toEqual([])
     }],
     ['updating a Settlement Payment', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
       const payment = await createSettlementPayment(store, token, sarah, alex)
 
@@ -499,7 +501,7 @@ function rollbackCases(): RollbackCase[] {
       ])
     }],
     ['deleting a Settlement Payment', async () => {
-      const { store, db } = await createD1Store()
+      const { store, db } = await createSqliteStore()
       const { token, sarah, alex } = await createTwoParticipantEvent(store)
       const payment = await createSettlementPayment(store, token, sarah, alex)
 
@@ -517,24 +519,24 @@ function rollbackCases(): RollbackCase[] {
   ]
 }
 
-async function createD1Store(): Promise<{ store: D1Store; db: D1Database; migrationFiles: string[] }> {
-  const { store, db, miniflare, migrationFiles } = await createMigratedD1Store()
-  miniflareInstances.push(miniflare)
+async function createSqliteStore(): Promise<{ store: SqliteStore; db: NodeSqliteDatabase; migrationFiles: string[] }> {
+  const { store, db, migrationFiles } = createMigratedSqliteStore()
+  sqliteDatabases.push(db)
   return { store, db, migrationFiles }
 }
 
-async function rejectEventTouches(db: D1Database): Promise<void> {
-  await db.prepare(`
+async function rejectEventTouches(db: NodeSqliteDatabase): Promise<void> {
+  db.exec(`
     create trigger reject_event_touch
     before update on events
     begin
       select raise(abort, 'simulated event touch failure');
     end
-  `).run()
+  `)
 }
 
 async function createTwoParticipantEvent(
-  store: D1Store
+  store: SqliteStore
 ): Promise<{ token: string; sarah: Participant; alex: Participant }> {
   const created = await store.createEvent({
     title: 'Sydney weekend',
@@ -549,7 +551,7 @@ async function createTwoParticipantEvent(
 }
 
 async function createSettlementPayment(
-  store: D1Store,
+  store: SqliteStore,
   token: string,
   sarah: Participant,
   alex: Participant
@@ -574,7 +576,7 @@ function dinnerInput(sarahId: string, alexId: string): ExpenseInput {
   }
 }
 
-async function requireSnapshot(store: D1Store, token: string): Promise<EventSnapshot> {
+async function requireSnapshot(store: SqliteStore, token: string): Promise<EventSnapshot> {
   const snapshot = await store.getEventByToken(token)
   if (!snapshot) {
     throw new Error(`Expected Event ${token}`)
@@ -597,7 +599,7 @@ function requireRecord(record: EventRecord | null): EventRecord {
   return record
 }
 
-async function countRows(db: D1Database, tableName: string, where: string, value: string): Promise<number> {
+async function countRows(db: NodeSqliteDatabase, tableName: string, where: string, value: string): Promise<number> {
   const row = await db.prepare(`select count(*) as count from ${tableName} where ${where}`).bind(value).first<{ count: number }>()
   return row?.count ?? 0
 }

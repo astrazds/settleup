@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  EVENT_REALTIME_FALLBACK_POLL_MS,
+  REALTIME_FALLBACK_POLL_MS,
   eventRealtimeReconnectDelay,
   eventRealtimeRoutePath,
   parseEventRealtimeMessage
@@ -449,7 +449,7 @@ describe('client script contract', () => {
   })
 
   it('keeps the browser fallback polling interval deterministic', () => {
-    expect(EVENT_REALTIME_FALLBACK_POLL_MS).toBe(8000)
+    expect(REALTIME_FALLBACK_POLL_MS).toBe(8000)
   })
 })
 

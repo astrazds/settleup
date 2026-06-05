@@ -4,20 +4,20 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 
 ## Platform
 
-- Use Cloudflare Workers with Hono for the Worker runtime.
-- Serve the frontend and JSON API from one Worker until the UI complexity justifies a separate frontend app.
-- Use React for Event page interaction while keeping the frontend served by the Worker as a bundled `/static/client.js` asset.
-- Keep CSS and route-owned document shells in the Worker; do not introduce a separate frontend app until the UI complexity justifies it.
+- Use Hono on a Node HTTP server for the app runtime.
+- Serve the frontend and JSON API from one Node app until the UI complexity justifies a separate frontend app.
+- Use React for Event page interaction while keeping the frontend served by the app as a bundled `/static/client.js` asset.
+- Keep CSS and route-owned document shells in the app; do not introduce a separate frontend app until the UI complexity justifies it.
 
 ## Data
 
-- Use Cloudflare D1 as the durable database for Events, Participants, Expenses, Shares, and Settlement Payments.
+- Use SQLite through Node `node:sqlite` as the durable database for Events, Participants, Expenses, Shares, and Settlement Payments.
 - Keep Balances and Suggested Settlements derived from saved records; Suggested Settlements may power UI actions but are not persisted as history.
 - Keep the UI and Saved Event command surface limited to Included Participants for Expenses; derive equal Shares server-side before persisting the Event Record.
 - Keep Event mutation rules centralized in `src/event-record.ts`; storage adapters load and persist Event Records.
-- Keep D1 row mapping and all-or-nothing Event Record replacement behind `src/d1-event-record-persistence.ts`.
-- D1 adapter tests use Miniflare with checked-in migrations rather than a handwritten SQL fake.
-- Treat MVP Events as short-lived data: expire access after three days and delete persisted records after five days through the Worker Cron Trigger.
+- Keep SQLite row mapping and all-or-nothing Event Record replacement behind `src/sqlite-event-record-persistence.ts`.
+- SQLite adapter tests use in-memory Node SQLite with checked-in migrations rather than a handwritten SQL fake.
+- Treat MVP Events as short-lived data: expire access after three days and delete persisted records after five days through runtime cleanup.
 
 ## Runtime Shape
 
@@ -38,8 +38,8 @@ This file replaces the former ADR folder. Keep it short: add only durable decisi
 
 ## Realtime
 
-- Use one Durable Object room per Event token for WebSocket coordination.
-- D1 remains the saved Event source of truth; the Durable Object only broadcasts Event-change notifications after successful mutations.
+- Use one in-process WebSocket room per Event token for realtime coordination.
+- SQLite remains the saved Event source of truth; realtime only broadcasts Event-change notifications after successful mutations.
 - Keep the Event realtime protocol in `src/event-realtime-protocol.ts` and share its message shape, route path, fallback interval, and reconnect timing with the browser client.
 - Browser polling remains a fallback for unavailable or reconnecting WebSockets.
 - Realtime must not add presence, chat, edit attribution, locks, accounts, or permissions.

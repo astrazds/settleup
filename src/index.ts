@@ -5,26 +5,15 @@ import {
 } from './event-command-input'
 import { executeSavedEventCommand } from './event-command-runtime'
 import type { SavedEventCommandResult } from './event-command-runtime'
-import {
-  DurableObjectEventRealtimeNotifier,
-  EventRealtimeRoom,
-  NoopEventRealtimeNotifier
-} from './event-realtime'
+import { NoopEventRealtimeNotifier } from './event-realtime'
 import type { EventRealtimeNotifier } from './event-realtime'
-import { D1Store } from './store'
+import { MemoryStore } from './store'
 import type { AppStore } from './store'
 import { clientScript } from './ui/client'
 import { renderCreatePage, renderEventPage, renderNotFoundPage, stylesheet } from './ui/views'
 
-export { EventRealtimeRoom }
-
-type Bindings = Omit<CloudflareBindings, 'EVENT_REALTIME' | 'VERSION_METADATA'> & {
-  EVENT_REALTIME?: DurableObjectNamespace<EventRealtimeRoom>
-  VERSION_METADATA?: WorkerVersionMetadata
-}
-
-type StoreFactory = (env: Bindings) => AppStore
-type RealtimeNotifierFactory = (env: Bindings | undefined) => EventRealtimeNotifier
+type StoreFactory = () => AppStore
+type RealtimeNotifierFactory = () => EventRealtimeNotifier
 
 interface AppDeps {
   storeFactory?: StoreFactory
@@ -67,18 +56,11 @@ function assetVersion(content: string): string {
   return (hash >>> 0).toString(36)
 }
 
-export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
-  const app = new Hono<{ Bindings: Bindings }>()
-  const storeFactory = deps.storeFactory ?? ((env: Bindings) => new D1Store(env.DB))
+export function createApp(deps: AppDeps = {}): Hono {
+  const app = new Hono()
+  const defaultStore = new MemoryStore()
+  const storeFactory = deps.storeFactory ?? (() => defaultStore)
   const realtimeNotifierFactory = deps.realtimeNotifierFactory ?? defaultRealtimeNotifierFactory
-
-  app.use('*', async (c, next) => {
-    await next()
-    const workerVersion = c.env?.VERSION_METADATA?.id
-    if (workerVersion) {
-      c.header('x-worker-version', workerVersion)
-    }
-  })
 
   app.get('/', (c) => {
     return c.html(renderCreatePage('', {}, pageAssets), 200, {
@@ -95,12 +77,12 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       })
     }
 
-    const snapshot = await storeFactory(c.env).createEvent(input.value)
+    const snapshot = await storeFactory().createEvent(input.value)
     return c.redirect(snapshot.event.eventLinkPath, 303)
   })
 
   app.get('/e/:token', async (c) => {
-    const snapshot = await storeFactory(c.env).getEventByToken(c.req.param('token'))
+    const snapshot = await storeFactory().getEventByToken(c.req.param('token'))
     if (!snapshot) {
       return c.html(renderNotFoundPage(pageAssets), 404, {
         'x-robots-tag': 'noindex'
@@ -146,11 +128,11 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
       return validationError(input.message)
     }
 
-    return jsonCreated(await storeFactory(c.env).createEvent(input.value))
+    return jsonCreated(await storeFactory().createEvent(input.value))
   })
 
   app.get('/api/events/:token', async (c) => {
-    const snapshot = await storeFactory(c.env).getEventByToken(c.req.param('token'))
+    const snapshot = await storeFactory().getEventByToken(c.req.param('token'))
     if (!snapshot) {
       return jsonError('not_found', 'Event not found', 404)
     }
@@ -163,19 +145,19 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
     }
 
     const token = c.req.param('token')
-    const snapshot = await storeFactory(c.env).getEventByToken(token)
+    const snapshot = await storeFactory().getEventByToken(token)
     if (!snapshot) {
       return new Response('Event not found', { status: 404 })
     }
 
-    return realtimeNotifierFactory(c.env).connect(token, c.req.raw)
+    return realtimeNotifierFactory().connect(token, c.req.raw)
   })
 
   app.post('/api/events/:token/participants', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'addParticipant',
         token,
@@ -187,8 +169,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.patch('/api/events/:token/participants/:participantId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'renameParticipant',
         token,
@@ -201,8 +183,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.delete('/api/events/:token/participants/:participantId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'deleteParticipant',
         token,
@@ -214,8 +196,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.post('/api/events/:token/expenses', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'createExpense',
         token,
@@ -227,8 +209,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.patch('/api/events/:token/expenses/:expenseId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'updateExpense',
         token,
@@ -241,8 +223,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.delete('/api/events/:token/expenses/:expenseId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'deleteExpense',
         token,
@@ -254,8 +236,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.post('/api/events/:token/settlement-payments', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'createSettlementPayment',
         token,
@@ -267,8 +249,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.patch('/api/events/:token/settlement-payments/:settlementPaymentId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'updateSettlementPayment',
         token,
@@ -281,8 +263,8 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
   app.delete('/api/events/:token/settlement-payments/:settlementPaymentId', async (c) => {
     const token = c.req.param('token')
     return handleSavedEventCommand(async () => executeSavedEventCommand(
-      storeFactory(c.env),
-      realtimeNotifierFactory(c.env),
+      storeFactory(),
+      realtimeNotifierFactory(),
       {
         type: 'deleteSettlementPayment',
         token,
@@ -296,15 +278,10 @@ export function createApp(deps: AppDeps = {}): Hono<{ Bindings: Bindings }> {
 
 const app = createApp()
 
-export default {
-  fetch: app.fetch,
-  scheduled(controller, env, ctx) {
-    ctx.waitUntil(cleanupExpiredEvents(env, new Date(controller.scheduledTime)))
-  }
-} satisfies ExportedHandler<Bindings>
+export default app
 
-export async function cleanupExpiredEvents(env: Bindings, now = new Date()): Promise<void> {
-  await new D1Store(env.DB).cleanupExpiredEvents(now)
+export async function cleanupExpiredEvents(store: AppStore, now = new Date()): Promise<void> {
+  await store.cleanupExpiredEvents(now)
 }
 
 async function readJson(request: Request): Promise<unknown> {
@@ -361,9 +338,6 @@ function textField(body: unknown, key: string): string | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
-function defaultRealtimeNotifierFactory(env: Bindings | undefined): EventRealtimeNotifier {
-  if (!env?.EVENT_REALTIME) {
-    return new NoopEventRealtimeNotifier()
-  }
-  return new DurableObjectEventRealtimeNotifier(env.EVENT_REALTIME)
+function defaultRealtimeNotifierFactory(): EventRealtimeNotifier {
+  return new NoopEventRealtimeNotifier()
 }

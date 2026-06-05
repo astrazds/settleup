@@ -6,24 +6,26 @@ Core docs:
 - [CONTEXT.md](./CONTEXT.md): domain vocabulary.
 - [DESIGN.md](./DESIGN.md): UI direction and interaction rules.
 - [docs/DECISIONS.md](./docs/DECISIONS.md): durable architecture and product decisions.
-- [docs/VERIFICATION.md](./docs/VERIFICATION.md): test, CI, and Cloudflare verification workflow.
+- [docs/VERIFICATION.md](./docs/VERIFICATION.md): test, CI, and packaging verification workflow.
 - [AGENTS.md](./AGENTS.md): repo-local agent instructions.
 
 ## Architecture
 
-- `src/index.ts`: Hono Worker routes and response shapes.
+- `src/index.ts`: Hono app routes and response shapes.
+- `src/server.ts`: Node HTTP/WebSocket server entrypoint.
+- `src/node-sqlite.ts`: Node SQLite database adapter and migration runner.
 - `src/event-command-input.ts`: form and JSON command parsing, including Included Participant to equal Share derivation for Expense commands.
 - `src/event-command-runtime.ts`: saved Event mutation lifecycle, validation mapping, and success-only realtime notification.
 - `src/event-record.ts`: Event Record mutation rules for Participants, Expenses, stored Shares, and Settlement Payments.
-- `src/d1-event-record-persistence.ts`: D1 row mapping and all-or-nothing Event Record persistence.
+- `src/sqlite-event-record-persistence.ts`: SQLite row mapping and all-or-nothing Event Record persistence.
 - `src/event-retention.ts`: short-lived Event retention policy.
-- `src/store.ts`: `MemoryStore` for tests and `D1Store` for Cloudflare D1.
+- `src/store.ts`: `MemoryStore` for tests and `SqliteStore` for durable SQLite storage.
 - `src/event-realtime-protocol.ts`: shared Event realtime message shape, route path, fallback interval, and reconnect policy.
-- `src/event-realtime.ts`: Durable Object WebSocket notifications scoped by Event token.
+- `src/event-realtime.ts`: in-process WebSocket room notifications scoped by Event token.
 - `src/money.ts`: two-decimal Currency parsing and formatting.
 - `src/ui/client-expense-draft.ts`: DOM-free Expense Draft equal split composition.
 - `src/ui/client-event-page-policy.ts`: DOM-free Event page state policy.
-- `src/ui/react-client.tsx`: React Event page client served by the Worker as `/static/client.js`.
+- `src/ui/react-client.tsx`: React Event page client served by the app as `/static/client.js`.
 - `src/ui/generated-client.ts`: generated bundled browser asset. Regenerate with `npm run build:client`.
 - `test/e2e/`: Playwright coverage for Event UI, realtime fallback behavior, and accessibility.
 
@@ -38,7 +40,7 @@ Core docs:
 
 ## Runtime Scope
 
-The UI and saved Event HTTP commands expose Expense capture as Description, Amount, Payer, and Included Participants. The Worker derives equal Shares from those Included Participants before saving the Event Record. D1 still stores explicit Share rows so Balances, history, and future custom Share work have a durable model.
+The UI and saved Event HTTP commands expose Expense capture as Description, Amount, Payer, and Included Participants. The server derives equal Shares from those Included Participants before saving the Event Record. SQLite stores explicit Share rows so Balances, history, and future custom Share work have a durable model.
 
 ## Commands
 
@@ -46,8 +48,9 @@ The UI and saved Event HTTP commands expose Expense capture as Description, Amou
 npm install
 npm run build
 npm run build:client
+npm run build:server
 npm run dev
-npm run db:migrations:apply:local
+npm start
 npm test
 npm run test:coverage
 npm run typecheck
@@ -57,29 +60,21 @@ npm run verify
 npm run deploy
 ```
 
-Local D1 migrations:
+Local runtime defaults:
 
 ```sh
-npm run db:migrations:apply:local
+SETTLEUP_DATABASE_PATH=.data/settleup.sqlite npm run dev
 ```
 
-`npm run verify` is the full local confidence gate. It runs behavior tests, coverage, typecheck, Playwright smoke tests, HTML validation, and a Wrangler deploy dry run, then cleans `dist-dry-run/`.
+Migrations in `migrations/` are applied on Node server startup before the app accepts requests.
 
-Forgejo Actions runs the same gate on pushes and pull requests. Pushes to `main` deploy production after verification passes, using the Cloudflare secrets documented in [docs/VERIFICATION.md](./docs/VERIFICATION.md).
+`npm run verify` is the full local confidence gate. It runs behavior tests, coverage, typecheck, Playwright smoke tests against the Node server, HTML validation, and the Node build/package check.
 
-Production is deployed by Forgejo Actions to:
+`npm run deploy` currently performs the same provider-neutral build as `npm run deploy:dry-run`; an external host can run `npm start` against the generated `dist/server.js` with `SETTLEUP_DATABASE_PATH` pointing at its SQLite database file.
 
-- `https://settleup.pure-cake8631.workers.dev`
+## Runtime
 
-The first successful automated production deploy was Forgejo workflow run `#18` on 2026-05-28, deploying Worker version `bd697169-f462-4dd0-9e47-2cba164a7160`.
-
-## Cloudflare
-
-`wrangler.jsonc` is the repo-local configuration source. The Worker is `settleup`; current bindings are:
-
-- `DB`: D1 database named `settleup`.
-- `EVENT_REALTIME`: Durable Object namespace for Event-scoped WebSocket notifications.
-- `VERSION_METADATA`: Worker version metadata used for deployment diagnostics.
-- Cron Trigger: daily UTC Event cleanup for records older than five days.
-
-Treat local config as intent, not proof of deployed state. Verify live Cloudflare resources before remote migrations, deployments, or production debugging.
+- HTTP and JSON routes run through Hono on Node.
+- Persistent data is stored in SQLite through `node:sqlite`.
+- Realtime Event-change notifications use the Node WebSocket server and in-process token-scoped rooms.
+- Expired Event cleanup runs on a Node interval and can also be called through `cleanupExpiredEvents`.

@@ -1,15 +1,23 @@
-import { DurableObject } from 'cloudflare:workers'
 import {
-  EVENT_REALTIME_PING,
-  EVENT_REALTIME_PONG,
+  REALTIME_PING,
+  REALTIME_PONG,
   eventChangedMessage,
   serializeEventRealtimeMessage
 } from './event-realtime-protocol'
 import type { EventRealtimeMessage } from './event-realtime-protocol'
 
+const webSocketConnecting = 0
+const webSocketOpen = 1
+
 export interface EventRealtimeNotifier {
   eventChanged(token: string): Promise<void>
   connect(token: string, request: Request): Promise<Response>
+}
+
+export interface RealtimeClient {
+  readonly readyState: number
+  send(message: string): void
+  close(code?: number, reason?: string): void
 }
 
 export class NoopEventRealtimeNotifier implements EventRealtimeNotifier {
@@ -20,61 +28,66 @@ export class NoopEventRealtimeNotifier implements EventRealtimeNotifier {
   }
 }
 
-export class DurableObjectEventRealtimeNotifier implements EventRealtimeNotifier {
-  constructor(private readonly rooms: DurableObjectNamespace<EventRealtimeRoom>) {}
+export class LocalEventRealtimeNotifier implements EventRealtimeNotifier {
+  constructor(private readonly hub: EventRealtimeHub) {}
 
   async eventChanged(token: string): Promise<void> {
-    await this.rooms.getByName(token).eventChanged()
+    this.hub.eventChanged(token)
   }
 
-  async connect(token: string, request: Request): Promise<Response> {
-    return this.rooms.getByName(token).fetch(request)
+  async connect(): Promise<Response> {
+    return new Response('Realtime upgrades are handled by the Node server', { status: 426 })
   }
 }
 
-export class EventRealtimeRoom extends DurableObject<CloudflareBindings> {
-  constructor(ctx: DurableObjectState, env: CloudflareBindings) {
-    super(ctx, env)
-    this.ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair(EVENT_REALTIME_PING, EVENT_REALTIME_PONG))
-  }
+export class EventRealtimeHub {
+  private readonly rooms = new Map<string, EventRealtimeRoom>()
 
-  async fetch(request: Request): Promise<Response> {
-    if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
-      return new Response('Expected WebSocket', { status: 426 })
+  room(token: string): EventRealtimeRoom {
+    let room = this.rooms.get(token)
+    if (!room) {
+      room = new EventRealtimeRoom()
+      this.rooms.set(token, room)
     }
-
-    const pair = new WebSocketPair()
-    const [client, server] = Object.values(pair)
-    this.ctx.acceptWebSocket(server)
-
-    return new Response(null, {
-      status: 101,
-      webSocket: client
-    })
+    return room
   }
 
-  async eventChanged(): Promise<void> {
+  eventChanged(token: string): void {
+    this.room(token).eventChanged()
+  }
+}
+
+export class EventRealtimeRoom {
+  private readonly clients = new Set<RealtimeClient>()
+
+  connect(client: RealtimeClient): () => void {
+    this.clients.add(client)
+    return () => {
+      this.clients.delete(client)
+    }
+  }
+
+  eventChanged(): void {
     this.broadcast(eventChangedMessage())
   }
 
-  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
-    if (message === EVENT_REALTIME_PING) {
-      ws.send(EVENT_REALTIME_PONG)
+  receiveMessage(client: RealtimeClient, message: string | Buffer | ArrayBuffer | Buffer[]): void {
+    if (message.toString() === REALTIME_PING && client.readyState === webSocketOpen) {
+      client.send(REALTIME_PONG)
     }
   }
 
-  async webSocketClose(): Promise<void> {}
-
-  async webSocketError(ws: WebSocket): Promise<void> {
-    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-      ws.close(1011, 'WebSocket error')
+  closeErroredClient(client: RealtimeClient): void {
+    if (client.readyState === webSocketOpen || client.readyState === webSocketConnecting) {
+      client.close(1011, 'WebSocket error')
     }
+    this.clients.delete(client)
   }
 
   private broadcast(message: EventRealtimeMessage): void {
     const payload = serializeEventRealtimeMessage(message)
-    for (const client of this.ctx.getWebSockets()) {
-      if (client.readyState === WebSocket.OPEN) {
+    for (const client of this.clients) {
+      if (client.readyState === webSocketOpen) {
         client.send(payload)
       }
     }

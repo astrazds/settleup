@@ -18,13 +18,13 @@ import {
   eventCleanupCutoff,
   isEventExpired
 } from './event-retention'
-import { D1EventRecordPersistence } from './d1-event-record-persistence'
-import type { D1DatabaseLike } from './d1-event-record-persistence'
+import { SqliteEventRecordPersistence } from './sqlite-event-record-persistence'
+import type { SqlDatabaseLike } from './sqlite-event-record-persistence'
 import type { EventSnapshot, ExpenseInput, SettlementPaymentInput } from './domain'
 import { StoreError } from './errors'
 
 export { StoreError } from './errors'
-export type { D1DatabaseLike, D1PreparedStatementLike } from './d1-event-record-persistence'
+export type { SqlDatabaseLike, SqlPreparedStatementLike } from './sqlite-event-record-persistence'
 
 export interface AppStore {
   createEvent(input: CreateEventInput): Promise<EventSnapshot>
@@ -159,11 +159,11 @@ export class MemoryStore implements AppStore {
   }
 }
 
-export class D1Store implements AppStore {
-  private readonly records: D1EventRecordPersistence
+export class SqliteStore implements AppStore {
+  private readonly records: SqliteEventRecordPersistence
 
-  constructor(db: D1DatabaseLike, private readonly now = () => new Date()) {
-    this.records = new D1EventRecordPersistence(db)
+  constructor(db: SqlDatabaseLike, private readonly now = () => new Date()) {
+    this.records = new SqliteEventRecordPersistence(db)
   }
 
   async createEvent(input: CreateEventInput): Promise<EventSnapshot> {

@@ -1,13 +1,17 @@
 import type { EventSummary, Expense, Participant, SettlementPayment, Share } from './domain'
 import type { EventRecord } from './event-record'
 
-export interface D1DatabaseLike {
-  prepare(query: string): D1PreparedStatementLike
-  batch(statements: D1PreparedStatementLike[]): Promise<unknown[]>
+export interface SqlDatabaseLike {
+  prepare(query: string): SqlPreparedStatementLike
+  batch(statements: SqlPreparedStatementLike[]): Promise<unknown[]>
 }
 
-export interface D1PreparedStatementLike {
-  bind(...values: unknown[]): D1PreparedStatementLike
+export interface SqlMigrationDatabaseLike {
+  exec(query: string): void
+}
+
+export interface SqlPreparedStatementLike {
+  bind(...values: unknown[]): SqlPreparedStatementLike
   first<T = unknown>(): Promise<T | null>
   all<T = unknown>(): Promise<{ results?: T[] }>
   run(): Promise<unknown>
@@ -20,8 +24,8 @@ export interface EventRecordPersistence {
   deleteCreatedBefore(cutoff: string): Promise<void>
 }
 
-export class D1EventRecordPersistence implements EventRecordPersistence {
-  constructor(private readonly db: D1DatabaseLike) {}
+export class SqliteEventRecordPersistence implements EventRecordPersistence {
+  constructor(private readonly db: SqlDatabaseLike) {}
 
   async create(record: EventRecord): Promise<void> {
     await this.db.batch([
@@ -134,19 +138,19 @@ export class D1EventRecordPersistence implements EventRecordPersistence {
     return (rows.results ?? []).map(settlementPaymentFromRow)
   }
 
-  private insertEventStatement(event: EventSummary): D1PreparedStatementLike {
+  private insertEventStatement(event: EventSummary): SqlPreparedStatementLike {
     return this.db
       .prepare('insert into events (id, token, title, currency, created_at, updated_at) values (?, ?, ?, ?, ?, ?)')
       .bind(event.id, event.token, event.title, event.currency, event.createdAt, event.updatedAt)
   }
 
-  private updateEventStatement(event: EventSummary): D1PreparedStatementLike {
+  private updateEventStatement(event: EventSummary): SqlPreparedStatementLike {
     return this.db
       .prepare('update events set token = ?, title = ?, currency = ?, created_at = ?, updated_at = ? where id = ?')
       .bind(event.token, event.title, event.currency, event.createdAt, event.updatedAt, event.id)
   }
 
-  private insertParticipantStatements(record: EventRecord): D1PreparedStatementLike[] {
+  private insertParticipantStatements(record: EventRecord): SqlPreparedStatementLike[] {
     return record.participants.map((participant) =>
       this.db
         .prepare(
@@ -156,7 +160,7 @@ export class D1EventRecordPersistence implements EventRecordPersistence {
     )
   }
 
-  private insertExpenseStatements(record: EventRecord): D1PreparedStatementLike[] {
+  private insertExpenseStatements(record: EventRecord): SqlPreparedStatementLike[] {
     return record.expenses.flatMap((expense) => [
       this.db
         .prepare(
@@ -175,7 +179,7 @@ export class D1EventRecordPersistence implements EventRecordPersistence {
     ])
   }
 
-  private insertShareStatements(expense: Expense): D1PreparedStatementLike[] {
+  private insertShareStatements(expense: Expense): SqlPreparedStatementLike[] {
     return expense.shares.map((share) =>
       this.db
         .prepare('insert into shares (id, expense_id, participant_id, amount_minor) values (?, ?, ?, ?)')
@@ -183,7 +187,7 @@ export class D1EventRecordPersistence implements EventRecordPersistence {
     )
   }
 
-  private insertSettlementPaymentStatements(record: EventRecord): D1PreparedStatementLike[] {
+  private insertSettlementPaymentStatements(record: EventRecord): SqlPreparedStatementLike[] {
     return record.settlementPayments.map((settlementPayment) =>
       this.db
         .prepare(

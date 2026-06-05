@@ -9,7 +9,7 @@ import type {
   SettlementPayment
 } from '../domain'
 import {
-  EVENT_REALTIME_FALLBACK_POLL_MS,
+  REALTIME_FALLBACK_POLL_MS,
   eventRealtimeReconnectDelay,
   eventRealtimeRoutePath,
   parseEventRealtimeMessage
@@ -170,7 +170,7 @@ function EventApp({ token }: { token: string }): React.ReactElement {
     if (fallbackPollingRef.current) return
     fallbackPollingRef.current = window.setInterval(() => {
       void refresh(true)
-    }, EVENT_REALTIME_FALLBACK_POLL_MS)
+    }, REALTIME_FALLBACK_POLL_MS)
   }, [refresh])
 
   const connectRealtime = useCallback((): void => {

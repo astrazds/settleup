@@ -37,12 +37,12 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Money amounts use whole minor units with two decimal places.
 - One Event has exactly one Currency.
 - Saved Expense commands accept Included Participants and derive equal Shares before persistence.
-- D1-backed multi-record Event mutations must be all-or-nothing.
+- SQLite-backed multi-record Event mutations must be all-or-nothing.
 - Balances reflect only saved Expenses and Settlement Payments.
 - Suggested Settlements are derived data used to power Balance-row Pay actions, not recorded history.
 - Settlement Payments may overpay.
 - Draft forms must not be overwritten by realtime or polling refreshes.
-- Realtime messages announce saved Event changes only; D1 remains the source of truth.
+- Realtime messages announce saved Event changes only; SQLite remains the source of truth.
 - Concurrent edits are last-write-wins for the MVP.
 - Event data is Private-by-Link, not public and not account-private.
 - Event Link tokens are opaque, URL-safe, lowercase, and avoid visually ambiguous characters.
@@ -58,8 +58,8 @@ Defer browser-local recent Event lists until the Event page itself is excellent.
 - Presence, viewer counts, edit attribution, locks, merge conflict UI, and audit history.
 - Manual whole-Event deletion and token rotation.
 - Offline mutation support, public API guarantees, CAPTCHA, or explicit rate limiting.
-- A separate frontend app detached from the Worker.
+- A separate frontend app detached from the Node app.
 
 ## Test Direction
 
-Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed D1 tests, realtime protocol/notifier seams, DOM-free UI policy helpers, React-visible Event behavior, and Playwright-visible Event behavior over private implementation assertions.
+Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed SQLite tests, realtime protocol/notifier seams, DOM-free UI policy helpers, React-visible Event behavior, and Playwright-visible Event behavior over private implementation assertions.

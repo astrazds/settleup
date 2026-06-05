@@ -10,6 +10,7 @@ dist/
 playwright-report/
 test-results/
 coverage/
+.data/
 worker-startup.cpuprofile
 .vscode/*
 !.vscode/launch.json
@@ -20,7 +21,6 @@ worker-startup.cpuprofile
 
 # deps
 node_modules/
-.wrangler
 
 # env
 .env

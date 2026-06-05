@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DurableObjectEventRealtimeNotifier, EventRealtimeRoom } from './event-realtime'
+import { EventRealtimeHub, EventRealtimeRoom, LocalEventRealtimeNotifier } from './event-realtime'
 import type { EventRealtimeNotifier } from './event-realtime'
 import { parseEventRealtimeMessage } from './event-realtime-protocol'
 import { createApp } from './index'
@@ -18,49 +18,49 @@ describe('Event realtime protocol', () => {
 
 describe('Event realtime room', () => {
   beforeEach(() => {
-    installWorkerWebSocketGlobals()
+    installWebSocketGlobals()
   })
 
   it('broadcasts Event-change notifications to open clients in the room', async () => {
     const firstClient = new FakeWebSocket()
     const secondClient = new FakeWebSocket()
     const closedClient = new FakeWebSocket(WebSocket.CLOSED)
-    const room = new EventRealtimeRoom(
-      fakeDurableObjectState([firstClient, secondClient, closedClient]),
-      {} as CloudflareBindings
-    )
+    const room = new EventRealtimeRoom()
+    room.connect(firstClient)
+    room.connect(secondClient)
+    room.connect(closedClient)
 
-    await room.eventChanged()
+    room.eventChanged()
 
     expect(firstClient.sent).toEqual(['{"type":"event_changed"}'])
     expect(secondClient.sent).toEqual(['{"type":"event_changed"}'])
     expect(closedClient.sent).toEqual([])
   })
+
+  it('replies to browser heartbeat pings', () => {
+    const client = new FakeWebSocket()
+    const room = new EventRealtimeRoom()
+    room.connect(client)
+
+    room.receiveMessage(client, 'ping')
+
+    expect(client.sent).toEqual(['pong'])
+  })
 })
 
-describe('DurableObjectEventRealtimeNotifier', () => {
+describe('LocalEventRealtimeNotifier', () => {
   it('routes Event-change notifications only to the room named by token', async () => {
-    const rooms = new FakeRoomNamespace()
-    const notifier = new DurableObjectEventRealtimeNotifier(rooms.namespace)
+    const hub = new EventRealtimeHub()
+    const tokenAClient = new FakeWebSocket()
+    const tokenBClient = new FakeWebSocket()
+    hub.room('event-token-a').connect(tokenAClient)
+    hub.room('event-token-b').connect(tokenBClient)
+    const notifier = new LocalEventRealtimeNotifier(hub)
 
     await notifier.eventChanged('event-token-a')
 
-    expect(rooms.room('event-token-a').changedCount).toBe(1)
-    expect(rooms.room('event-token-b').changedCount).toBe(0)
-  })
-
-  it('connects clients through the room named by Event token', async () => {
-    const rooms = new FakeRoomNamespace()
-    const notifier = new DurableObjectEventRealtimeNotifier(rooms.namespace)
-    const request = new Request('https://settleup.test/api/events/event-token-a/realtime', {
-      headers: { Upgrade: 'websocket' }
-    })
-
-    const response = await notifier.connect('event-token-a', request)
-
-    expect(response.status).toBe(204)
-    expect(rooms.room('event-token-a').connectedRequests).toEqual([request])
-    expect(rooms.room('event-token-b').connectedRequests).toEqual([])
+    expect(tokenAClient.sent).toEqual(['{"type":"event_changed"}'])
+    expect(tokenBClient.sent).toEqual([])
   })
 })
 
@@ -102,66 +102,26 @@ describe('Event realtime route notifications', () => {
 
 class FakeWebSocket {
   readonly sent: string[] = []
+  readonly closed: Array<{ code?: number; reason?: string }> = []
 
   constructor(readonly readyState: number = WebSocket.OPEN) {}
 
   send(message: string): void {
     this.sent.push(message)
   }
+
+  close(code?: number, reason?: string): void {
+    this.closed.push({ code, reason })
+  }
 }
 
-function fakeDurableObjectState(sockets: FakeWebSocket[]): DurableObjectState {
-  return {
-    acceptWebSocket: () => undefined,
-    getWebSockets: () => sockets as unknown as WebSocket[],
-    setWebSocketAutoResponse: () => undefined
-  } as unknown as DurableObjectState
-}
-
-function installWorkerWebSocketGlobals(): void {
+function installWebSocketGlobals(): void {
   vi.stubGlobal('WebSocket', {
     CONNECTING: 0,
     OPEN: 1,
     CLOSING: 2,
     CLOSED: 3
   })
-  vi.stubGlobal('WebSocketRequestResponsePair', class {
-    constructor(
-      readonly request: string,
-      readonly response: string
-    ) {}
-  })
-}
-
-class FakeRoomNamespace {
-  private readonly rooms = new Map<string, FakeRoomStub>()
-
-  readonly namespace = {
-    getByName: (name: string) => this.room(name)
-  } as unknown as DurableObjectNamespace<EventRealtimeRoom>
-
-  room(name: string): FakeRoomStub {
-    let room = this.rooms.get(name)
-    if (!room) {
-      room = new FakeRoomStub()
-      this.rooms.set(name, room)
-    }
-    return room
-  }
-}
-
-class FakeRoomStub {
-  changedCount = 0
-  readonly connectedRequests: Request[] = []
-
-  async eventChanged(): Promise<void> {
-    this.changedCount += 1
-  }
-
-  async fetch(request: Request): Promise<Response> {
-    this.connectedRequests.push(request)
-    return new Response(null, { status: 204 })
-  }
 }
 
 function testApp(): { app: ReturnType<typeof createApp>; notifier: FakeRealtimeNotifier } {

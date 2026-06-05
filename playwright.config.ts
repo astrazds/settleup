@@ -10,7 +10,7 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }]
   ],
   webServer: {
-    command: 'npm run dev -- --port 8791',
+    command: 'SETTLEUP_DATABASE_PATH=.data/smoke.sqlite npm run dev -- --port 8791',
     url: 'http://127.0.0.1:8791',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000

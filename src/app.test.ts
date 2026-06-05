@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { executeSavedEventCommand } from './event-command-runtime'
-import worker, { createApp } from './index'
+import { cleanupExpiredEvents, createApp } from './index'
 import type { EventSnapshot, Expense, Participant, SettlementPayment } from './domain'
 import type { EventRealtimeNotifier } from './event-realtime'
 import { MemoryStore } from './store'
@@ -151,8 +151,17 @@ describe('Event creation and access', () => {
     expect(response.status).toBe(204)
   })
 
-  it('exposes scheduled cleanup for Cloudflare Cron Triggers', () => {
-    expect(worker.scheduled).toEqual(expect.any(Function))
+  it('exposes cleanup for independent runtime scheduling', async () => {
+    const store = new MemoryStore()
+    const created = await store.createEvent({
+      title: 'Expired lunch',
+      currency: 'AUD',
+      displayName: 'Sarah'
+    })
+
+    await cleanupExpiredEvents(store, new Date('2100-01-01T00:00:00.000Z'))
+
+    await expect(store.getEventByToken(created.event.token)).resolves.toBeNull()
   })
 })
 

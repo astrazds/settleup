@@ -1,6 +1,6 @@
 # Verification
 
-Use this gate before merging changes that affect runtime behavior, Event UI behavior, Worker configuration, or deployment packaging.
+Use this gate before merging changes that affect runtime behavior, Event UI behavior, storage, realtime, or deployment packaging.
 
 ```sh
 npm run verify
@@ -15,7 +15,6 @@ npm run typecheck
 npm run test:smoke
 npm run validate:html
 npm run deploy:dry-run
-rm -rf dist-dry-run
 ```
 
 ## Layers
@@ -25,67 +24,49 @@ rm -rf dist-dry-run
 - `npm run typecheck`: strict TypeScript check without output.
 - `npm run test:smoke:critical`: Playwright critical Event UI project.
 - `npm run test:smoke:extended`: Playwright realtime browser project.
-- `npm run test:smoke`: both Playwright projects against local Wrangler dev and local D1.
+- `npm run test:smoke`: both Playwright projects against the local Node server and a disposable SQLite database at `.data/smoke.sqlite`.
 - `npm run validate:html`: validates `docs/design/mockups.html`.
-- `npm run db:migrations:apply:local`: applies D1 migrations to the local D1 database through the `DB` binding.
-- `npm run db:migrations:apply:remote`: applies D1 migrations to the remote D1 database through the `DB` binding.
-- `npm run deploy:dry-run`: Wrangler packaging check without deployment.
 - `npm run build:client`: bundles the React Event page into `src/ui/generated-client.ts`; it is also run by the relevant npm pre-scripts.
+- `npm run build:server`: bundles the Node server entrypoint into `dist/server.js`.
+- `npm run deploy:dry-run`: runs the same provider-neutral build used for deployment packaging.
 
 ## Current Coverage
 
 - Domain and routes: Event creation/access, saved command execution, Participant mutations, Expense mutations with Included Participant equal Share derivation, Settlement Payment mutations, malformed input, Currency handling, Balances, and derived Suggested Settlements behind Balance Pay actions.
-- Storage: migration-backed D1 setup, D1 Event Record persistence mapping, Event Record round trips through `D1Store`, and rollback coverage for multi-record Event mutations.
-- Realtime: shared protocol parsing, Durable Object room broadcast, Event token isolation, connection routing, success-only mutation notifications, draft preservation, stale-draft warnings, and fallback polling.
-- Browser: Event creation, Add Expense with Participant selection and equal split behavior, Balance-row Pay actions, folded outside-payment capture, correction flows, Event Link copy feedback, mobile layout, and focused accessibility coverage.
+- Storage: migration-backed SQLite setup, SQLite Event Record persistence mapping, Event Record round trips through `SqliteStore`, and rollback coverage for multi-record Event mutations.
+- Realtime: shared protocol parsing, local room broadcast, Event token isolation, success-only mutation notifications, draft preservation, stale-draft warnings, and fallback polling.
+- Browser: Event creation, Add Expense with Participant selection and equal split behavior, Balance-row Pay actions, folded outside-payment capture, correction flows, Event Link copy feedback, mobile layout, realtime refresh, and focused accessibility coverage.
 
-## Cloudflare Workflow
+## Runtime Workflow
 
-- `wrangler.jsonc` defines the Worker name, compatibility date, D1 binding, Durable Object binding, and Durable Object migration.
-- D1 migrations live in `migrations/`.
-- Run local D1 migrations with `npm run db:migrations:apply:local`.
-- Run `npm run cf-typegen` after changing bindings or Wrangler configuration.
-- Use Cloudflare MCP tools for account inventory, current docs, build diagnostics, and observability before assuming remote state.
-- Wrangler config enables `nodejs_compat`, Worker source-map upload, Smart Placement, explicit Workers Logs and Traces sampling, and `VERSION_METADATA` for deployment diagnostics.
-- Wrangler config includes a daily UTC Cron Trigger that runs Event cleanup for records older than five days.
-- `package.json` includes Cloudflare binding descriptions for `DB`, `EVENT_REALTIME`, and `VERSION_METADATA` so deploy tooling can present resource intent.
+- Migrations live in `migrations/`.
+- The Node server applies checked-in migrations on startup.
+- Local development uses `.data/settleup.sqlite` unless `SETTLEUP_DATABASE_PATH` is set.
+- Playwright smoke tests remove and recreate `.data/smoke.sqlite` before starting the server.
+- Realtime browser tests connect to the Node WebSocket server at `/api/events/:token/realtime`.
+- Expired Event cleanup runs on an hourly Node timer and is also exposed as `cleanupExpiredEvents(store, now)` for tests and alternate schedulers.
 
-Before creating, deleting, or mutating remote Cloudflare resources, confirm the intended resource name, binding name, and environment match `wrangler.jsonc` and the task.
+Run the local server:
+
+```sh
+npm run dev
+```
+
+Run a built server:
+
+```sh
+npm run build
+SETTLEUP_DATABASE_PATH=.data/settleup.sqlite npm start
+```
 
 ## CI And Output
 
-Forgejo Actions runs the full gate on pushes to `main` and pull requests. On a successful `main` push, the same workflow deploys production after the verification job passes.
+Forgejo Actions should run the full verification gate on pushes and pull requests. A production host only needs Node, installed npm dependencies, the built `dist/server.js`, the checked-in `migrations/` directory, and a writable SQLite database path.
 
-Production deploy uses these Forgejo repository secrets:
+Transient generated output stays out of commits. `src/ui/generated-client.ts` is the checked-in app-served browser bundle and is regenerated by `npm run build:client`.
 
-- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID that owns the `settleup` Worker and D1 database.
-- `CLOUDFLARE_API_TOKEN`: Cloudflare API token scoped to the same account with Account `D1:Edit` and Account `Workers Scripts:Edit`.
-
-The production deploy job runs:
-
-```sh
-npm run deploy
-```
-
-`npm run deploy` builds the checked-in client bundle, applies remote D1 migrations through the `DB` binding, and deploys the Worker.
-
-Production deploy target:
-
-- Worker: `settleup`
-- URL: `https://settleup.pure-cake8631.workers.dev`
-- D1 database: `settleup`
-- Durable Object binding: `EVENT_REALTIME`
-
-The first successful automated production deploy was Forgejo workflow run `#18` on 2026-05-28. It found no pending D1 migrations, deployed `settleup`, and produced Worker version `bd697169-f462-4dd0-9e47-2cba164a7160`.
-
-If the D1 migration step fails with Cloudflare error `7403`, replace or update `CLOUDFLARE_API_TOKEN`; the token can authenticate but cannot call the D1 API for the configured account.
-
-Use `fj actions tasks` from the repository root to confirm workflow state after pushing.
-
-Transient generated output stays out of commits. `src/ui/generated-client.ts` is the checked-in Worker-served browser bundle and is regenerated by `npm run build:client`.
-
-- `dist-dry-run/`
+- `.data/`
+- `dist/`
 - `coverage/`
 - `playwright-report/`
 - `test-results/`
-- `.wrangler/`

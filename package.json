@@ -10,27 +10,24 @@
     "url": "https://repos.astrazds.net/astrazds/settleup.git"
   },
   "keywords": [
-    "cloudflare-workers",
-    "d1",
     "expense-splitting",
     "hono",
     "settlement",
+    "sqlite",
     "typescript"
   ],
   "author": "Andrejs Strazds <andrejs@astrazds.com>",
   "type": "module",
   "scripts": {
-    "build": "npm run build:client",
+    "build": "npm run build:client && npm run build:server",
     "build:client": "node scripts/build-client.mjs",
-    "predev": "npm run build:client",
-    "dev": "wrangler dev",
-    "db:migrations:apply:local": "wrangler d1 migrations apply DB --local",
-    "db:migrations:apply:remote": "wrangler d1 migrations apply DB --remote",
-    "deploy": "npm run db:migrations:apply:remote && wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "pretest:smoke": "npm run build:client && npm run db:migrations:apply:local",
-    "pretest:smoke:critical": "npm run build:client && npm run db:migrations:apply:local",
-    "pretest:smoke:extended": "npm run build:client && npm run db:migrations:apply:local",
+    "build:server": "esbuild src/server.ts --bundle --packages=external --platform=node --format=esm --outfile=dist/server.js",
+    "dev": "npm run build && node dist/server.js",
+    "start": "node dist/server.js",
+    "deploy": "npm run build",
+    "pretest:smoke": "rm -f .data/smoke.sqlite .data/smoke.sqlite-* && npm run build",
+    "pretest:smoke:critical": "rm -f .data/smoke.sqlite .data/smoke.sqlite-* && npm run build",
+    "pretest:smoke:extended": "rm -f .data/smoke.sqlite .data/smoke.sqlite-* && npm run build",
     "test:smoke": "playwright test",
     "test:smoke:critical": "playwright test --project=critical",
     "test:smoke:extended": "playwright test --project=extended",
@@ -40,40 +37,26 @@
     "pretypecheck": "npm run build:client",
     "typecheck": "tsc --noEmit",
     "validate:html": "html-validate docs/design/mockups.html",
-    "predeploy": "npm run build:client",
-    "predeploy:dry-run": "npm run build:client",
-    "deploy:dry-run": "wrangler deploy --dry-run --minify --outdir dist-dry-run",
-    "verify": "npm test && npm run test:coverage && npm run typecheck && npm run test:smoke && npm run validate:html && sh -c 'trap \"rm -rf dist-dry-run\" EXIT; npm run deploy:dry-run'"
-  },
-  "cloudflare": {
-    "bindings": {
-      "DB": {
-        "description": "Cloudflare D1 database for Events, Participants, Expenses, Shares, Settlement Payments, Balances, and Suggested Settlements. Wrangler config binds this as `DB` and migrations live in `migrations/`."
-      },
-      "EVENT_REALTIME": {
-        "description": "Durable Object namespace for Event-scoped WebSocket fan-out. The class is `EventRealtimeRoom` and migrations create it with SQLite storage."
-      },
-      "VERSION_METADATA": {
-        "description": "Worker version metadata used for deployment diagnostics and the `x-worker-version` response header."
-      }
-    }
+    "deploy:dry-run": "npm run build",
+    "verify": "npm test && npm run test:coverage && npm run typecheck && npm run test:smoke && npm run validate:html && npm run build"
   },
   "dependencies": {
+    "@hono/node-server": "^2.0.4",
     "hono": "^4.12.23",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.7",
     "esbuild": "^0.28.0",
     "html-validate": "^11.4.0",
-    "miniflare": "^4.20260526.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7",
-    "wrangler": "^4.4.0"
+    "vitest": "^4.1.7"
   }
 }
