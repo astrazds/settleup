@@ -4,9 +4,12 @@ import {
   Copy,
   History,
   Link,
+  Monitor,
+  Moon,
   Pencil,
   Plus,
   ReceiptText,
+  Sun,
   Trash2,
   Users,
   WalletCards,
@@ -34,6 +37,7 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
 import type {
@@ -87,9 +91,64 @@ type RealtimeState =
   | 'Live updates reconnecting, polling'
   | 'Live updates unavailable, polling'
 
+type ThemeMode = 'light' | 'dark' | 'system'
+
 const appIconPath = '/icon.svg'
 const buttonTouchClassName = 'min-h-11 sm:min-h-0'
 const draftReviewWarning = 'Event updated while you were editing. Review before saving.'
+const themeStorageKey = 'settleup:theme'
+const themeModes = ['light', 'dark', 'system'] as const
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return typeof value === 'string' && themeModes.includes(value as ThemeMode)
+}
+
+function readThemeMode(): ThemeMode {
+  try {
+    const stored = window.localStorage.getItem(themeStorageKey)
+    return isThemeMode(stored) ? stored : 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+function systemPrefersDark(): boolean {
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
+}
+
+function applyThemeMode(mode: ThemeMode): void {
+  const isDark = mode === 'dark' || (mode === 'system' && systemPrefersDark())
+  document.documentElement.classList.toggle('dark', isDark)
+  document.documentElement.dataset.themeMode = mode
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#20211d' : '#f6f4ec')
+}
+
+function useThemeMode(): [ThemeMode, (mode: ThemeMode) => void] {
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => readThemeMode())
+
+  useEffect(() => {
+    applyThemeMode(themeMode)
+    if (themeMode !== 'system') return undefined
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const syncSystemTheme = () => applyThemeMode('system')
+
+    mediaQuery.addEventListener('change', syncSystemTheme)
+    return () => mediaQuery.removeEventListener('change', syncSystemTheme)
+  }, [themeMode])
+
+  const setThemeMode = useCallback((mode: ThemeMode) => {
+    setThemeModeState(mode)
+    try {
+      window.localStorage.setItem(themeStorageKey, mode)
+    } catch {
+      // Ignore unavailable storage; the active document still switches modes.
+    }
+  }, [])
+
+  return [themeMode, setThemeMode]
+}
 
 function emptyExpenseDraft(): ExpenseDraft {
   return {
@@ -120,6 +179,7 @@ function emptyParticipantCorrection(): ParticipantCorrection {
 
 function EventApp({ token }: { token: string }) {
   const [snapshot, setSnapshot] = useState<EventSnapshot | null>(null)
+  const [themeMode, setThemeMode] = useThemeMode()
   const [currentParticipantId, setCurrentParticipantId] = useState('')
   const [realtimeState, setRealtimeState] = useState<RealtimeState>('Live updates connecting')
   const [toast, setToast] = useState('')
@@ -597,6 +657,8 @@ function EventApp({ token }: { token: string }) {
       submitParticipantCorrection={submitParticipantCorrection}
       submitSettlementPayment={submitSettlementPayment}
       switchParticipant={switchParticipant}
+      setThemeMode={setThemeMode}
+      themeMode={themeMode}
       toast={toast}
     />
   )
@@ -659,6 +721,8 @@ interface EventPageProps {
   submitParticipantCorrection: (event: FormEvent<HTMLFormElement>) => void
   submitSettlementPayment: (event: FormEvent<HTMLFormElement>) => void
   switchParticipant: (participantId: string) => void
+  setThemeMode: (mode: ThemeMode) => void
+  themeMode: ThemeMode
   toast: string
 }
 
@@ -700,6 +764,8 @@ function EventPage(props: EventPageProps) {
     submitParticipantCorrection,
     submitSettlementPayment,
     switchParticipant,
+    setThemeMode,
+    themeMode,
     toast
   } = props
 
@@ -713,6 +779,8 @@ function EventPage(props: EventPageProps) {
           realtimeState={realtimeState}
           snapshot={snapshot}
           switchParticipant={switchParticipant}
+          setThemeMode={setThemeMode}
+          themeMode={themeMode}
           toast={toast}
         />
 
@@ -794,6 +862,8 @@ interface EventHeaderProps {
   realtimeState: RealtimeState
   snapshot: EventSnapshot
   switchParticipant: (participantId: string) => void
+  setThemeMode: (mode: ThemeMode) => void
+  themeMode: ThemeMode
   toast: string
 }
 
@@ -804,11 +874,13 @@ function EventHeader({
   realtimeState,
   snapshot,
   switchParticipant,
+  setThemeMode,
+  themeMode,
   toast
 }: EventHeaderProps) {
   return (
     <Card className="lg:col-span-2">
-      <CardHeader className="gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
+      <CardHeader className="grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
         <div className="flex min-w-0 items-start gap-3">
           <AppBrandIcon />
           <div className="min-w-0">
@@ -820,9 +892,10 @@ function EventHeader({
             </CardDescription>
           </div>
         </div>
-        <CardAction className="static col-auto row-auto grid gap-2 justify-self-stretch sm:justify-self-end">
+        <CardAction className="col-span-full col-start-1 row-start-auto flex flex-wrap items-center gap-2 justify-self-stretch sm:col-auto sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:justify-self-end">
+          <ThemeModeToggle mode={themeMode} setMode={setThemeMode} />
           <Button
-            className={cn('w-full sm:w-auto', buttonTouchClassName)}
+            className={cn('flex-1 sm:flex-none', buttonTouchClassName)}
             data-copy-link
             onClick={copyEventLink}
             type="button"
@@ -851,6 +924,36 @@ function EventHeader({
         </CardContent>
       ) : null}
     </Card>
+  )
+}
+
+function ThemeModeToggle({ mode, setMode }: { mode: ThemeMode; setMode: (mode: ThemeMode) => void }) {
+  const changeMode = (value: string) => {
+    if (isThemeMode(value)) {
+      setMode(value)
+    }
+  }
+
+  return (
+    <ToggleGroup
+      aria-label="Theme mode"
+      data-testid="theme-mode-toggle"
+      onValueChange={changeMode}
+      spacing={0}
+      type="single"
+      value={mode}
+      variant="outline"
+    >
+      <ToggleGroupItem aria-label="Use system theme" className="h-11 min-w-11 sm:h-8 sm:min-w-8" value="system">
+        <Monitor />
+      </ToggleGroupItem>
+      <ToggleGroupItem aria-label="Use light theme" className="h-11 min-w-11 sm:h-8 sm:min-w-8" value="light">
+        <Sun />
+      </ToggleGroupItem>
+      <ToggleGroupItem aria-label="Use dark theme" className="h-11 min-w-11 sm:h-8 sm:min-w-8" value="dark">
+        <Moon />
+      </ToggleGroupItem>
+    </ToggleGroup>
   )
 }
 

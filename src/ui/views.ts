@@ -153,6 +153,7 @@ function documentPage({ title, body, assets }: { title: string; body: string; as
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#20211d">
+  <script>${themeModeHeadScript()}</script>
   <title>${escapeHtml(title)}</title>
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/svg+xml" href="${escapeHtml(assets.iconPath)}">
@@ -166,6 +167,30 @@ function documentPage({ title, body, assets }: { title: string; body: string; as
 ${body.trim()}
 </body>
 </html>`
+}
+
+function themeModeHeadScript(): string {
+  return `(() => {
+  const storageKey = 'settleup:theme'
+  const modes = ['light', 'dark', 'system']
+  const readMode = () => {
+    try {
+      const stored = window.localStorage.getItem(storageKey)
+      return modes.includes(stored) ? stored : 'system'
+    } catch {
+      return 'system'
+    }
+  }
+  const systemIsDark = () => window.matchMedia?.('(prefers-color-scheme: dark)').matches === true
+  const applyMode = (mode) => {
+    const isDark = mode === 'dark' || (mode === 'system' && systemIsDark())
+    document.documentElement.classList.toggle('dark', isDark)
+    document.documentElement.dataset.themeMode = mode
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light'
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#20211d' : '#f6f4ec')
+  }
+  applyMode(readMode())
+})()`
 }
 
 function appIconMarkup(assets: PageAssets): string {

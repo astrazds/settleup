@@ -30,6 +30,32 @@ test.describe('Event UI smoke flow', () => {
     await expect(page.getByLabel('Your name')).toHaveAttribute('aria-describedby', /create-display-name-error/)
   })
 
+  test('detects system theme by default and persists explicit theme mode', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' })
+    const event = eventUi(page)
+    await event.createEvent({ eventTitle: `Theme smoke ${Date.now()}` })
+
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+    await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'system')
+    await expect(page.getByTestId('theme-mode-toggle')).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'Use system theme' })).toBeChecked()
+
+    await page.getByRole('radio', { name: 'Use light theme' }).click()
+    await expect(page.locator('html')).not.toHaveClass(/\bdark\b/)
+    await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'light')
+    await expect(page.getByRole('radio', { name: 'Use light theme' })).toBeChecked()
+    expect(await page.evaluate(() => window.localStorage.getItem('settleup:theme'))).toBe('light')
+
+    await page.reload()
+    await expect(page.locator('html')).not.toHaveClass(/\bdark\b/)
+    await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'light')
+    await expect(page.getByRole('radio', { name: 'Use light theme' })).toBeChecked()
+
+    await page.getByRole('radio', { name: 'Use system theme' }).click()
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+    await expect(page.locator('html')).toHaveAttribute('data-theme-mode', 'system')
+  })
+
   test('creates an Event, captures an Expense, records settlement, and shows Event History', async ({ page }) => {
     const event = eventUi(page)
     await event.createEvent({ eventTitle: `Sydney smoke ${Date.now()}` })

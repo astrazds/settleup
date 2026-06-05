@@ -17,6 +17,7 @@ The create page is a compact task form, not a landing page. It uses the headline
 - Use shadcn semantic tokens (`background`, `foreground`, `card`, `muted`, `primary`, `destructive`, `border`, `input`, and `ring`) rather than a repo-specific palette.
 - Compose Event page controls with checked-in shadcn/ui source components and semantic tokens before adding bespoke UI markup.
 - Use the preset radius scale from `src/ui/shadcn.css`; do not recreate a separate radius system.
+- Honor the user's system color scheme by default, then persist explicit Light, Dark, or System mode choices using the same shadcn semantic tokens.
 - Use receipt-grid structure: rows, dividers, subtotal bands, aligned amounts, and compact grouped forms.
 - Repeated records should read as ledger rows, not floating cards.
 - Touch targets on mobile and coarse pointers should be at least 44px.
@@ -29,7 +30,7 @@ The Event page uses three durable panels:
 - Add Expense, including a one-Participant onboarding state, compact Participant rows for split selection, and Participant correction.
 - Event History for saved Expenses and payments.
 
-Utility actions stay compact. Event Link sharing and the current acting Participant selector belong beside the Event title, not as separate full panels. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Record outside payment panel.
+Utility actions stay compact. Theme mode, Event Link sharing, and the current acting Participant selector belong beside the Event title, not as separate full panels. Settlement Payment capture belongs beside Balances as direct row Pay actions plus a folded Record outside payment panel.
 
 The Event page state policy lives outside DOM rendering. Keep placement, visibility, empty guidance, history ordering, and Participant deletion availability in a plain policy layer so renderer changes do not redefine the product shape.
 

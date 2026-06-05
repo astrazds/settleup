@@ -36,13 +36,13 @@ Core docs:
 ## Current UI
 
 - Create page copy: "Create a shared expense Event", "Use it for a trip, dinner, or shared cost.", and the private Event Link note before Create Event.
-- Event header: Event Title, Copy Event Link action, Currency note, realtime status, and current acting Participant selector once split selection is possible.
+- Event header: Event Title, System/Light/Dark theme selector, Copy Event Link action, Currency note, realtime status, and current acting Participant selector once split selection is possible.
 - Balances: net Balance rows, with a `Pay` action on rows where a Participant owes money.
 - Add Expense: one-Participant onboarding, header acting-Participant selector once available, Description, Amount, Save expense, compact Participant rows, and a one-row Add Participant form. The payer is the current Participant default; selected Participants split the Expense equally.
 - Record outside payment: folded shadcn panel beside Balances for Who paid, Who received, Amount, Record payment, and Cancel.
 - Event History: newest-first Expenses and payments with Edit and Delete controls.
 
-The UI uses shadcn preset `b6u0ULvrE` as the styling baseline. The Event page uses checked-in shadcn/ui source components for panels, fields, buttons, badges, alerts, Radix Select, Radix Checkbox, and loading states.
+The UI uses shadcn preset `b6u0ULvrE` as the styling baseline. The Event page uses checked-in shadcn/ui source components for panels, fields, buttons, badges, alerts, Radix Select, Radix Checkbox, Radix Toggle Group, and loading states. Theme mode defaults to the system color scheme and can be pinned to Light or Dark from the Event header.
 
 ## Runtime Scope
 
