@@ -15,6 +15,9 @@ Key files:
 - `src/ui/client-expense-draft.ts`, `src/ui/client-event-page-policy.ts`: DOM-free browser behavior policy/composition modules for equal split draft behavior and Event page state.
 - `src/ui/react-client.tsx`: React Event page client bundled into `/static/client.js`.
 - `src/ui/generated-client.ts`: generated checked-in browser bundle; regenerate with `npm run build:client`.
+- `components.json`: shadcn/ui CLI, registry, alias, and Tailwind configuration.
+- `src/ui/shadcn.css`: Tailwind v4 and shadcn theme input compiled by `npm run build:client`.
+- `src/ui/generated-shadcn-styles.ts`: generated checked-in shadcn/Tailwind stylesheet module; regenerate with `npm run build:client`.
 - `migrations/`: SQLite migrations.
 - `PRODUCT.md`, `CONTEXT.md`, `DESIGN.md`, `docs/DECISIONS.md`, `docs/VERIFICATION.md`: complete repo documentation set.
 
@@ -35,6 +38,9 @@ Key files:
 - `npm run verify`: run the full local confidence gate.
 - `npm run deploy:dry-run`: verify provider-neutral Node packaging.
 - `npm run deploy`: run the provider-neutral build for deployment packaging.
+- `npx shadcn@latest info --json`: inspect this repo's shadcn/ui configuration.
+- `npx shadcn@latest docs <component>`: fetch current shadcn component docs and examples.
+- `npx shadcn@latest add <component> --dry-run`: preview generated component files before applying.
 
 ## Style
 
@@ -48,10 +54,25 @@ For broad runtime, UI, storage, realtime, or deployment packaging changes, run `
 
 ## Agent Skills
 
+### Skill routing
+
 - TypeScript work: use `typescript-expert`.
 - Hono-specific questions: check official Hono LLM docs first: `https://hono.dev/llms.txt`, `https://hono.dev/llms-full.txt`, and `https://hono.dev/llms-small.txt`.
 - Frontend, UI, design, accessibility, responsive behavior, copy, or interaction polish: use `impeccable` and read `PRODUCT.md` plus `DESIGN.md`.
+- shadcn/ui work: use the project shadcn skill, run `npx shadcn@latest info --json`, fetch component docs with `npx shadcn@latest docs <component>`, and prefer `npx shadcn@latest add <component> --dry-run` before writing generated components.
 - TDD or behavior changes: use `tdd` and keep tests behavior-first.
+
+### Issue tracker
+
+Issues are tracked in Forgejo at `https://repos.astrazds.net` using `fj`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use category labels `bug` or `enhancement`, plus one state label from the default triage vocabulary. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo with domain vocabulary in `CONTEXT.md` and durable decisions in `docs/DECISIONS.md`. See `docs/agents/domain.md`.
 
 Runtime work should keep the app independent of provider-specific services and CLIs. Use `node:sqlite` for the durable local database unless a future product decision deliberately introduces a different provider-neutral storage adapter.
 

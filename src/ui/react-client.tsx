@@ -1,7 +1,42 @@
 /** @jsxImportSource react */
+import {
+  CheckIcon,
+  CircleDollarSignIcon,
+  CopyIcon,
+  CreditCardIcon,
+  HistoryIcon,
+  PencilIcon,
+  PlusIcon,
+  ReceiptTextIcon,
+  Trash2Icon,
+  UsersRoundIcon,
+  WalletCardsIcon,
+  XIcon
+} from 'lucide-react'
 import React, { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet
+} from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import type {
   EventSnapshot,
   Expense,
@@ -29,6 +64,7 @@ import {
   newParticipantId,
   shouldShowDraftUpdateWarning
 } from './client-state'
+import { cn } from '@/lib/utils'
 
 type RequestMethod = 'POST' | 'PATCH' | 'DELETE'
 
@@ -66,6 +102,10 @@ interface ToastState {
   message: string
   visible: boolean
 }
+
+const selectClassName = 'h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm disabled:cursor-not-allowed disabled:opacity-50'
+const checkboxClassName = 'size-4 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50'
+const moneyClassName = 'font-mono text-sm font-semibold tabular-nums'
 
 const appElement = document.querySelector<HTMLElement>('#app')
 const token = appElement?.dataset.token
@@ -272,11 +312,18 @@ function EventApp({ token }: { token: string }): React.ReactElement {
 
   if (!snapshot) {
     return (
-      <section className="loading-panel">
-        <p className="eyebrow">SettleUp</p>
-        <h1>Event not found</h1>
-        <p>This Event Link does not work.</p>
-      </section>
+      <div className="mx-auto grid min-h-svh w-full max-w-5xl place-items-center">
+        <Card className="w-full max-w-md rounded-lg shadow-none">
+          <CardHeader>
+            <CardTitle>Event not found</CardTitle>
+            <CardDescription>This Event Link does not work.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Skeleton className="h-3 w-3/4" />
+            <Skeleton className="h-3 w-1/2" />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -586,57 +633,81 @@ function EventApp({ token }: { token: string }): React.ReactElement {
   const currentParticipantName = findParticipant(snapshot.participants, effectiveCurrentParticipantId).displayName
 
   return (
-    <>
-      <header className="app-top">
-        <div>
-          <div className="brand">
-            <span className="mark" aria-hidden="true"><span /><span /></span>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+      <header className="flex flex-col gap-3 rounded-lg border bg-card px-4 py-4 text-card-foreground sm:flex-row sm:items-start sm:justify-between sm:px-5">
+        <div className="min-w-0">
+          <div className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+            <span className="grid size-6 gap-1" aria-hidden="true">
+              <span className="ml-auto block h-1.5 w-4 rounded-sm bg-primary" />
+              <span className="block h-1.5 w-4 rounded-sm bg-primary" />
+            </span>
             <span>SettleUp</span>
           </div>
-          <div className="event-title-line">
-            <h1 data-event-title>{snapshot.event.title}</h1>
-            <button
-              className="icon-button"
+          <div className="flex min-w-0 items-start gap-2">
+            <h1 className="min-w-0 [overflow-wrap:anywhere] text-2xl font-semibold leading-tight tracking-normal" data-event-title>
+              {snapshot.event.title}
+            </h1>
+            <Button
+              variant="outline"
+              size="icon"
               data-copy-link
               type="button"
               aria-label="Copy Event Link"
               title="Copy Event Link"
               onClick={() => void copyEventLink()}
             >
-              <span className="copy-icon" aria-hidden="true" />
-            </button>
+              <CopyIcon data-icon="inline-start" />
+            </Button>
           </div>
-          <p className="subtle"><span data-event-currency>{snapshot.event.currency}</span>, anyone with this link can edit.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            <span data-event-currency>{snapshot.event.currency}</span>, anyone with this link can edit.
+          </p>
         </div>
-        <div className="top-tools">
-          <span className="chip chip-current" data-realtime-state>{realtimeState}</span>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <Badge variant="secondary" className="gap-1.5" data-realtime-state>
+            <span className="size-2 rounded-full bg-primary" aria-hidden="true" />
+            {realtimeState}
+          </Badge>
         </div>
       </header>
-      <div className="toast-region" aria-live="polite" aria-atomic="true" data-toast-region>
-        <p className="toast-message" data-toast-message hidden={!toast.visible}>{toast.message}</p>
+      <div className="fixed bottom-4 left-4 right-4 z-20 sm:left-auto sm:right-5 sm:top-5 sm:bottom-auto sm:w-80" aria-live="polite" aria-atomic="true" data-toast-region>
+        <Alert className="shadow-sm" data-toast-message hidden={!toast.visible}>
+          <AlertTitle>SettleUp</AlertTitle>
+          <AlertDescription>{toast.message}</AlertDescription>
+        </Alert>
       </div>
-      <section className="start-panel" data-start-guidance hidden={!policy.startGuidance.visible}>
-        <div>
-          <strong data-start-title>{policy.startGuidance.title}</strong>
-          <p className="subtle" data-start-copy>{policy.startGuidance.copy}</p>
-        </div>
-        <button
-          type="button"
-          data-start-action
-          aria-label={policy.startGuidance.actionLabel}
-          onClick={followStartGuidance}
-        >
-          {policy.startGuidance.action}
-        </button>
-      </section>
-      <div className="app-grid">
-        <section className="section balances-section" data-testid="balances-panel">
-          <div className="section-head">
-            <h2>Balances</h2>
-            <span className="amount amount-positive" data-outstanding>
-              {outstandingMinor(snapshot) > 0 ? `Outstanding ${money(outstandingMinor(snapshot), snapshot.event.currency)}` : ''}
-            </span>
-          </div>
+      <Alert data-start-guidance hidden={!policy.startGuidance.visible}>
+        <ReceiptTextIcon />
+        <AlertTitle data-start-title>{policy.startGuidance.title}</AlertTitle>
+        <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span data-start-copy>{policy.startGuidance.copy}</span>
+          <Button
+            type="button"
+            data-start-action
+            aria-label={policy.startGuidance.actionLabel}
+            onClick={followStartGuidance}
+          >
+            <PlusIcon data-icon="inline-start" />
+            {policy.startGuidance.action}
+          </Button>
+        </AlertDescription>
+      </Alert>
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <Card className="rounded-lg py-0 shadow-none" as="section" data-testid="balances-panel">
+          <CardHeader className="border-b py-4">
+            <CardTitle>
+              <h2 className="flex items-center gap-2 text-lg font-semibold">
+                <WalletCardsIcon aria-hidden="true" />
+                Balances
+              </h2>
+            </CardTitle>
+            <CardAction>
+              <span className={cn(moneyClassName, 'text-primary')} data-outstanding>
+                {outstandingMinor(snapshot) > 0 ? `Outstanding ${money(outstandingMinor(snapshot), snapshot.event.currency)}` : ''}
+              </span>
+            </CardAction>
+          </CardHeader>
+          <CardContent className="px-0 py-0">
           <Balances
             snapshot={snapshot}
             pendingPayParticipantId={pendingPayParticipantId}
@@ -644,25 +715,27 @@ function EventApp({ token }: { token: string }): React.ReactElement {
             onConfirmPayBalance={(participantId) => void recordSuggestedSettlement(participantId)}
             onCancelPayBalance={() => setPendingPayParticipantId('')}
           />
+          </CardContent>
           {policy.taskRegions.recordSettlementPayment.visible ? (
             <div
-              className="settlement-dock"
+              className="border-t bg-muted/35"
               data-testid="record-settlement-panel"
               data-settlement-section
               data-settlement-form-section
             >
-              <div className="manual-settlement">
-                <button
-                  className="secondary"
+              <div className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  variant="outline"
                   type="button"
                   data-manual-settlement
                   disabled={!policy.settlementPaymentForm.canRecord}
                   hidden={settlementDraft.open || settlementDraft.dirty || Boolean(settlementDraft.settlementPaymentId)}
                   onClick={openManualSettlementForm}
                 >
+                  <CreditCardIcon data-icon="inline-start" />
                   Record outside payment
-                </button>
-                <p className="control-note" data-settlement-unavailable hidden={policy.settlementPaymentForm.canRecord}>
+                </Button>
+                <p className="text-sm text-muted-foreground" data-settlement-unavailable hidden={policy.settlementPaymentForm.canRecord}>
                   {policy.settlementPaymentForm.disabledReason}
                 </p>
               </div>
@@ -677,20 +750,26 @@ function EventApp({ token }: { token: string }): React.ReactElement {
               />
             </div>
           ) : null}
-        </section>
+        </Card>
 
-        <section className="section" data-testid="add-expense-panel">
-          <div className="section-head">
-            <div>
-              <h2>Add Expense</h2>
+        <Card className="rounded-lg py-0 shadow-none" as="section" data-testid="add-expense-panel">
+          <CardHeader className="border-b py-4">
+            <div className="min-w-0">
+              <CardTitle>
+                <h2 className="flex items-center gap-2 text-lg font-semibold">
+                  <ReceiptTextIcon aria-hidden="true" />
+                  Add Expense
+                </h2>
+              </CardTitle>
               {policy.currentParticipantDefaults.visible ? (
-                <p className="actor-summary">Paid by <strong dir="auto">{currentParticipantName}</strong></p>
+                <CardDescription className="mt-1">Paid by <strong className="text-foreground" dir="auto">{currentParticipantName}</strong></CardDescription>
               ) : null}
             </div>
             {policy.currentParticipantDefaults.visible ? (
-              <div className="expense-defaults" data-testid="expense-defaults">
-                <span>{policy.currentParticipantDefaults.label}</span>
+              <CardAction className="flex min-w-0 flex-col gap-1 text-sm sm:min-w-48" data-testid="expense-defaults">
+                <span className="font-medium text-muted-foreground">{policy.currentParticipantDefaults.label}</span>
                 <select
+                  className={selectClassName}
                   data-current-participant
                   aria-label={policy.currentParticipantDefaults.selectorLabel}
                   value={selectedDefaultId || effectiveCurrentParticipantId}
@@ -700,9 +779,10 @@ function EventApp({ token }: { token: string }): React.ReactElement {
                     <option key={participant.id} value={participant.id}>{participant.displayName}</option>
                   ))}
                 </select>
-              </div>
+              </CardAction>
             ) : null}
-          </div>
+          </CardHeader>
+          <CardContent className="px-0 py-0">
           <ExpenseForm
             draft={expenseDraft}
             participants={snapshot.participants}
@@ -730,10 +810,19 @@ function EventApp({ token }: { token: string }): React.ReactElement {
             onDeleteParticipant={(participantId) => void deleteParticipant(participantId)}
             snapshot={snapshot}
           />
-        </section>
+          </CardContent>
+        </Card>
 
-        <section className="section" data-testid="event-history-panel">
-          <div className="section-head"><h2>Event History</h2></div>
+        <Card className="rounded-lg py-0 shadow-none lg:col-span-2" as="section" data-testid="event-history-panel">
+          <CardHeader className="border-b py-4">
+            <CardTitle>
+              <h2 className="flex items-center gap-2 text-lg font-semibold">
+                <HistoryIcon aria-hidden="true" />
+                Event History
+              </h2>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 py-0">
           <History
             snapshot={snapshot}
             onEditExpense={editExpense}
@@ -741,9 +830,10 @@ function EventApp({ token }: { token: string }): React.ReactElement {
             onEditPayment={editPayment}
             onDeletePayment={(paymentId) => void deletePayment(paymentId)}
           />
-        </section>
+          </CardContent>
+        </Card>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -761,7 +851,7 @@ function Balances({
   onCancelPayBalance: () => void
 }): React.ReactElement {
   return (
-    <div data-balances>
+    <div className="divide-y" data-balances>
       {snapshot.balances.map((balance) => {
         const participant = findParticipant(snapshot.participants, balance.participantId)
         const suggestions = snapshot.suggestedSettlements.filter((suggestion) =>
@@ -772,46 +862,61 @@ function Balances({
           return `${participant.displayName} pays ${recipient.displayName} ${money(suggestion.amountMinor, snapshot.event.currency)}`
         }).join(', ')
         const amountClass = balance.amountMinor > 0
-          ? 'amount-positive'
-          : balance.amountMinor < 0 ? 'amount-negative' : 'amount-zero'
-        const rowClass = balance.amountMinor > 0 ? ' row-positive' : balance.amountMinor < 0 ? ' row-negative' : ''
+          ? 'text-primary'
+          : balance.amountMinor < 0 ? 'text-destructive' : 'text-muted-foreground'
+        const rowClass = balance.amountMinor > 0
+          ? 'bg-primary/5'
+          : balance.amountMinor < 0 ? 'bg-destructive/5' : ''
         const phrase = balance.amountMinor > 0
           ? `is owed ${money(balance.amountMinor, snapshot.event.currency)}`
           : balance.amountMinor < 0 ? `owes ${money(Math.abs(balance.amountMinor), snapshot.event.currency)}` : 'is settled'
         const isPayReviewing = pendingPayParticipantId === participant.id
         return (
-          <div className={`ledger-row balance-row${rowClass}${isPayReviewing ? ' row-reviewing' : ''}`} key={balance.participantId}>
-            <div>
-              <strong>{participant.displayName}</strong>
+          <div
+            className={cn(
+              'ledger-row balance-row grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center',
+              rowClass,
+              isPayReviewing && 'row-reviewing bg-muted'
+            )}
+            key={balance.participantId}
+          >
+            <div className="min-w-0">
+              <strong className="block min-w-0 [overflow-wrap:anywhere]" dir="auto">{participant.displayName}</strong>
               {isPayReviewing ? (
-                <p className="control-note pay-preview" data-pay-preview>{preview || 'No suggested payment to record.'}</p>
+                <p className="mt-1 text-sm font-medium text-muted-foreground" data-pay-preview>{preview || 'No suggested payment to record.'}</p>
               ) : null}
             </div>
             {isPayReviewing ? (
-              <span className="row-actions balance-actions balance-review-actions">
-                <button
+              <span className="row-actions balance-actions balance-review-actions flex flex-wrap gap-2 sm:justify-end">
+                <Button
                   type="button"
                   data-confirm-pay-balance={participant.id}
                   onClick={() => onConfirmPayBalance(participant.id)}
                 >
+                  <CheckIcon data-icon="inline-start" />
                   Record payment
-                </button>
-                <button className="secondary" type="button" onClick={onCancelPayBalance}>Cancel</button>
+                </Button>
+                <Button variant="outline" type="button" onClick={onCancelPayBalance}>
+                  <XIcon data-icon="inline-start" />
+                  Cancel
+                </Button>
               </span>
             ) : (
-              <span className="row-actions balance-actions">
+              <span className="row-actions balance-actions flex flex-wrap items-center gap-2 sm:justify-end">
                 {balance.amountMinor < 0 ? (
-                  <button
-                    className="secondary"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     type="button"
                     data-pay-balance={participant.id}
                     aria-label={`Review payment for ${participant.displayName} owing ${money(Math.abs(balance.amountMinor), snapshot.event.currency)}`}
                     onClick={() => onReviewPayBalance(participant.id)}
                   >
+                    <CreditCardIcon data-icon="inline-start" />
                     Pay
-                  </button>
+                  </Button>
                 ) : null}
-                <span className={`amount ${amountClass}`}>{phrase}</span>
+                <span className={cn(moneyClassName, amountClass)}>{phrase}</span>
               </span>
             )}
           </div>
@@ -877,11 +982,12 @@ function ExpenseForm({
     setNewParticipantName('')
   }
   const participantAddRow = (
-    <div className="embedded-block participant-manager" data-participant-form>
-      <div className="inline-form compact-form participant-add-row">
-        <label>
-          <span className="sr-only">Display name</span>
-          <input
+    <div className="participant-manager border-t p-4" data-participant-form>
+      <Field className="gap-2">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <FieldLabel htmlFor="new-participant-name" className="sr-only">Display name</FieldLabel>
+          <Input
+            id="new-participant-name"
             type="text"
             name="displayName"
             placeholder="Name"
@@ -893,26 +999,30 @@ function ExpenseForm({
               submitParticipant()
             }}
           />
-        </label>
-        <button type="button" aria-label="Add Participant" data-add-participant onClick={submitParticipant}>
-          Add
-        </button>
-      </div>
+          <Button type="button" aria-label="Add Participant" data-add-participant onClick={submitParticipant}>
+            <PlusIcon data-icon="inline-start" />
+            Add
+          </Button>
+        </div>
+      </Field>
     </div>
   )
 
   if (!expensePolicy.canRecord) {
     return (
       <form
-        className="inline-form"
+        className="flex flex-col"
         data-expense-form
         onSubmit={(event: FormEvent) => {
           event.preventDefault()
         }}
       >
-        <div className="expense-onboarding" data-expense-onboarding>
-          <strong>{expensePolicy.onboardingTitle}</strong>
-          <p>{expensePolicy.onboardingCopy}</p>
+        <div className="p-4">
+          <Alert data-expense-onboarding>
+            <UsersRoundIcon />
+            <AlertTitle>{expensePolicy.onboardingTitle}</AlertTitle>
+            <AlertDescription>{expensePolicy.onboardingCopy}</AlertDescription>
+          </Alert>
         </div>
         {participantAddRow}
       </form>
@@ -921,67 +1031,73 @@ function ExpenseForm({
 
   return (
     <form
-      className="inline-form"
+      className="flex flex-col"
       data-expense-form
       onSubmit={(event: FormEvent) => {
         event.preventDefault()
         onSubmit()
       }}
     >
-      <p className="control-note payer-note" data-payer-note>Paid by {payerName}.</p>
-      <div className="form-grid expense-entry-row">
-        <label>
-          <span>Description</span>
-          <input
-            type="text"
-            name="description"
-            required
-            placeholder="Dinner"
-            value={draft.description}
-            aria-invalid={expenseErrorTarget === 'description' ? 'true' : undefined}
-            aria-describedby={expenseErrorTarget === 'description' ? expenseErrorId : undefined}
-            onChange={(event) => onChange({ description: event.currentTarget.value, error: '' })}
-          />
-        </label>
-        <label>
-          <span>Amount</span>
-          <input
-            type="text"
-            name="amount"
-            inputMode="decimal"
-            required
-            placeholder="80.00"
-            value={draft.amount}
-            aria-invalid={expenseErrorTarget === 'amount' ? 'true' : undefined}
-            aria-describedby={expenseErrorTarget === 'amount' ? expenseErrorId : undefined}
-            onChange={(event) => onChange({ amount: event.currentTarget.value, error: '' })}
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={saveDisabled}
-          aria-describedby={saveDisabledReason ? 'save-expense-unavailable' : undefined}
-        >
-          Save expense
-        </button>
+      <div className="flex flex-col gap-4 p-4">
+        <FieldDescription className="payer-note" data-payer-note>Paid by {payerName}.</FieldDescription>
+        <FieldGroup className="gap-4">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(8rem,12rem)_auto] sm:items-end">
+            <Field data-invalid={expenseErrorTarget === 'description' ? true : undefined}>
+              <FieldLabel htmlFor="expense-description">Description</FieldLabel>
+              <Input
+                id="expense-description"
+                type="text"
+                name="description"
+                required
+                placeholder="Dinner"
+                value={draft.description}
+                aria-invalid={expenseErrorTarget === 'description' ? true : undefined}
+                aria-describedby={expenseErrorTarget === 'description' ? expenseErrorId : undefined}
+                onChange={(event) => onChange({ description: event.currentTarget.value, error: '' })}
+              />
+            </Field>
+            <Field data-invalid={expenseErrorTarget === 'amount' ? true : undefined}>
+              <FieldLabel htmlFor="expense-amount">Amount</FieldLabel>
+              <Input
+                id="expense-amount"
+                type="text"
+                name="amount"
+                inputMode="decimal"
+                required
+                placeholder="80.00"
+                value={draft.amount}
+                aria-invalid={expenseErrorTarget === 'amount' ? true : undefined}
+                aria-describedby={expenseErrorTarget === 'amount' ? expenseErrorId : undefined}
+                onChange={(event) => onChange({ amount: event.currentTarget.value, error: '' })}
+              />
+            </Field>
+            <Button
+              type="submit"
+              disabled={saveDisabled}
+              aria-describedby={saveDisabledReason ? 'save-expense-unavailable' : undefined}
+            >
+              <ReceiptTextIcon data-icon="inline-start" />
+              Save expense
+            </Button>
+          </div>
+          <FieldDescription
+            id="save-expense-unavailable"
+            data-save-expense-unavailable
+            hidden={!saveDisabledReason}
+          >
+            {saveDisabledReason}
+          </FieldDescription>
+        </FieldGroup>
       </div>
-      <p
-        className="control-note save-disabled-note"
-        id="save-expense-unavailable"
-        data-save-expense-unavailable
-        hidden={!saveDisabledReason}
-      >
-        {saveDisabledReason}
-      </p>
       <input type="hidden" name="expenseId" value={draft.expenseId} readOnly />
       <input type="hidden" name="payerParticipantId" value={draft.payerParticipantId} readOnly />
-      <fieldset
-        className="included-panel"
-        aria-invalid={expenseErrorTarget === 'participants' ? 'true' : undefined}
+      <FieldSet
+        className="gap-0 border-t px-4 pt-4"
+        aria-invalid={expenseErrorTarget === 'participants' ? true : undefined}
         aria-describedby={expenseFieldsetDescription}
       >
-        <legend>Split between</legend>
-        <div data-included-participants data-participants className="included-list">
+        <FieldLegend>Split between</FieldLegend>
+        <div data-included-participants data-participants className="included-list divide-y">
           {participants.map((participant) => {
             const deleteState = participantDeleteState(snapshot, participant.id)
             const referenced = !deleteState.canDelete && deleteState.reason === 'Referenced Participants cannot be deleted.'
@@ -991,9 +1107,10 @@ function ExpenseForm({
             const rowError = participantCorrection.participantId === participant.id ? participantCorrection.error : ''
             const errorId = `participant-correction-error-${participant.id}`
             return (
-              <div className={`ledger-row participant-row${isRenaming || isDeleting ? ' participant-row-editing' : ''}`} key={participant.id}>
-                <label className="participant-split">
+              <div className={cn('ledger-row participant-row grid gap-3 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center', (isRenaming || isDeleting) && 'participant-row-editing items-end')} key={participant.id}>
+                <label className="participant-split flex min-h-11 items-center justify-center">
                   <input
+                    className={checkboxClassName}
                     type="checkbox"
                     name="includedParticipantId"
                     aria-label={`Split with ${participant.displayName}`}
@@ -1002,11 +1119,12 @@ function ExpenseForm({
                     onChange={(event) => onIncludedChange(participant.id, event.currentTarget.checked)}
                   />
                 </label>
-                <div className="participant-summary">
+                <div className="participant-summary min-w-0">
                   {isRenaming ? (
-                    <label className="participant-rename-label">
-                      <span>Participant name</span>
-                      <input
+                    <Field data-invalid={rowError ? true : undefined} className="gap-1">
+                      <FieldLabel htmlFor={`participant-name-${participant.id}`}>Participant name</FieldLabel>
+                      <Input
+                        id={`participant-name-${participant.id}`}
                         type="text"
                         name="participantDisplayName"
                         required
@@ -1028,89 +1146,97 @@ function ExpenseForm({
                           }
                         }}
                       />
-                    </label>
+                    </Field>
                   ) : (
                     <>
-                      <strong dir="auto">{participant.displayName}</strong>
-                      <span className="participant-meta">
-                        <span className={included ? 'participant-inclusion included' : 'participant-inclusion'}>
+                      <strong className="block min-w-0 [overflow-wrap:anywhere]" dir="auto">{participant.displayName}</strong>
+                      <span className="participant-meta mt-1 flex flex-wrap gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Badge variant={included ? 'default' : 'secondary'} className="rounded-sm">
                           {included ? 'Included in split' : 'Not in split'}
-                        </span>
-                        {referenced ? <span className="participant-reference">used in records</span> : null}
+                        </Badge>
+                        {referenced ? <Badge variant="outline" className="rounded-sm">used in records</Badge> : null}
                       </span>
                     </>
                   )}
                 </div>
-                <span className="row-actions participant-actions">
+                <span className="row-actions participant-actions flex flex-wrap gap-2 sm:justify-end">
                   {isRenaming ? (
                     <>
-                      <button
+                      <Button
                         type="button"
                         aria-label={`Save name for ${participant.displayName}`}
                         disabled={participantCorrection.saving || !participantCorrection.displayName.trim()}
                         onClick={onSaveParticipantRename}
                       >
+                        <CheckIcon data-icon="inline-start" />
                         {participantCorrection.saving ? 'Saving...' : 'Save name'}
-                      </button>
-                      <button
-                        className="secondary"
+                      </Button>
+                      <Button
+                        variant="outline"
                         type="button"
                         aria-label={`Cancel renaming ${participant.displayName}`}
                         disabled={participantCorrection.saving}
                         onClick={onCancelParticipantRename}
                       >
+                        <XIcon data-icon="inline-start" />
                         Cancel
-                      </button>
+                      </Button>
                     </>
                   ) : isDeleting ? (
                     <>
-                      <span className="control-note participant-confirmation">Delete <strong dir="auto">{participant.displayName}</strong>?</span>
-                      <button
-                        className="danger"
+                      <span className="text-sm font-medium text-destructive">Delete <strong dir="auto">{participant.displayName}</strong>?</span>
+                      <Button
+                        variant="destructive"
                         type="button"
                         aria-label={`Confirm delete participant ${participant.displayName}`}
                         disabled={participantCorrection.saving}
                         onClick={() => onDeleteParticipant(participant.id)}
                       >
+                        <Trash2Icon data-icon="inline-start" />
                         {participantCorrection.saving ? 'Deleting...' : 'Delete'}
-                      </button>
-                      <button
-                        className="secondary"
+                      </Button>
+                      <Button
+                        variant="outline"
                         type="button"
                         aria-label={`Cancel deleting ${participant.displayName}`}
                         disabled={participantCorrection.saving}
                         onClick={onCancelParticipantRename}
                       >
+                        <XIcon data-icon="inline-start" />
                         Cancel
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <>
-                      <button
-                        className="secondary"
+                      <Button
+                        variant="outline"
+                        size="sm"
                         type="button"
                         data-rename-participant={participant.id}
                         aria-label={`Rename participant ${participant.displayName}`}
                         onClick={() => onStartParticipantRename(participant)}
                       >
+                        <PencilIcon data-icon="inline-start" />
                         Rename
-                      </button>
+                      </Button>
                       {deleteState.canDelete ? (
-                        <button
-                          className="danger"
+                        <Button
+                          variant="outline"
+                          size="sm"
                           type="button"
                           data-delete-participant={participant.id}
                           aria-label={`Delete participant ${participant.displayName}`}
                           onClick={() => onStartParticipantDelete(participant)}
                         >
+                          <Trash2Icon data-icon="inline-start" />
                           Delete
-                        </button>
+                        </Button>
                       ) : null}
                     </>
                   )}
                 </span>
                 {rowError ? (
-                  <p className="error participant-correction-error" id={errorId} role="alert">
+                  <p className="participant-correction-error text-sm text-destructive sm:col-start-2 sm:col-end-4" id={errorId} role="alert">
                     {rowError}
                   </p>
                 ) : null}
@@ -1118,12 +1244,12 @@ function ExpenseForm({
             )
           })}
         </div>
-        <p className="control-note" id="expense-payer-warning" data-payer-warning hidden={!payerWarning}>{payerWarning}</p>
+        <FieldDescription id="expense-payer-warning" data-payer-warning hidden={!payerWarning}>{payerWarning}</FieldDescription>
         {participantAddRow}
-      </fieldset>
-      <p className="control-note draft-warning" data-expense-update-warning aria-live="polite">{draft.updateWarning}</p>
+      </FieldSet>
+      <p className="px-4 pb-2 text-sm text-muted-foreground" data-expense-update-warning aria-live="polite">{draft.updateWarning}</p>
       <p
-        className="error"
+        className="mx-4 mb-4 rounded-md border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive"
         id={expenseErrorId}
         data-expense-error
         role="alert"
@@ -1164,7 +1290,7 @@ function SettlementForm({
 
   return (
     <form
-      className="inline-form settlement-form"
+      className="settlement-form flex flex-col gap-4 border-t p-4"
       data-settlement-form
       hidden={!draft.open && !draft.dirty && !draft.settlementPaymentId}
       onSubmit={(event: FormEvent) => {
@@ -1173,63 +1299,80 @@ function SettlementForm({
       }}
     >
       <input type="hidden" name="settlementPaymentId" value={draft.settlementPaymentId} readOnly />
-      <p className="control-note settlement-intent">
-        Record money that already moved outside SettleUp. This updates balances only.
-      </p>
-      <div className="settlement-party-row">
-        <label>
-          <span>Who paid</span>
-          <select
-            name="senderParticipantId"
-            data-participant-select
-            value={draft.senderParticipantId}
-            aria-invalid={settlementErrorTarget === 'participants' ? 'true' : undefined}
-            aria-describedby={settlementErrorTarget === 'participants' ? settlementErrorId : undefined}
-            onChange={(event) => onChange({ senderParticipantId: event.currentTarget.value, error: '' })}
-          >
-            {participants.map((participant) => (
-              <option key={participant.id} value={participant.id}>{participant.displayName}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Who received</span>
-          <select
-            name="recipientParticipantId"
-            data-participant-select
-            value={draft.recipientParticipantId}
-            aria-invalid={settlementErrorTarget === 'participants' ? 'true' : undefined}
-            aria-describedby={settlementErrorTarget === 'participants' ? settlementErrorId : undefined}
-            onChange={(event) => onChange({ recipientParticipantId: event.currentTarget.value, error: '' })}
-          >
-            {participants.map((participant) => (
-              <option key={participant.id} value={participant.id}>{participant.displayName}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="settlement-action-row">
-        <label>
-          <span className="sr-only">Amount</span>
-          <input
-            type="text"
-            name="amount"
-            inputMode="decimal"
-            aria-label="Amount"
-            placeholder="24.00"
-            value={draft.amount}
-            aria-invalid={settlementErrorTarget === 'amount' ? 'true' : undefined}
-            aria-describedby={settlementErrorTarget === 'amount' ? settlementErrorId : undefined}
-            onChange={(event) => onChange({ amount: event.currentTarget.value, error: '' })}
-          />
-        </label>
-        <button type="submit" disabled={!canRecord}>Record payment</button>
-        <button className="secondary" type="button" data-cancel-settlement onClick={onCancel}>Cancel</button>
-      </div>
-      <p className="settlement-preview" data-settlement-preview aria-live="polite">{preview}</p>
-      <p className="control-note draft-warning" data-settlement-update-warning aria-live="polite">{draft.updateWarning}</p>
+      <Alert>
+        <CircleDollarSignIcon />
+        <AlertTitle>Outside payment</AlertTitle>
+        <AlertDescription>
+          Record money that already moved outside SettleUp. This updates balances only.
+        </AlertDescription>
+      </Alert>
+      <FieldGroup className="gap-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field data-invalid={settlementErrorTarget === 'participants' ? true : undefined}>
+            <FieldLabel htmlFor="settlement-sender">Who paid</FieldLabel>
+            <select
+              id="settlement-sender"
+              className={selectClassName}
+              name="senderParticipantId"
+              data-participant-select
+              value={draft.senderParticipantId}
+              aria-invalid={settlementErrorTarget === 'participants' ? true : undefined}
+              aria-describedby={settlementErrorTarget === 'participants' ? settlementErrorId : undefined}
+              onChange={(event) => onChange({ senderParticipantId: event.currentTarget.value, error: '' })}
+            >
+              {participants.map((participant) => (
+                <option key={participant.id} value={participant.id}>{participant.displayName}</option>
+              ))}
+            </select>
+          </Field>
+          <Field data-invalid={settlementErrorTarget === 'participants' ? true : undefined}>
+            <FieldLabel htmlFor="settlement-recipient">Who received</FieldLabel>
+            <select
+              id="settlement-recipient"
+              className={selectClassName}
+              name="recipientParticipantId"
+              data-participant-select
+              value={draft.recipientParticipantId}
+              aria-invalid={settlementErrorTarget === 'participants' ? true : undefined}
+              aria-describedby={settlementErrorTarget === 'participants' ? settlementErrorId : undefined}
+              onChange={(event) => onChange({ recipientParticipantId: event.currentTarget.value, error: '' })}
+            >
+              {participants.map((participant) => (
+                <option key={participant.id} value={participant.id}>{participant.displayName}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
+          <Field data-invalid={settlementErrorTarget === 'amount' ? true : undefined}>
+            <FieldLabel htmlFor="settlement-amount" className="sr-only">Amount</FieldLabel>
+            <Input
+              id="settlement-amount"
+              type="text"
+              name="amount"
+              inputMode="decimal"
+              aria-label="Amount"
+              placeholder="24.00"
+              value={draft.amount}
+              aria-invalid={settlementErrorTarget === 'amount' ? true : undefined}
+              aria-describedby={settlementErrorTarget === 'amount' ? settlementErrorId : undefined}
+              onChange={(event) => onChange({ amount: event.currentTarget.value, error: '' })}
+            />
+          </Field>
+          <Button type="submit" disabled={!canRecord}>
+            <CheckIcon data-icon="inline-start" />
+            Record payment
+          </Button>
+          <Button variant="outline" type="button" data-cancel-settlement onClick={onCancel}>
+            <XIcon data-icon="inline-start" />
+            Cancel
+          </Button>
+        </div>
+      </FieldGroup>
+      <p className="rounded-md border bg-card px-3 py-2 text-sm font-medium text-muted-foreground" data-settlement-preview aria-live="polite">{preview}</p>
+      <p className="text-sm text-muted-foreground" data-settlement-update-warning aria-live="polite">{draft.updateWarning}</p>
       <p
-        className="error"
+        className="rounded-md border border-destructive/40 bg-card px-3 py-2 text-sm text-destructive"
         id={settlementErrorId}
         data-settlement-error
         role="alert"
@@ -1256,11 +1399,19 @@ function History({
 }): React.ReactElement {
   const items = eventHistoryItems(snapshot)
   if (items.length === 0) {
-    return <div data-history><p className="empty">No Event history yet. Expenses and payments will appear here.</p></div>
+    return (
+      <div data-history className="p-4">
+        <Alert>
+          <HistoryIcon />
+          <AlertTitle>No Event history yet</AlertTitle>
+          <AlertDescription>Expenses and payments will appear here.</AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
-    <div data-history>
+    <div data-history className="divide-y">
       {items.map((item) => {
         if (item.kind === 'expense') {
           const expense = item.record as Expense
@@ -1268,40 +1419,44 @@ function History({
           const shares = historyShareSummary(snapshot.participants, expense.shares, snapshot.event.currency)
           const expenseActionLabel = `${expense.description}, ${money(expense.amountMinor, snapshot.event.currency)}`
           return (
-            <div className="ledger-row record-row history-record" key={`expense-${expense.id}`}>
-              <div className="history-main">
-                <div className="history-title-line">
-                  <span className="history-kind">Expense</span>
-                  <h3 dir="auto">{expense.description}</h3>
+            <div className="ledger-row record-row history-record grid gap-4 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" key={`expense-${expense.id}`}>
+              <div className="history-main min-w-0">
+                <div className="history-title-line flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary" className="rounded-sm">Expense</Badge>
+                  <h3 className="min-w-0 [overflow-wrap:anywhere] text-base font-semibold" dir="auto">{expense.description}</h3>
                 </div>
-                <p className="history-summary">
+                <p className="mt-2 text-sm text-muted-foreground">
                   <strong dir="auto">{payer.displayName}</strong> paid {money(expense.amountMinor, snapshot.event.currency)}
                 </p>
-                <p className="history-detail">
+                <p className="mt-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">
                   <span>Split between</span> {shares}
                 </p>
               </div>
-              <div className="history-side">
-                <span className="amount">{money(expense.amountMinor, snapshot.event.currency)}</span>
-                <span className="row-actions history-actions">
-                  <button
-                    className="secondary"
+              <div className="history-side flex flex-col gap-3 sm:items-end">
+                <span className={moneyClassName}>{money(expense.amountMinor, snapshot.event.currency)}</span>
+                <span className="row-actions history-actions grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
                     type="button"
                     data-edit-expense={expense.id}
                     aria-label={`Edit expense ${expenseActionLabel}`}
                     onClick={() => onEditExpense(expense)}
                   >
+                    <PencilIcon data-icon="inline-start" />
                     Edit
-                  </button>
-                  <button
-                    className="danger"
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     type="button"
                     data-delete-expense={expense.id}
                     aria-label={`Delete expense ${expenseActionLabel}`}
                     onClick={() => onDeleteExpense(expense.id)}
                   >
+                    <Trash2Icon data-icon="inline-start" />
                     Delete
-                  </button>
+                  </Button>
                 </span>
               </div>
             </div>
@@ -1312,35 +1467,39 @@ function History({
         const recipient = findParticipant(snapshot.participants, payment.recipientParticipantId)
         const paymentActionLabel = `${sender.displayName} paid ${recipient.displayName}, ${money(payment.amountMinor, snapshot.event.currency)}`
         return (
-          <div className="ledger-row record-row history-record row-positive" key={`payment-${payment.id}`}>
-            <div className="history-main">
-              <div className="history-title-line">
-                <span className="history-kind">Payment</span>
-                <strong><span dir="auto">{sender.displayName}</span> paid <span dir="auto">{recipient.displayName}</span></strong>
+          <div className="ledger-row record-row history-record row-positive grid gap-4 bg-primary/5 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start" key={`payment-${payment.id}`}>
+            <div className="history-main min-w-0">
+              <div className="history-title-line flex flex-wrap items-center gap-2">
+                <Badge className="rounded-sm">Payment</Badge>
+                <strong className="min-w-0 [overflow-wrap:anywhere]"><span dir="auto">{sender.displayName}</span> paid <span dir="auto">{recipient.displayName}</span></strong>
               </div>
-              <p className="history-summary">Recorded payment outside SettleUp</p>
+              <p className="mt-2 text-sm text-muted-foreground">Recorded payment outside SettleUp</p>
             </div>
-            <div className="history-side">
-              <span className="amount amount-positive">{money(payment.amountMinor, snapshot.event.currency)}</span>
-              <span className="row-actions history-actions">
-                <button
-                  className="secondary"
+            <div className="history-side flex flex-col gap-3 sm:items-end">
+              <span className={cn(moneyClassName, 'amount-positive text-primary')}>{money(payment.amountMinor, snapshot.event.currency)}</span>
+              <span className="row-actions history-actions grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
                   type="button"
                   data-edit-payment={payment.id}
                   aria-label={`Edit payment ${paymentActionLabel}`}
                   onClick={() => onEditPayment(payment)}
                 >
+                  <PencilIcon data-icon="inline-start" />
                   Edit
-                </button>
-                <button
-                  className="danger"
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   type="button"
                   data-delete-payment={payment.id}
                   aria-label={`Delete payment ${paymentActionLabel}`}
                   onClick={() => onDeletePayment(payment.id)}
                 >
+                  <Trash2Icon data-icon="inline-start" />
                   Delete
-                </button>
+                </Button>
               </span>
             </div>
           </div>

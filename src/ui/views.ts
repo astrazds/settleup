@@ -1,5 +1,6 @@
 import { supportedCurrencies } from '../domain'
 import type { EventSummary } from '../domain'
+import { shadcnStyles } from './generated-shadcn-styles'
 
 interface CreatePageValues {
   title?: string
@@ -119,7 +120,7 @@ export function renderNotFoundPage(assets = defaultPageAssets): string {
   })
 }
 
-export const stylesheet = `
+const appStyles = `
 :root {
   color-scheme: light;
   --paper: oklch(97.5% 0.008 82);
@@ -171,10 +172,13 @@ body {
   min-width: 320px;
 }
 a { color: var(--ledger-deep); }
-button, input, select {
+.create-shell button,
+.create-shell input,
+.create-shell select {
   font: inherit;
 }
-button, .button-link {
+.create-shell button,
+.button-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -189,46 +193,51 @@ button, .button-link {
   cursor: pointer;
   transition: background-color 160ms ease-out, border-color 160ms ease-out, color 160ms ease-out, transform 120ms ease-out;
 }
-button:hover, .button-link:hover {
+.create-shell button:hover,
+.button-link:hover {
   background: var(--ledger-deep);
   border-color: var(--ledger-deep);
 }
-button:active, .button-link:active {
+.create-shell button:active,
+.button-link:active {
   transform: translateY(1px);
 }
-button[disabled] {
+.create-shell button[disabled] {
   cursor: not-allowed;
   background: var(--wash);
   border-color: var(--rule);
   color: var(--muted);
 }
-button.secondary {
+.create-shell button.secondary {
   background: var(--sheet);
   color: var(--ink);
   border-color: var(--rule);
 }
-button.secondary:hover {
+.create-shell button.secondary:hover {
   background: var(--wash);
   border-color: color-mix(in oklch, var(--rule), var(--ink) 18%);
 }
-button.danger {
+.create-shell button.danger {
   background: var(--sheet);
   color: var(--clay);
   border-color: color-mix(in oklch, var(--clay), var(--rule) 70%);
 }
-button.danger:hover {
+.create-shell button.danger:hover {
   background: var(--clay-wash);
   border-color: var(--clay-rule);
 }
-button:focus-visible, input:focus-visible, select:focus-visible {
+.create-shell button:focus-visible,
+.create-shell input:focus-visible,
+.create-shell select:focus-visible {
   outline: 3px solid color-mix(in oklch, var(--focus), transparent 68%);
   outline-offset: 2px;
 }
-input[aria-invalid="true"],
-select[aria-invalid="true"] {
+.create-shell input[aria-invalid="true"],
+.create-shell select[aria-invalid="true"] {
   border-color: var(--clay);
 }
-input, select {
+.create-shell input,
+.create-shell select {
   width: 100%;
   min-width: 0;
   border: 1px solid var(--rule);
@@ -238,11 +247,11 @@ input, select {
   min-height: 40px;
   padding: 8px 10px;
 }
-input::placeholder {
+.create-shell input::placeholder {
   color: color-mix(in oklch, var(--ink), transparent 36%);
   opacity: 1;
 }
-label {
+.create-shell label {
   display: grid;
   gap: 6px;
   min-width: 0;
@@ -250,7 +259,7 @@ label {
   font-size: var(--text-caption);
   font-weight: var(--weight-strong);
 }
-label span { color: var(--muted); }
+.create-shell label span { color: var(--muted); }
 .field-error {
   color: var(--clay-deep);
   font-size: var(--text-caption);
@@ -1250,10 +1259,10 @@ h3 {
   h1 { font-size: var(--text-heading); }
 }
 @media (max-width: 640px), (pointer: coarse) {
-  button,
-  button.small,
-  input,
-  select {
+  .create-shell button,
+  .create-shell button.small,
+  .create-shell input,
+  .create-shell select {
     min-height: 44px;
   }
   .icon-button {
@@ -1329,6 +1338,8 @@ h3 {
   }
 }
 `
+
+export const stylesheet = `${shadcnStyles}\n${appStyles}`
 
 function documentPage({ title, body, assets }: { title: string; body: string; assets: PageAssets }): string {
   return `<!DOCTYPE html>

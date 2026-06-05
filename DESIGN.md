@@ -14,6 +14,7 @@ The create page is a compact task form, not a landing page. It uses the headline
 - Avoid generic money imagery: coins, dollar signs, wallets, banks, calculators, and receipt mascots.
 - Use system sans-serif, fixed `rem` type sizes, and tabular numerals for money.
 - Keep the palette warm and restrained: paper surfaces, ink text, ledger green for action/owed state, clay for error/owes state, and amber for caution.
+- Compose Event page controls with checked-in shadcn/ui source components and semantic tokens before adding bespoke UI markup.
 - Use 8px radii for panels and controls, 4px for compact tags.
 - Use receipt-grid structure: rows, dividers, subtotal bands, aligned amounts, and compact grouped forms.
 - Repeated records should read as ledger rows, not floating cards.
