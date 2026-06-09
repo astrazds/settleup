@@ -1,65 +1,37 @@
 # Product
 
-SettleUp is a no-login group expense splitter for one bounded shared-cost Event. The product priority is fast shared expense capture first, confident final settlement second, and low-friction return visits only where they support capture or settlement.
+## Register
 
-## Current Scope
+product
 
-Shipped MVP behavior:
+## Users
 
-- Create a Private-by-Link Event with an Event Title, Currency, and first Participant.
-- Share an opaque Event Link.
-- Let anyone with the Event Link view and edit Event data.
-- Let visitors choose, remember, and switch their local Participant default.
-- Add, rename, and delete unreferenced Participants.
-- Add, edit, and delete Expenses with Included Participants.
-- Equal-split Expenses across the selected Included Participants.
-- Add, edit, and delete Settlement Payments.
-- Show Balances.
-- Record owed Balances directly from a Participant row.
-- Record manual Settlement Payments.
-- Refresh saved Event state through realtime notifications, with polling fallback.
-- Preserve active draft forms when saved Event state changes.
-- Expire Events three days after creation and clean up persisted Event data five days after creation.
+SettleUp is for small groups sharing one bounded set of costs: trips, dinners, shared houses, weekends, and other short-lived events where people need to capture expenses quickly and settle confidently. Users arrive from a private event link, often on mobile, often while the event is still happening, and should not need accounts, roles, or setup knowledge to contribute.
 
-## Next Product Work
+## Product Purpose
 
-Strengthen current Participant clarity for return visits and shared devices. The visitor's selected Participant may be remembered in the browser, but the UI must make who they are acting as obvious and easy to switch without implying login, ownership, or permissions.
+SettleUp is a no-login group expense splitter for one shared-cost event. It prioritizes fast shared expense capture first, confident final settlement second, and low-friction return visits only where they support capture or settlement.
 
-Defer browser-local recent Event lists until the Event page itself is excellent. They can help return visits later, but should not pull the product toward an account-like home screen.
+Success means a group can create a private-by-link event, add participants and expenses, see balances, record settlement payments, and return later without losing active drafts or needing to understand accounting.
 
-## Product Rules
+## Brand Personality
 
-- Event pages and the create page are not intended for search indexing.
-- User-provided text is plain text only.
-- Participant display names, Event Titles, and Expense descriptions are trimmed and non-blank.
-- Participant display names and Expense descriptions do not need to be unique.
-- MVP Currencies are AUD, USD, EUR, GBP, and NZD.
-- Money amounts use whole minor units with two decimal places.
-- One Event has exactly one Currency.
-- Saved Expense commands accept Included Participants and derive equal Shares before persistence.
-- SQLite-backed multi-record Event mutations must be all-or-nothing.
-- Balances reflect only saved Expenses and Settlement Payments.
-- Suggested Settlements are derived data used to power Balance-row Pay actions, not recorded history.
-- Settlement Payments may overpay.
-- Draft forms must not be overwritten by realtime or polling refreshes.
-- Realtime messages announce saved Event changes only; SQLite remains the source of truth.
-- Concurrent edits are last-write-wins for the MVP.
-- Event data is Private-by-Link, not public and not account-private.
-- Event Link tokens are opaque, URL-safe, lowercase, and avoid visually ambiguous characters.
-- Event retention is intentionally short for the MVP: Event Links stop resolving after three days, and scheduled cleanup deletes Event data after five days.
+Fast, calm, trustworthy.
 
-## Out Of Scope
+The interface should feel practical and settled: quick enough to use during a conversation, quiet enough to trust with money details, and clear enough that anyone with the link can understand what changed.
 
-- Accounts, login, owners, admins, or permission levels.
-- Human-readable Event Link slugs.
-- Multiple currencies inside one Event.
-- Natural-language Expense parsing.
-- Receipt photos, OCR, attachments, comments, chat, categories, tags, exports, print views, recurring Events, templates, forgiveness, or waiver records.
-- Presence, viewer counts, edit attribution, locks, merge conflict UI, and audit history.
-- Manual whole-Event deletion and token rotation.
-- Offline mutation support, public API guarantees, CAPTCHA, or explicit rate limiting.
-- A separate frontend app detached from the Node app.
+## Anti-references
 
-## Test Direction
+SettleUp should not look banking-heavy, playful-fintech, or spreadsheet-dense. Avoid interfaces that imply accounts, financial products, investment dashboards, gamified money behavior, dense ledger work, or power-user table management.
 
-Keep the confidence suite behavior-first. Prefer public domain functions, Hono requests, shared command runtime behavior, migration-backed SQLite tests, realtime protocol/notifier seams, DOM-free UI policy helpers, React-visible Event behavior, and Playwright-visible Event behavior over private implementation assertions.
+## Design Principles
+
+- Capture before administration: expense entry, participant selection, and settlement actions should stay close to the event workflow.
+- Confidence over cleverness: money totals, balances, and settlement actions need plain labels, visible state, and predictable controls.
+- Private-by-link clarity: make the sharing model understandable without turning it into an account or permission system.
+- Preserve flow: realtime refreshes and return visits must not overwrite active drafts or force users to restart context.
+- Short-lived by design: expiry and cleanup should feel intentional, not like missing account features.
+
+## Accessibility & Inclusion
+
+Target WCAG AA. Maintain readable contrast for text and controls, visible keyboard focus, accessible names for icon buttons, reduced-motion support for non-essential motion, and color-blind-safe state communication that does not rely on color alone.
