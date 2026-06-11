@@ -151,6 +151,7 @@ It explicitly rejects banking-heavy, playful-fintech, spreadsheet-dense, and gam
 - Restrained light UI with one strong blue action color.
 - Flat surfaces, firm borders, compact radii, and no decorative shadows.
 - Human payment language: `gets back`, `pays`, `Record payment`, `Mark as paid`.
+- Root create flow with no seeded event data.
 - Mobile-first capture flow with secondary payer/split details folded until needed.
 - Private-by-link clarity around shared changes and destructive actions.
 
@@ -232,6 +233,12 @@ The reusable implementation is split between product primitives in `src/componen
 - **Structure:** topbar, event hero, two-column desktop grid, single-column mobile flow.
 - **Mobile behavior:** capture first, then settlement feedback, balances, history, and footer.
 
+### Create Event
+- **Role:** the default root view when no Event Link is present.
+- **Fields:** event name, currency, and the creator's participant name.
+- **Behavior:** create the event through the API, replace the URL with `/e/:token`, then enter the event workspace.
+- **Empty state:** never seed sample participants, expenses, balances, or history rows.
+
 ### Panels
 - **Shape:** `8px` radius, `1px` `line` border, white background.
 - **Header:** `.section-header` with lucide icon, direct title, optional muted context, and optional compact action.
@@ -255,6 +262,11 @@ The reusable implementation is split between product primitives in `src/componen
 - **Selected state:** `blue-soft` background, `blue-2` border, and inset selected ring.
 - **Accessibility:** checkbox inputs remain real form controls even when visually compact.
 
+### People Control
+- **Role:** inline event setup inside the capture panel, not a separate administration screen.
+- **Style:** a quiet `surface-2` manager with participant chips and one `Add person` input/action pair.
+- **Behavior:** adding a person updates event metadata, the identity selector, and the default split when the expense draft is still untouched.
+
 ### Balance Rows
 - **Layout:** person and paid/share metadata on the left, tabular net value on the right.
 - **Semantics:** positive means `gets back`; negative means `pays`; settled uses muted copy.
@@ -270,6 +282,7 @@ The reusable implementation is split between product primitives in `src/componen
 ### History Rows
 - **Role:** supporting evidence, lower priority than capture and balances.
 - **Layout:** icon, description, metadata, amount, and restrained edit/remove actions.
+- **Empty state:** show `No expenses yet` with a direct explanation that the first saved expense will appear there.
 - **Payment history:** uses soft blue icon treatment to distinguish recorded payments from expenses.
 
 ## Do's and Don'ts
@@ -277,6 +290,7 @@ The reusable implementation is split between product primitives in `src/componen
 ### Do:
 - **Do** keep expense capture ahead of administration; payment tools appear after capture, not before.
 - **Do** preserve private-by-link clarity anywhere a change affects everyone with the link.
+- **Do** keep new events empty until a user explicitly adds people, expenses, or payments.
 - **Do** keep labels short and concrete: `Save expense`, `Record payment`, `Mark as paid`, `Everyone's balances`.
 - **Do** use semantic status roles and accessible names for icon-led controls.
 - **Do** keep mobile controls stable at 320px and prevent horizontal overflow with `minmax(0, 1fr)` and `min-width: 0` where needed.

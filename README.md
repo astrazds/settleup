@@ -4,10 +4,13 @@ SettleUp is a no-login shared expense app for one trip, dinner, weekend, house s
 
 Create a private event link, add the people involved, capture expenses as they happen, and see who should pay whom when the group is ready to settle. It is built for mobile-first capture, plain payment language, and low ceremony: no accounts, no roles, no finance-dashboard feel.
 
+The app opens on event creation. A new event starts empty: the creator enters an event name, currency, and their own name, then shares the generated private link. People and expenses are added from the event page.
+
 ## What It Does
 
 - Creates private-by-link expense events.
 - Adds participants without account setup.
+- Starts new events without sample participants, expenses, or placeholder data.
 - Tracks shared expenses in one event currency.
 - Splits expenses equally across selected participants.
 - Shows balances in human terms: who pays, who gets back money, and what is already settled.
@@ -81,6 +84,7 @@ npm run preview       # Preview the built client
 - `src/server/app.ts`: Hono routes and static client serving.
 - `src/server/event-service.ts`: event mutation and balance logic.
 - `src/server/database.ts`: SQLite schema and migrations.
+- `public/icon-updated.png`: source app and repository icon.
 - `PRODUCT.md`: product scope and rules.
 - `DESIGN.md`: design system and interaction direction.
 

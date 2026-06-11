@@ -5,6 +5,8 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 ## Project Scope
 
 - Create a Private-by-Link Event with an Event Title, Currency, and first Participant.
+- Start the app on event creation when no Event Link is present.
+- Keep newly created Events empty until users add Participants, Expenses, or Settlement Payments.
 - Share an opaque Event Link.
 - Let anyone with the Event Link view and edit Event data.
 - Let visitors choose, remember, and switch their local Participant default.
@@ -22,6 +24,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 ## Product Rules
 
 - Event pages and the create page are not intended for search indexing.
+- The root app must not auto-create demo Events.
 - User-provided text is plain text only.
 - Participant display names, Event Titles, and Expense descriptions are trimmed and non-blank.
 - Participant display names and Expense descriptions do not need to be unique.

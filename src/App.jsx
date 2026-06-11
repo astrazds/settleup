@@ -8,6 +8,7 @@ import {
   Home,
   ReceiptText,
   Split,
+  UserPlus,
   WalletCards,
 } from "lucide-react";
 import React from "react";
@@ -42,33 +43,7 @@ import {
 } from "./components/event-ui.jsx";
 import { minorToDecimal, parseDecimalMoneyToMinor } from "./shared/domain.ts";
 
-const demoParticipants = [
-  { id: "andrejs", name: "Andrejs", initials: "AN", color: "green" },
-  { id: "mia", name: "Mia", initials: "MI", color: "blue" },
-  { id: "sam", name: "Sam", initials: "SA", color: "violet" },
-  { id: "priya", name: "Priya", initials: "PR", color: "orange" },
-];
-
-const demoExpenses = [
-  {
-    description: "Groceries",
-    amountMinor: 12480,
-    payerName: "Andrejs",
-    includedNames: ["Andrejs", "Mia", "Sam"],
-  },
-  {
-    description: "Fuel",
-    amountMinor: 6000,
-    payerName: "Sam",
-    includedNames: ["Andrejs", "Mia", "Sam", "Priya"],
-  },
-  {
-    description: "Dinner",
-    amountMinor: 6260,
-    payerName: "Mia",
-    includedNames: ["Andrejs", "Mia", "Sam", "Priya"],
-  },
-];
+const supportedCurrencies = ["AUD", "USD", "EUR", "GBP", "NZD"];
 
 function isOpenBalance(valueMinor) {
   return Math.abs(valueMinor) > 0;
@@ -89,6 +64,20 @@ function validateExpense({ description, amount, includedIds }) {
 
   if (includedIds.length === 0) {
     errors.included = "Choose at least one participant to split this expense.";
+  }
+
+  return errors;
+}
+
+function validateEventSetup({ title, firstParticipantName }) {
+  const errors = {};
+
+  if (!title.trim()) {
+    errors.title = "Enter an event name.";
+  }
+
+  if (!firstParticipantName.trim()) {
+    errors.firstParticipantName = "Enter your name.";
   }
 
   return errors;
@@ -155,44 +144,16 @@ function toUiPayment(payment) {
   };
 }
 
-async function createDemoEvent() {
-  const created = await createEvent({
-    title: "Beach house weekend",
-    currency: "AUD",
-    firstParticipantName: demoParticipants[0].name,
-  });
-
-  let nextSnapshot = created.snapshot;
-
-  for (const participant of demoParticipants.slice(1)) {
-    nextSnapshot = await addParticipant(created.token, { name: participant.name });
-  }
-
-  for (const expense of demoExpenses) {
-    const payer = nextSnapshot.participants.find((participant) => participant.name === expense.payerName);
-    const includedParticipantIds = nextSnapshot.participants
-      .filter((participant) => expense.includedNames.includes(participant.name))
-      .map((participant) => participant.id);
-
-    if (!payer) {
-      throw new Error(`Could not create demo expense ${expense.description}.`);
-    }
-
-    nextSnapshot = await createExpense(created.token, {
-      description: expense.description,
-      amountMinor: expense.amountMinor,
-      payerId: payer.id,
-      includedParticipantIds,
-    });
-  }
-
-  return nextSnapshot;
-}
-
 export function App() {
   const [snapshot, setSnapshot] = useState(null);
   const [eventToken, setEventToken] = useState("");
   const [appStatus, setAppStatus] = useState({ type: "loading", message: "Loading event" });
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventCurrency, setEventCurrency] = useState("AUD");
+  const [firstParticipantName, setFirstParticipantName] = useState("");
+  const [createAttempted, setCreateAttempted] = useState(false);
+  const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [currentParticipant, setCurrentParticipant] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -201,6 +162,9 @@ export function App() {
   const [savedMessage, setSavedMessage] = useState("Add details");
   const [copyStatus, setCopyStatus] = useState("Copy link");
   const [copyFallbackVisible, setCopyFallbackVisible] = useState(false);
+  const [participantName, setParticipantName] = useState("");
+  const [participantError, setParticipantError] = useState("");
+  const [participantSubmitting, setParticipantSubmitting] = useState(false);
   const [lastSettlementId, setLastSettlementId] = useState("");
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [pendingRemovalId, setPendingRemovalId] = useState("");
@@ -222,9 +186,15 @@ export function App() {
     async function loadInitialEvent() {
       try {
         const pathToken = getEventTokenFromPath();
-        const nextSnapshot = pathToken
-          ? await getEvent(pathToken)
-          : await createDemoEvent();
+
+        if (!pathToken) {
+          if (!cancelled) {
+            setAppStatus({ type: "create", message: "Create event" });
+          }
+          return;
+        }
+
+        const nextSnapshot = await getEvent(pathToken);
 
         if (cancelled) {
           return;
@@ -233,10 +203,6 @@ export function App() {
         setSnapshot(nextSnapshot);
         setEventToken(nextSnapshot.event.token);
         setAppStatus({ type: "ready", message: "Ready" });
-
-        if (!pathToken) {
-          window.history.replaceState(null, "", `/e/${nextSnapshot.event.token}`);
-        }
       } catch (error) {
         if (!cancelled) {
           setAppStatus({
@@ -436,6 +402,164 @@ export function App() {
     }).format(minorToDecimal(amountMinor));
   }
 
+  async function createNewEvent(event) {
+    event.preventDefault();
+    setCreateAttempted(true);
+    setCreateError("");
+    const errors = validateEventSetup({ title: eventTitle, firstParticipantName });
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
+    setCreateSubmitting(true);
+    try {
+      const created = await createEvent({
+        title: eventTitle.trim(),
+        currency: eventCurrency,
+        firstParticipantName: firstParticipantName.trim(),
+      });
+
+      setSnapshot(created.snapshot);
+      setEventToken(created.token);
+      setAppStatus({ type: "ready", message: "Ready" });
+      setCreateSubmitting(false);
+      window.history.replaceState(null, "", `/e/${created.token}`);
+    } catch (error) {
+      setCreateSubmitting(false);
+      setCreateError(error instanceof Error ? error.message : "Could not create this event.");
+    }
+  }
+
+  if (appStatus.type === "create") {
+    const createValidation = validateEventSetup({ title: eventTitle, firstParticipantName });
+    const visibleCreateErrors = createAttempted ? createValidation : {};
+
+    return (
+      <main className="app-shell app-shell-create">
+        <section className="workspace create-workspace" aria-label="Create SettleUp event">
+          <header className="topbar create-topbar">
+            <a className="brand" href="/" aria-label="SettleUp home">
+              <span>Settle</span>
+              <strong>Up</strong>
+            </a>
+            <span className="create-topbar-note">Private event links expire after three days.</span>
+          </header>
+
+          <div className="event-hero create-hero">
+            <div className="event-mark">
+              <DecorativeIcon icon={Home} size={30} />
+            </div>
+            <div className="event-copy">
+              <h1>Create an event</h1>
+              <p className="event-privacy">
+                Start with a name, currency, and yourself. Add everyone else once the private link is ready.
+              </p>
+            </div>
+          </div>
+
+          <form className="panel create-panel" onSubmit={createNewEvent}>
+            <SectionHeader
+              icon={ReceiptText}
+              title="Event details"
+              muted="This creates a private link for one shared-cost event."
+              action={
+                createError ? (
+                  <InlineStatus icon={AlertCircle} tone="warning">
+                    Review
+                  </InlineStatus>
+                ) : null
+              }
+            />
+
+            {createError ? (
+              <div className="form-error-summary create-error" role="alert">
+                <DecorativeIcon icon={AlertCircle} size={17} />
+                <p>{createError}</p>
+              </div>
+            ) : null}
+
+            <div className="create-form-grid">
+              <label className="field span-2">
+                <span>Event name</span>
+                <div className="input-with-icon">
+                  <input
+                    value={eventTitle}
+                    onChange={(event) => {
+                      setEventTitle(event.target.value);
+                      setCreateError("");
+                    }}
+                    aria-invalid={Boolean(visibleCreateErrors.title)}
+                    aria-describedby={visibleCreateErrors.title ? "event-title-error" : undefined}
+                    autoFocus
+                  />
+                  <DecorativeIcon icon={FileText} size={17} />
+                </div>
+                <FieldError id="event-title-error">{visibleCreateErrors.title}</FieldError>
+              </label>
+
+              <label className="field">
+                <span>Currency</span>
+                <SelectShell wide>
+                  <select
+                    aria-label="Currency"
+                    value={eventCurrency}
+                    onChange={(event) => setEventCurrency(event.target.value)}
+                  >
+                    {supportedCurrencies.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
+                  <DecorativeIcon icon={ChevronDown} size={15} />
+                </SelectShell>
+              </label>
+
+              <label className="field">
+                <span>Your name</span>
+                <input
+                  value={firstParticipantName}
+                  onChange={(event) => {
+                    setFirstParticipantName(event.target.value);
+                    setCreateError("");
+                  }}
+                  aria-invalid={Boolean(visibleCreateErrors.firstParticipantName)}
+                  aria-describedby={
+                    visibleCreateErrors.firstParticipantName ? "first-participant-error" : undefined
+                  }
+                />
+                <FieldError id="first-participant-error">
+                  {visibleCreateErrors.firstParticipantName}
+                </FieldError>
+              </label>
+            </div>
+
+            <div className="create-summary">
+              <DecorativeIcon icon={CalendarClock} size={17} />
+              <p>
+                Anyone with the event link can add people, expenses, and settlement payments until it expires.
+              </p>
+            </div>
+
+            <div className="form-actions">
+              <p className="form-action-note">No accounts, owners, or setup steps beyond this event.</p>
+              <ActionButton
+                variant="primary"
+                type="submit"
+                disabled={createSubmitting}
+                needsReview={createAttempted && Object.keys(createValidation).length > 0}
+              >
+                <DecorativeIcon icon={createSubmitting ? CalendarClock : Check} size={17} />
+                {createSubmitting ? "Creating event" : "Create event"}
+              </ActionButton>
+            </div>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
   if (appStatus.type === "loading" || !snapshot || !current || participants.length === 0) {
     return (
       <main className="app-shell">
@@ -459,6 +583,11 @@ export function App() {
             <div className="event-copy">
               <h1>SettleUp</h1>
               <p className="event-privacy">{appStatus.message}</p>
+              <p className="event-error-action">
+                <a className="secondary-action compact" href="/">
+                  Create new event
+                </a>
+              </p>
             </div>
           </div>
         </section>
@@ -514,6 +643,33 @@ export function App() {
         eventLinkRef.current?.focus();
         eventLinkRef.current?.select();
       }, 0);
+    }
+  }
+
+  async function saveParticipant(event) {
+    event.preventDefault();
+    const nextName = participantName.trim();
+
+    if (!nextName) {
+      setParticipantError("Enter a participant name.");
+      return;
+    }
+
+    setParticipantSubmitting(true);
+    setParticipantError("");
+    try {
+      const wasSplitWithEveryone = includedIds.length === participants.length;
+      const nextSnapshot = await addParticipant(eventToken, { name: nextName });
+      setSnapshot(nextSnapshot);
+      setParticipantName("");
+      setParticipantSubmitting(false);
+
+      if (!hasExpenseDraft && wasSplitWithEveryone) {
+        setIncludedIds(nextSnapshot.participants.map((participant) => participant.id));
+      }
+    } catch (error) {
+      setParticipantSubmitting(false);
+      setParticipantError(error instanceof Error ? error.message : "Could not add this participant.");
     }
   }
 
@@ -928,6 +1084,54 @@ export function App() {
               </div>
             ) : null}
 
+            <div className="participant-manager">
+              <div className="participant-manager-copy">
+                <span>People</span>
+                <strong>
+                  {participants.length} {participants.length === 1 ? "person" : "people"} in this event
+                </strong>
+              </div>
+              <div className="participant-chip-list" aria-label="People in this event">
+                {participants.map((participant) => (
+                  <span className="participant-chip" key={participant.id}>
+                    <Avatar participant={participant} small />
+                    {participant.name}
+                  </span>
+                ))}
+              </div>
+              <div className="participant-add-form">
+                <label className="field">
+                  <span>Add person</span>
+                  <input
+                    value={participantName}
+                    onChange={(event) => {
+                      setParticipantName(event.target.value);
+                      setParticipantError("");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        saveParticipant(event);
+                      }
+                    }}
+                    aria-invalid={Boolean(participantError)}
+                    aria-describedby={participantError ? "participant-error" : undefined}
+                  />
+                </label>
+                <ActionButton
+                  className="participant-add-button"
+                  variant="primary"
+                  onClick={saveParticipant}
+                  disabled={participantSubmitting}
+                >
+                  <DecorativeIcon icon={UserPlus} size={17} />
+                  {participantSubmitting ? "Adding" : "Add person"}
+                </ActionButton>
+                <FieldError className="participant-error" id="participant-error">
+                  {participantError}
+                </FieldError>
+              </div>
+            </div>
+
             <label className="field identity-field">
               <span>Your name</span>
               <SelectShell wide>
@@ -1118,6 +1322,15 @@ export function App() {
           <section className="panel history-panel">
             <SectionHeader icon={FileText} title="Event history" muted="Recent expenses and payments" />
             <div className="history-list">
+              {eventRecordCount === 0 ? (
+                <div className="empty-history">
+                  <DecorativeIcon icon={ReceiptText} size={20} />
+                  <div>
+                    <strong>No expenses yet</strong>
+                    <p>Save the first expense and it will appear here with any recorded payments.</p>
+                  </div>
+                </div>
+              ) : null}
               {payments.map((payment) => {
                 const from = participants.find((item) => item.id === payment.from);
                 const to = participants.find((item) => item.id === payment.to);
@@ -1186,7 +1399,11 @@ export function App() {
                 );
               })}
             </div>
-            <p className="history-count">Showing all {eventRecordCount} event records</p>
+            <p className="history-count">
+              {eventRecordCount === 0
+                ? "History starts after the first saved expense."
+                : `Showing all ${eventRecordCount} event records`}
+            </p>
           </section>
         </div>
 
