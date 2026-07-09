@@ -40,6 +40,18 @@ export async function addParticipant(token: string, request: ParticipantRequest)
   return requestJson(`/api/events/${token}/participants`, "POST", request);
 }
 
+export async function renameParticipant(
+  token: string,
+  participantId: string,
+  request: ParticipantRequest,
+): Promise<EventSnapshot> {
+  return requestJson(`/api/events/${token}/participants/${participantId}`, "PATCH", request);
+}
+
+export async function deleteParticipant(token: string, participantId: string): Promise<EventSnapshot> {
+  return requestJson(`/api/events/${token}/participants/${participantId}`, "DELETE");
+}
+
 export async function createExpense(token: string, request: ExpenseRequest): Promise<EventSnapshot> {
   return requestJson(`/api/events/${token}/expenses`, "POST", request);
 }

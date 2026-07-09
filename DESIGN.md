@@ -236,6 +236,8 @@ The reusable implementation is split between product primitives in `src/componen
 ### Create Event
 - **Role:** the default root view when no Event Link is present.
 - **Fields:** event name, currency, and the creator's participant name.
+- **Layout:** the create shell leads with the SettleUp wordmark and a compact hero. The form uses a full-width event name, creator name beside a compact right-aligned currency selector, one inline private-link note, and the primary action aligned to the trailing edge on wide screens.
+- **Copy:** keep setup language direct: `Give the event a name, add yourself, and set a currency.` Put link expiry in the inline note instead of duplicating it in the topbar or action area.
 - **Behavior:** create the event through the API, replace the URL with `/e/:token`, then enter the event workspace.
 - **Empty state:** never seed sample participants, expenses, balances, or history rows.
 
@@ -264,8 +266,9 @@ The reusable implementation is split between product primitives in `src/componen
 
 ### People Control
 - **Role:** inline event setup inside the capture panel, not a separate administration screen.
-- **Style:** a quiet `surface-2` manager with participant chips and one `Add person` input/action pair.
+- **Style:** a quiet `surface-2` manager with compact participant rows and one `Add person` input/action pair.
 - **Behavior:** adding a person updates event metadata, the identity selector, and the default split when the expense draft is still untouched.
+- **Participant edits:** `Rename` and `Remove` stay low-emphasis row actions. Removing is blocked for the last remaining person and server-side deletion only succeeds for unreferenced people.
 
 ### Balance Rows
 - **Layout:** person and paid/share metadata on the left, tabular net value on the right.
@@ -273,7 +276,9 @@ The reusable implementation is split between product primitives in `src/componen
 - **Mobile:** the preview row should summarize the most important payment, while full details stay in `Everyone's balances`.
 
 ### Settlement and Feedback
-- **Settlement prompt:** shows `Next payment` and `Record payment` only after capture is complete or payment mode is active.
+- **Settlement prompt:** shows `Next payment` and `Record payment` whenever saved balances are open and no expense draft blocks settlement.
+- **Suggested payment:** `Mark as paid` stays the primary path for the recommended next payment.
+- **Manual payment:** use the collapsed `Record a different payment` details row for payment amounts or directions that differ from the suggestion; editing an existing payment opens the same form.
 - **Payment confirmation:** green status region with explicit `Undo payment`.
 - **Remove confirmation:** coral-soft alert with `Keep expense` and `Remove expense`.
 - **Undo toast:** sticky dark status with a single `Undo` action.
@@ -283,15 +288,15 @@ The reusable implementation is split between product primitives in `src/componen
 - **Role:** supporting evidence, lower priority than capture and balances.
 - **Layout:** icon, description, metadata, amount, and restrained edit/remove actions.
 - **Empty state:** show `No expenses yet` with a direct explanation that the first saved expense will appear there.
-- **Payment history:** uses soft blue icon treatment to distinguish recorded payments from expenses.
+- **Payment history:** uses soft blue icon treatment to distinguish recorded payments from expenses, with restrained `Edit` and `Undo payment` actions.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep expense capture ahead of administration; payment tools appear after capture, not before.
+- **Do** keep expense capture ahead of administration; payment tools appear once saved expenses create open balances or a recorded payment is being corrected.
 - **Do** preserve private-by-link clarity anywhere a change affects everyone with the link.
 - **Do** keep new events empty until a user explicitly adds people, expenses, or payments.
-- **Do** keep labels short and concrete: `Save expense`, `Record payment`, `Mark as paid`, `Everyone's balances`.
+- **Do** keep labels short and concrete: `Save expense`, `Record payment`, `Mark as paid`, `Record a different payment`, `Everyone's balances`.
 - **Do** use semantic status roles and accessible names for icon-led controls.
 - **Do** keep mobile controls stable at 320px and prevent horizontal overflow with `minmax(0, 1fr)` and `min-width: 0` where needed.
 - **Do** use the shared components in `src/components/design-system.jsx` and `src/components/event-ui.jsx` before adding local copies.

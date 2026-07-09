@@ -20,9 +20,12 @@ import {
   createExpense,
   createPayment,
   deleteExpense,
+  deleteParticipant,
   deletePayment,
   getEvent,
+  renameParticipant,
   updateExpense,
+  updatePayment,
 } from "./client/api.ts";
 import {
   ActionButton,
@@ -78,6 +81,24 @@ function validateEventSetup({ title, firstParticipantName }) {
 
   if (!firstParticipantName.trim()) {
     errors.firstParticipantName = "Enter your name.";
+  }
+
+  return errors;
+}
+
+function validatePayment({ amount, fromId, toId }) {
+  const errors = {};
+
+  if (!fromId || !toId) {
+    errors.participants = "Choose who paid and who received it.";
+  } else if (fromId === toId) {
+    errors.participants = "Choose two different people for this payment.";
+  }
+
+  try {
+    parseDecimalMoneyToMinor(amount);
+  } catch {
+    errors.amount = "Enter an amount greater than $0.00.";
   }
 
   return errors;
@@ -165,7 +186,15 @@ export function App() {
   const [participantName, setParticipantName] = useState("");
   const [participantError, setParticipantError] = useState("");
   const [participantSubmitting, setParticipantSubmitting] = useState(false);
+  const [editingParticipantId, setEditingParticipantId] = useState("");
+  const [participantEditName, setParticipantEditName] = useState("");
+  const [participantEditError, setParticipantEditError] = useState("");
   const [lastSettlementId, setLastSettlementId] = useState("");
+  const [editingPaymentId, setEditingPaymentId] = useState("");
+  const [paymentFromId, setPaymentFromId] = useState("");
+  const [paymentToId, setPaymentToId] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentError, setPaymentError] = useState("");
   const [editingExpenseId, setEditingExpenseId] = useState("");
   const [pendingRemovalId, setPendingRemovalId] = useState("");
   const [recentlyRemovedExpense, setRecentlyRemovedExpense] = useState(null);
@@ -362,10 +391,7 @@ export function App() {
       !splitWithEveryone,
   );
   const shouldBlockSettlement = hasExpenseDraft || needsReview;
-  const captureJustFinished = savedMessage === "Saved just now" || savedMessage === "Updated just now";
-  const showSettlementTools = Boolean(
-    settlementSuggestion && !shouldBlockSettlement && (captureJustFinished || lastSettlement || settleModeOpen),
-  );
+  const showSettlementTools = Boolean(settlementSuggestion && !shouldBlockSettlement);
   const settlementExplainer = settlementSuggestion
     ? `${settlementSuggestion.from.name} should send ${money(settlementSuggestion.amountMinor)} to ${settlementSuggestion.to.name}. This only marks the event as paid; it does not transfer money.`
     : "No one needs to pay right now.";
@@ -395,11 +421,47 @@ export function App() {
     window.localStorage.setItem(`settleup:${snapshot.event.token}:participant`, currentParticipant);
   }, [currentParticipant, snapshot]);
 
+  useEffect(() => {
+    if (participants.length === 0) {
+      return;
+    }
+
+    const participantIds = participants.map((participant) => participant.id);
+    setPaymentFromId((currentId) => participantIds.includes(currentId) ? currentId : participantIds[0]);
+    setPaymentToId((currentId) => {
+      if (participantIds.includes(currentId) && currentId !== paymentFromId) {
+        return currentId;
+      }
+
+      return participantIds.find((participantId) => participantId !== paymentFromId) ?? participantIds[0];
+    });
+  }, [participants, paymentFromId]);
+
   function money(amountMinor) {
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
       currency: currencyCode,
     }).format(minorToDecimal(amountMinor));
+  }
+
+  function fillPaymentDraftFromSuggestion() {
+    if (!settlementSuggestion) {
+      return;
+    }
+
+    setEditingPaymentId("");
+    setPaymentFromId(settlementSuggestion.from.id);
+    setPaymentToId(settlementSuggestion.to.id);
+    setPaymentAmount(String(settlementSuggestion.amount));
+    setPaymentError("");
+  }
+
+  function resetPaymentDraft() {
+    setEditingPaymentId("");
+    setPaymentFromId(participants[0]?.id ?? "");
+    setPaymentToId(participants[1]?.id ?? participants[0]?.id ?? "");
+    setPaymentAmount("");
+    setPaymentError("");
   }
 
   async function createNewEvent(event) {
@@ -443,7 +505,6 @@ export function App() {
               <span>Settle</span>
               <strong>Up</strong>
             </a>
-            <span className="create-topbar-note">Private event links expire after three days.</span>
           </header>
 
           <div className="event-hero create-hero">
@@ -453,25 +514,12 @@ export function App() {
             <div className="event-copy">
               <h1>Create an event</h1>
               <p className="event-privacy">
-                Start with a name, currency, and yourself. Add everyone else once the private link is ready.
+                Give the event a name, add yourself, and set a currency.
               </p>
             </div>
           </div>
 
           <form className="panel create-panel" onSubmit={createNewEvent}>
-            <SectionHeader
-              icon={ReceiptText}
-              title="Event details"
-              muted="This creates a private link for one shared-cost event."
-              action={
-                createError ? (
-                  <InlineStatus icon={AlertCircle} tone="warning">
-                    Review
-                  </InlineStatus>
-                ) : null
-              }
-            />
-
             {createError ? (
               <div className="form-error-summary create-error" role="alert">
                 <DecorativeIcon icon={AlertCircle} size={17} />
@@ -480,7 +528,7 @@ export function App() {
             ) : null}
 
             <div className="create-form-grid">
-              <label className="field span-2">
+              <label className="field create-event-name-field">
                 <span>Event name</span>
                 <div className="input-with-icon">
                   <input
@@ -498,25 +546,7 @@ export function App() {
                 <FieldError id="event-title-error">{visibleCreateErrors.title}</FieldError>
               </label>
 
-              <label className="field">
-                <span>Currency</span>
-                <SelectShell wide>
-                  <select
-                    aria-label="Currency"
-                    value={eventCurrency}
-                    onChange={(event) => setEventCurrency(event.target.value)}
-                  >
-                    {supportedCurrencies.map((currency) => (
-                      <option key={currency} value={currency}>
-                        {currency}
-                      </option>
-                    ))}
-                  </select>
-                  <DecorativeIcon icon={ChevronDown} size={15} />
-                </SelectShell>
-              </label>
-
-              <label className="field">
+              <label className="field create-participant-field">
                 <span>Your name</span>
                 <input
                   value={firstParticipantName}
@@ -533,17 +563,34 @@ export function App() {
                   {visibleCreateErrors.firstParticipantName}
                 </FieldError>
               </label>
+
+              <label className="field create-currency-field">
+                <span>Currency</span>
+                <SelectShell wide>
+                  <select
+                    aria-label="Currency"
+                    value={eventCurrency}
+                    onChange={(event) => setEventCurrency(event.target.value)}
+                  >
+                    {supportedCurrencies.map((currency) => (
+                      <option key={currency} value={currency}>
+                        {currency}
+                      </option>
+                    ))}
+                  </select>
+                  <DecorativeIcon icon={ChevronDown} size={15} />
+                </SelectShell>
+              </label>
             </div>
 
             <div className="create-summary">
               <DecorativeIcon icon={CalendarClock} size={17} />
               <p>
-                Anyone with the event link can add people, expenses, and settlement payments until it expires.
+                Anyone with the event link can add people, expenses, and settlement payments. Links expire after three days.
               </p>
             </div>
 
             <div className="form-actions">
-              <p className="form-action-note">No accounts, owners, or setup steps beyond this event.</p>
               <ActionButton
                 variant="primary"
                 type="submit"
@@ -673,6 +720,46 @@ export function App() {
     }
   }
 
+  function startParticipantEdit(participant) {
+    setEditingParticipantId(participant.id);
+    setParticipantEditName(participant.name);
+    setParticipantEditError("");
+  }
+
+  function cancelParticipantEdit() {
+    setEditingParticipantId("");
+    setParticipantEditName("");
+    setParticipantEditError("");
+  }
+
+  async function saveParticipantEdit(event) {
+    event.preventDefault();
+    const nextName = participantEditName.trim();
+
+    if (!nextName) {
+      setParticipantEditError("Enter a participant name.");
+      return;
+    }
+
+    try {
+      setSnapshot(await renameParticipant(eventToken, editingParticipantId, { name: nextName }));
+      cancelParticipantEdit();
+    } catch (error) {
+      setParticipantEditError(error instanceof Error ? error.message : "Could not rename this participant.");
+    }
+  }
+
+  async function removeParticipant(participant) {
+    try {
+      setSnapshot(await deleteParticipant(eventToken, participant.id));
+      if (editingParticipantId === participant.id) {
+        cancelParticipantEdit();
+      }
+    } catch (error) {
+      setParticipantEditError(error instanceof Error ? error.message : "Could not remove this participant.");
+    }
+  }
+
   function reviewExpenseFields() {
     setAttemptedSubmit(true);
     focusFirstError(currentValidation);
@@ -699,6 +786,7 @@ export function App() {
       setSnapshot(nextSnapshot);
       setLastSettlementId(nextSnapshot.payments[0]?.id ?? "");
       setSettleModeOpen(true);
+      resetPaymentDraft();
       window.setTimeout(() => {
         settlementStatusRef.current?.focus();
       }, 0);
@@ -707,13 +795,56 @@ export function App() {
     }
   }
 
+  async function saveManualPayment(event) {
+    event.preventDefault();
+    const errors = validatePayment({ amount: paymentAmount, fromId: paymentFromId, toId: paymentToId });
+
+    if (Object.keys(errors).length > 0) {
+      setPaymentError(errors.participants ?? errors.amount);
+      return;
+    }
+
+    const payment = {
+      amountMinor: parseDecimalMoneyToMinor(paymentAmount),
+      from: paymentFromId,
+      to: paymentToId,
+    };
+
+    try {
+      const nextSnapshot = editingPaymentId
+        ? await updatePayment(eventToken, editingPaymentId, payment)
+        : await createPayment(eventToken, payment);
+      setSnapshot(nextSnapshot);
+      setLastSettlementId(editingPaymentId || nextSnapshot.payments[0]?.id || "");
+      resetPaymentDraft();
+      setSettleModeOpen(true);
+      window.setTimeout(() => {
+        settlementStatusRef.current?.focus();
+      }, 0);
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : "Could not save payment.");
+    }
+  }
+
   async function undoSettlement(paymentId) {
     try {
       setSnapshot(await deletePayment(eventToken, paymentId));
       setLastSettlementId("");
+      if (editingPaymentId === paymentId) {
+        resetPaymentDraft();
+      }
     } catch (error) {
       setSavedMessage(error instanceof Error ? error.message : "Could not undo payment");
     }
+  }
+
+  function editPayment(payment) {
+    setEditingPaymentId(payment.id);
+    setPaymentFromId(payment.from);
+    setPaymentToId(payment.to);
+    setPaymentAmount(String(payment.amount));
+    setPaymentError("");
+    setSettleModeOpen(true);
   }
 
   function toggleIncluded(id) {
@@ -799,6 +930,7 @@ export function App() {
     }
 
     setSettlementBlockNotice(false);
+    fillPaymentDraftFromSuggestion();
     setSettleModeOpen(true);
   }
 
@@ -816,6 +948,7 @@ export function App() {
     setAttemptedSubmit(false);
     setSplitControlsOpen(false);
     setSettlementBlockNotice(false);
+    fillPaymentDraftFromSuggestion();
     setSettleModeOpen(true);
   }
 
@@ -932,13 +1065,79 @@ export function App() {
             <p>No one needs to pay right now.</p>
           </div>
         )}
+        <details className="manual-payment-details" open={Boolean(editingPaymentId)}>
+          <summary>{editingPaymentId ? "Edit payment" : "Record a different payment"}</summary>
+          <form className="manual-payment-form" onSubmit={saveManualPayment}>
+            <div className="manual-payment-heading">
+              <span>Use this when the paid amount differs from the next suggestion.</span>
+            </div>
+            {paymentError ? (
+              <div className="form-error-summary payment-error" role="alert">
+                <DecorativeIcon icon={AlertCircle} size={17} />
+                <p>{paymentError}</p>
+              </div>
+            ) : null}
+            <div className="payment-form-grid">
+              <label className="field">
+                <span>Paid by</span>
+                <SelectShell wide>
+                  <select value={paymentFromId} onChange={(event) => setPaymentFromId(event.target.value)}>
+                    {participants.map((participant) => (
+                      <option key={participant.id} value={participant.id}>
+                        {participant.name}
+                      </option>
+                    ))}
+                  </select>
+                  <DecorativeIcon icon={ChevronDown} size={15} />
+                </SelectShell>
+              </label>
+              <label className="field">
+                <span>Paid to</span>
+                <SelectShell wide>
+                  <select value={paymentToId} onChange={(event) => setPaymentToId(event.target.value)}>
+                    {participants.map((participant) => (
+                      <option key={participant.id} value={participant.id}>
+                        {participant.name}
+                      </option>
+                    ))}
+                  </select>
+                  <DecorativeIcon icon={ChevronDown} size={15} />
+                </SelectShell>
+              </label>
+              <label className="field">
+                <span>Amount ({snapshot.event.currency})</span>
+                <input
+                  inputMode="decimal"
+                  value={paymentAmount}
+                  onChange={(event) => {
+                    setPaymentAmount(event.target.value);
+                    setPaymentError("");
+                  }}
+                />
+              </label>
+            </div>
+            <div className="manual-payment-actions">
+              {editingPaymentId ? (
+                <ActionButton onClick={resetPaymentDraft}>
+                  Cancel edit
+                </ActionButton>
+              ) : null}
+              <ActionButton variant="primary" type="submit" disabled={participants.length < 2}>
+                <DecorativeIcon icon={WalletCards} size={16} />
+                {editingPaymentId ? "Update payment" : "Save payment"}
+              </ActionButton>
+            </div>
+          </form>
+        </details>
         {lastSettlement ? (
           <div className="settlement-ledger">
             <span>Last recorded</span>
-            <strong>
-              {lastSettlementFrom.name} paid {lastSettlementTo.name}{" "}
-              {money(lastSettlement.amountMinor)}
-            </strong>
+            {lastSettlementFrom && lastSettlementTo ? (
+              <strong>
+                {lastSettlementFrom.name} paid {lastSettlementTo.name}{" "}
+                {money(lastSettlement.amountMinor)}
+              </strong>
+            ) : null}
             <button type="button" onClick={() => undoSettlement(lastSettlement.id)}>
               Undo payment
             </button>
@@ -1093,12 +1292,53 @@ export function App() {
               </div>
               <div className="participant-chip-list" aria-label="People in this event">
                 {participants.map((participant) => (
-                  <span className="participant-chip" key={participant.id}>
-                    <Avatar participant={participant} small />
-                    {participant.name}
-                  </span>
+                  <div className="participant-chip" key={participant.id}>
+                    {editingParticipantId === participant.id ? (
+                      <>
+                        <Avatar participant={participant} small />
+                        <input
+                          value={participantEditName}
+                          onChange={(event) => {
+                            setParticipantEditName(event.target.value);
+                            setParticipantEditError("");
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              saveParticipantEdit(event);
+                            }
+                          }}
+                          aria-label={`Rename ${participant.name}`}
+                        />
+                        <button type="button" onClick={saveParticipantEdit}>
+                          Save
+                        </button>
+                        <button type="button" onClick={cancelParticipantEdit}>
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Avatar participant={participant} small />
+                        <span>{participant.name}</span>
+                        <button type="button" onClick={() => startParticipantEdit(participant)}>
+                          Rename
+                        </button>
+                        <button
+                          className="danger-action"
+                          type="button"
+                          onClick={() => removeParticipant(participant)}
+                          disabled={participants.length <= 1}
+                        >
+                          Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
                 ))}
               </div>
+              <FieldError className="participant-error" id="participant-edit-error">
+                {participantEditError}
+              </FieldError>
               <div className="participant-add-form">
                 <label className="field">
                   <span>Add person</span>
@@ -1347,9 +1587,14 @@ export function App() {
                         <span>{payment.date} · Payment marked paid</span>
                       </div>
                       <strong className="history-amount">{money(payment.amountMinor)}</strong>
-                      <button className="undo-history-payment" type="button" onClick={() => undoSettlement(payment.id)}>
-                        Undo payment
-                      </button>
+                      <div className="history-actions payment-actions">
+                        <button type="button" onClick={() => editPayment(payment)}>
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => undoSettlement(payment.id)}>
+                          Undo payment
+                        </button>
+                      </div>
                     </div>
                   </article>
                 );

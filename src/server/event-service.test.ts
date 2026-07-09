@@ -89,6 +89,18 @@ describe("EventService", () => {
     expect(snapshot.participants.map((participant) => participant.name)).toEqual(["Andrejs", "Mia"]);
   });
 
+  it("keeps at least one participant", () => {
+    const service = new EventService(openDatabase(":memory:"));
+    const created = service.createEvent({
+      title: "House",
+      currency: "AUD",
+      firstParticipantName: "Andrejs",
+    });
+    const andrejs = participantId(created.snapshot, "Andrejs");
+
+    expect(() => service.deleteParticipant(created.token, andrejs)).toThrow(AppError);
+  });
+
   it("stops resolving expired events and deletes them after cleanup retention", () => {
     let now = new Date("2026-06-01T00:00:00.000Z");
     const service = new EventService(openDatabase(":memory:"), () => now);

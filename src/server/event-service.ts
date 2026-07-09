@@ -207,6 +207,10 @@ export class EventService {
     this.assertNotExpired(event);
     this.requireParticipant(event.id, participantId);
 
+    if (this.getParticipantCount(event.id) <= 1) {
+      throw badRequest("An event needs at least one participant.");
+    }
+
     if (this.isParticipantReferenced(participantId)) {
       throw badRequest("Only unreferenced participants can be deleted.");
     }
@@ -496,6 +500,13 @@ export class EventService {
       .prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS nextSortOrder FROM participants WHERE event_id = ?")
       .get(eventId);
     return readIntegerField(row, "nextSortOrder");
+  }
+
+  private getParticipantCount(eventId: string): number {
+    return readIntegerField(
+      this.db.prepare("SELECT COUNT(*) AS count FROM participants WHERE event_id = ?").get(eventId),
+      "count",
+    );
   }
 
   private requireParticipant(eventId: string, participantId: string): void {

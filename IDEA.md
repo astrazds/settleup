@@ -6,6 +6,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 
 - Create a Private-by-Link Event with an Event Title, Currency, and first Participant.
 - Start the app on event creation when no Event Link is present.
+- Keep the create screen compact: Event name first, creator name beside a compact Currency selector, and expiry explained in the inline link note.
 - Keep newly created Events empty until users add Participants, Expenses, or Settlement Payments.
 - Share an opaque Event Link.
 - Let anyone with the Event Link view and edit Event data.
@@ -32,10 +33,14 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Money amounts use whole minor units with two decimal places.
 - One Event has exactly one Currency.
 - Saved Expense commands accept Included Participants and derive equal Shares before persistence.
+- Events must retain at least one Participant.
+- Participants can be deleted only when they are not referenced by Expenses, Expense Shares, or Settlement Payments.
 - SQLite-backed multi-record Event mutations must be all-or-nothing.
 - Balances reflect only saved Expenses and Settlement Payments.
 - Settlement Payments may overpay.
+- Suggested Settlement Payments are convenience commands; manual Settlement Payments can be recorded and edited when the real payment differs.
 - Draft forms must not be overwritten by realtime or polling refreshes.
+- Settlement controls can be shown whenever saved Balances are open, but draft Expense work blocks recording a payment until the draft is saved, discarded, or cleared.
 - Realtime messages announce saved Event changes only; SQLite remains the source of truth.
 - Concurrent edits are last-write-wins for the MVP.
 - Event data is Private-by-Link, not public and not account-private.
