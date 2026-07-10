@@ -236,10 +236,12 @@ The reusable implementation is split between product primitives in `src/componen
 ### Create Event
 - **Role:** the default root view when no Event Link is present.
 - **Fields:** event name, currency, and the creator's participant name.
-- **Layout:** the create shell leads with the SettleUp wordmark and a compact hero. The form uses truthful required-field progress, a full-width event name, creator name beside a compact right-aligned currency selector, a three-step lifecycle, a dynamic private-link summary, and the primary action aligned to the trailing edge on wide screens.
-- **Copy:** keep setup language direct: `Give the event a name, add yourself, and set a currency.` Explain what opens now, what link holders can change, and the exact closing day without repeating expiry in the topbar.
+- **Layout:** the create shell leads with the SettleUp wordmark and a compact `Create an event` hero. The form uses truthful required-field progress, a full-width event name, creator name beside a compact right-aligned currency selector, a three-step lifecycle, and the primary action aligned to the trailing edge on wide screens.
+- **Wide hero:** use a `3rem` event mark, `1.5rem` title, `0.75rem` gap, and `1rem` vertical padding so the form remains visually primary at tablet and desktop widths.
+- **Mobile hero:** vertically center the title against a `2.5rem` event mark, use a `1.3rem` title, and keep the gap to `0.625rem` so setup content remains dominant.
+- **Copy:** let the field-progress block explain what remains. Use the lifecycle once to explain what opens now, what link holders can change, and the exact closing day; do not repeat that guidance in the hero or a summary callout.
 - **Behavior:** create the event through the API, replace the URL with `/e/:token`, then enter the event workspace.
-- **Primary action:** use `Start my event`, followed by the concrete next state: the private event opens with a link ready to share.
+- **Primary action:** use `Start my event` without supporting copy; the lifecycle already explains the next state.
 - **Empty state:** never seed sample participants, expenses, balances, or history rows.
 
 ### Panels

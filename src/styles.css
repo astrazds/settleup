@@ -113,8 +113,8 @@ a {
 .create-topbar {
   grid-template-columns: minmax(0, 1fr) auto;
   row-gap: var(--space-1);
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
 }
 
 .create-topbar-note {
@@ -203,6 +203,24 @@ a {
 
 .create-hero {
   grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
+}
+
+.create-hero h1 {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.create-hero .event-mark {
+  width: 3rem;
+  height: 3rem;
+}
+
+.create-hero .event-mark svg {
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .event-mark {
@@ -980,33 +998,6 @@ h1 {
   grid-column: 1 / -1;
 }
 
-.create-summary {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin: 0 var(--space-4) var(--space-4);
-  padding: var(--space-3);
-  border: 1px solid var(--blue-line);
-  border-radius: var(--radius);
-  background: var(--blue-soft);
-  color: var(--blue);
-}
-
-.create-summary p {
-  color: color-mix(in srgb, var(--blue) 72%, var(--ink));
-  font-size: var(--text-xs);
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.create-summary strong {
-  display: block;
-  margin-bottom: 0.2rem;
-  color: var(--blue);
-  font-size: 0.88rem;
-  line-height: 1.3;
-}
-
 .event-error-action {
   margin-top: var(--space-4);
 }
@@ -1343,15 +1334,7 @@ input[aria-invalid="true"],
 .create-action-stack {
   display: grid;
   justify-items: end;
-  gap: var(--space-2);
   text-align: right;
-}
-
-.create-action-stack > span {
-  color: var(--muted);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  line-height: 1.35;
 }
 
 .primary-action,
@@ -1905,6 +1888,28 @@ input[aria-invalid="true"],
     line-height: 1.1;
   }
 
+  .create-hero {
+    align-items: center;
+    gap: 0.625rem;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+
+  .create-hero h1 {
+    font-size: 1.3rem;
+    line-height: 1.2;
+  }
+
+  .create-hero .event-mark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .create-hero .event-mark svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
   .event-mark {
     width: 2.9rem;
     height: 2.9rem;
@@ -2043,11 +2048,6 @@ input[aria-invalid="true"],
 
   .create-panel {
     margin: 0 var(--space-4) var(--space-4);
-  }
-
-  .create-summary {
-    margin-right: var(--space-3);
-    margin-left: var(--space-3);
   }
 
   .capture-defaults {

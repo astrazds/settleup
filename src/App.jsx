@@ -622,9 +622,6 @@ export function App() {
             </div>
             <div className="event-copy">
               <h1>Create an event</h1>
-              <p className="event-privacy">
-                Give the event a name, add yourself, and set a currency.
-              </p>
             </div>
           </div>
 
@@ -730,16 +727,6 @@ export function App() {
               </ol>
             </section>
 
-            <div className="create-summary">
-              <DecorativeIcon icon={CalendarClock} size={17} />
-              <div>
-                <strong>{eventTitle.trim() || "Your event"} will be private by link.</strong>
-                <p>
-                  No account needed. Anyone with the link can contribute, and the event expires after three days.
-                </p>
-              </div>
-            </div>
-
             <div className="form-actions">
               <div className="create-action-stack">
                 <ActionButton
@@ -751,7 +738,6 @@ export function App() {
                   <DecorativeIcon icon={createSubmitting ? CalendarClock : Check} size={17} />
                   {createSubmitting ? "Starting your event" : "Start my event"}
                 </ActionButton>
-                <span>Next: your event opens with a link ready to share.</span>
               </div>
             </div>
           </form>
