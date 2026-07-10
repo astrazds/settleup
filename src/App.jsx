@@ -6,8 +6,10 @@ import {
   Copy,
   FileText,
   Home,
+  Pencil,
   ReceiptText,
   Split,
+  Trash2,
   UserPlus,
   WalletCards,
 } from "lucide-react";
@@ -33,6 +35,7 @@ import {
   DecorativeIcon,
   FieldError,
   InlineStatus,
+  ProgressStatus,
   SectionHeader,
   SelectShell,
 } from "./components/design-system.jsx";
@@ -44,7 +47,7 @@ import {
   SettlementPrompt,
   UndoToast,
 } from "./components/event-ui.jsx";
-import { minorToDecimal, parseDecimalMoneyToMinor } from "./shared/domain.ts";
+import { deriveEqualShares, minorToDecimal, parseDecimalMoneyToMinor } from "./shared/domain.ts";
 
 const supportedCurrencies = ["AUD", "USD", "EUR", "GBP", "NZD"];
 
@@ -141,6 +144,14 @@ function formatEventDate(value) {
   }).format(new Date(value));
 }
 
+function formatEventDay(value) {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "numeric",
+    month: "short",
+    weekday: "short",
+  }).format(new Date(value));
+}
+
 function toUiExpense(expense) {
   return {
     id: expense.id,
@@ -208,6 +219,7 @@ export function App() {
   const amountRef = useRef(null);
   const includedRef = useRef(null);
   const firstIncludedInputRef = useRef(null);
+  const expenseDraftHydratedRef = useRef("");
 
   useEffect(() => {
     let cancelled = false;
@@ -333,7 +345,16 @@ export function App() {
       return 0;
     }
   })();
-  const perPersonMinor = selectedCount && draftAmountMinor ? Math.round(draftAmountMinor / selectedCount) : 0;
+  const paymentDraftMinor = (() => {
+    try {
+      return paymentAmount.trim() ? parseDecimalMoneyToMinor(paymentAmount) : 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const draftShares = selectedCount && draftAmountMinor
+    ? deriveEqualShares(draftAmountMinor, includedIds)
+    : [];
   const lastSettlement = payments.find((payment) => payment.id === lastSettlementId);
   const lastSettlementFrom = lastSettlement
     ? participants.find((item) => item.id === lastSettlement.from)
@@ -369,7 +390,13 @@ export function App() {
   const needsReview = attemptedSubmit && !canSave;
   const hasRecentSave = savedMessage === "Saved just now" || savedMessage === "Updated just now";
   const saveStatus = hasRecentSave ? savedMessage : canSave ? "Ready to save" : needsReview ? "Review fields" : "Add details";
-  const saveButtonLabel = needsReview ? "Review fields" : editingExpenseId ? "Update expense" : "Save expense";
+  const saveButtonLabel = needsReview
+    ? "Review fields"
+    : canSave
+      ? `${editingExpenseId ? "Update" : "Save"} ${money(draftAmountMinor)} expense`
+      : editingExpenseId
+        ? "Update expense"
+        : "Save expense";
   const allParticipantIds = participants.map((participant) => participant.id);
   const splitWithEveryone = selectedCount === participants.length;
   const excludedParticipants = participants.filter((participant) => !includedIds.includes(participant.id));
@@ -383,6 +410,17 @@ export function App() {
   const payer = participants.find((participant) => participant.id === payerId);
   const payerSummaryLabel =
     payer && payerId === currentParticipant ? `Payer defaults to ${payer.name}` : `Paid by ${payer?.name ?? current?.name}`;
+  const exactSplitLabel = draftShares.length > 0
+    ? Array.from(
+        draftShares.reduce((counts, share) => {
+          counts.set(share.amountMinor, (counts.get(share.amountMinor) ?? 0) + 1);
+          return counts;
+        }, new Map()),
+      )
+        .sort(([left], [right]) => right - left)
+        .map(([shareAmountMinor, count]) => `${count} × ${money(shareAmountMinor)}`)
+        .join(" · ")
+    : "Enter an amount to see exact shares";
   const hasExpenseDraft = Boolean(
     description.trim() ||
       amount.trim() ||
@@ -390,6 +428,18 @@ export function App() {
       payerId !== currentParticipant ||
       !splitWithEveryone,
   );
+  const expenseReadyCount =
+    Number(!currentValidation.description) +
+    Number(!currentValidation.amount) +
+    Number(Boolean(payer)) +
+    Number(!currentValidation.included);
+  const expenseProgressLabel = hasRecentSave
+    ? saveStatus
+    : savedMessage === "Draft restored"
+      ? `Draft restored · ${expenseReadyCount} of 4 ready`
+      : needsReview
+        ? `${expenseReadyCount} of 4 ready · review fields`
+        : `${expenseReadyCount} of 4 ready`;
   const shouldBlockSettlement = hasExpenseDraft || needsReview;
   const showSettlementTools = Boolean(settlementSuggestion && !shouldBlockSettlement);
   const settlementExplainer = settlementSuggestion
@@ -420,6 +470,62 @@ export function App() {
 
     window.localStorage.setItem(`settleup:${snapshot.event.token}:participant`, currentParticipant);
   }, [currentParticipant, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot || participants.length === 0 || expenseDraftHydratedRef.current === snapshot.event.token) {
+      return;
+    }
+
+    expenseDraftHydratedRef.current = snapshot.event.token;
+    const storageKey = `settleup:${snapshot.event.token}:expense-draft`;
+
+    try {
+      const storedValue = window.localStorage.getItem(storageKey);
+      if (!storedValue) {
+        return;
+      }
+
+      const draft = JSON.parse(storedValue);
+      if (!draft || typeof draft !== "object") {
+        return;
+      }
+
+      const participantIds = participants.map((participant) => participant.id);
+      const restoredPayerId = participantIds.includes(draft.payerId) ? draft.payerId : participantIds[0];
+      const restoredIncludedIds = Array.isArray(draft.includedIds)
+        ? draft.includedIds.filter((participantId) => participantIds.includes(participantId))
+        : participantIds;
+
+      setDescription(typeof draft.description === "string" ? draft.description : "");
+      setAmount(typeof draft.amount === "string" ? draft.amount : "");
+      setPayerId(restoredPayerId);
+      setIncludedIds(restoredIncludedIds);
+      setSplitControlsOpen(Boolean(draft.splitControlsOpen));
+      setSavedMessage("Draft restored");
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+  }, [participants, snapshot]);
+
+  useEffect(() => {
+    if (!snapshot || expenseDraftHydratedRef.current !== snapshot.event.token) {
+      return;
+    }
+
+    const storageKey = `settleup:${snapshot.event.token}:expense-draft`;
+    if (!hasExpenseDraft || editingExpenseId) {
+      window.localStorage.removeItem(storageKey);
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, JSON.stringify({
+      amount,
+      description,
+      includedIds,
+      payerId,
+      splitControlsOpen,
+    }));
+  }, [amount, description, editingExpenseId, hasExpenseDraft, includedIds, payerId, snapshot, splitControlsOpen]);
 
   useEffect(() => {
     if (participants.length === 0) {
@@ -496,6 +602,9 @@ export function App() {
   if (appStatus.type === "create") {
     const createValidation = validateEventSetup({ title: eventTitle, firstParticipantName });
     const visibleCreateErrors = createAttempted ? createValidation : {};
+    const createReadyCount =
+      Number(!createValidation.title) + Number(!createValidation.firstParticipantName) + 1;
+    const linkClosesAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
     return (
       <main className="app-shell app-shell-create">
@@ -527,12 +636,26 @@ export function App() {
               </div>
             ) : null}
 
+            <div className="create-progress">
+              <div>
+                <strong>Start with the details you know</strong>
+                <span>Your currency is already set. Name the event and add yourself.</span>
+              </div>
+              <ProgressStatus
+                label={`${createReadyCount} of 3 event details ready`}
+                max={3}
+                tone={createReadyCount === 3 ? "success" : "neutral"}
+                value={createReadyCount}
+              />
+            </div>
+
             <div className="create-form-grid">
               <label className="field create-event-name-field">
                 <span>Event name</span>
                 <div className="input-with-icon">
                   <input
                     value={eventTitle}
+                    placeholder="e.g. Beach weekend"
                     onChange={(event) => {
                       setEventTitle(event.target.value);
                       setCreateError("");
@@ -583,23 +706,53 @@ export function App() {
               </label>
             </div>
 
+            <section className="event-lifecycle" aria-labelledby="event-lifecycle-title">
+              <div className="event-lifecycle-heading">
+                <strong id="event-lifecycle-title">How your event works</strong>
+                <span>No account or payment details required.</span>
+              </div>
+              <ol>
+                <li>
+                  <span>Now</span>
+                  <strong>Your private event opens</strong>
+                  <p>You get a shareable link with yourself already added.</p>
+                </li>
+                <li>
+                  <span>While it’s active</span>
+                  <strong>Everyone adds the real costs</strong>
+                  <p>Anyone with the link can add people, expenses, and payments.</p>
+                </li>
+                <li>
+                  <span>{formatEventDay(linkClosesAt)}</span>
+                  <strong>The link closes automatically</strong>
+                  <p>After three days, the event becomes unavailable.</p>
+                </li>
+              </ol>
+            </section>
+
             <div className="create-summary">
               <DecorativeIcon icon={CalendarClock} size={17} />
-              <p>
-                Anyone with the event link can add people, expenses, and settlement payments. Links expire after three days.
-              </p>
+              <div>
+                <strong>{eventTitle.trim() || "Your event"} will be private by link.</strong>
+                <p>
+                  No account needed. Anyone with the link can contribute, and the event expires after three days.
+                </p>
+              </div>
             </div>
 
             <div className="form-actions">
-              <ActionButton
-                variant="primary"
-                type="submit"
-                disabled={createSubmitting}
-                needsReview={createAttempted && Object.keys(createValidation).length > 0}
-              >
-                <DecorativeIcon icon={createSubmitting ? CalendarClock : Check} size={17} />
-                {createSubmitting ? "Creating event" : "Create event"}
-              </ActionButton>
+              <div className="create-action-stack">
+                <ActionButton
+                  variant="primary"
+                  type="submit"
+                  disabled={createSubmitting}
+                  needsReview={createAttempted && Object.keys(createValidation).length > 0}
+                >
+                  <DecorativeIcon icon={createSubmitting ? CalendarClock : Check} size={17} />
+                  {createSubmitting ? "Starting your event" : "Start my event"}
+                </ActionButton>
+                <span>Next: your event opens with a link ready to share.</span>
+              </div>
             </div>
           </form>
         </section>
@@ -1021,7 +1174,7 @@ export function App() {
   }
 
   function renderSettlePrompt() {
-    return <SettlementPrompt settlementSuggestion={settlementSuggestion} onRecord={openSettlementMode} />;
+    return <SettlementPrompt money={money} settlementSuggestion={settlementSuggestion} onRecord={openSettlementMode} />;
   }
 
   function renderSettlementPanel() {
@@ -1053,8 +1206,9 @@ export function App() {
             <p>{settlementExplainer}</p>
             <ActionButton variant="summary" onClick={recordSuggestedPayment}>
               <DecorativeIcon icon={WalletCards} size={16} />
-              Mark as paid
+              Mark {money(settlementSuggestion.amountMinor)} paid
             </ActionButton>
+            <span className="settlement-safety">You can undo this from event history.</span>
           </div>
         ) : (
           <div className="settlement-review">
@@ -1124,7 +1278,11 @@ export function App() {
               ) : null}
               <ActionButton variant="primary" type="submit" disabled={participants.length < 2}>
                 <DecorativeIcon icon={WalletCards} size={16} />
-                {editingPaymentId ? "Update payment" : "Save payment"}
+                {paymentDraftMinor
+                  ? `${editingPaymentId ? "Update" : "Save"} ${money(paymentDraftMinor)} payment`
+                  : editingPaymentId
+                    ? "Update payment"
+                    : "Save payment"}
               </ActionButton>
             </div>
           </form>
@@ -1191,52 +1349,43 @@ export function App() {
             <span>Settle</span>
             <strong>Up</strong>
           </a>
-          <span className="currency-pill" aria-label={`Currency ${snapshot.event.currency}`}>
-            {snapshot.event.currency}
-          </span>
-          <div className={`url-copy ${copyFallbackVisible ? "url-copy-fallback" : ""}`} aria-live="polite">
-            {copyFallbackVisible ? (
-              <input
-                ref={eventLinkRef}
-                className="event-url-fallback"
-                value={eventUrl}
-                readOnly
-                aria-label="Event link"
-                onFocus={(event) => event.currentTarget.select()}
-              />
-            ) : (
-              <span>{eventUrl}</span>
-            )}
-            <button
-              type="button"
-              onClick={copyEventLink}
-              aria-label={copyFallbackVisible ? "Select event link" : undefined}
-            >
-              <DecorativeIcon icon={copyStatus === "Copied" ? Check : Copy} size={16} />
-              {copyStatus}
-            </button>
-          </div>
-          <div className="expiry">
-            <DecorativeIcon icon={CalendarClock} size={17} />
-            Expires {formatEventDate(snapshot.event.expiresAt)}
-          </div>
         </header>
 
         <div className="event-hero">
           <div className="event-mark">
             <DecorativeIcon icon={Home} size={30} />
           </div>
-          <div className="event-copy">
-            <div className="event-title-row">
-              <h1>{snapshot.event.title}</h1>
+          <div className="event-hero-content">
+            <div className="event-copy">
+              <div className="event-title-row">
+                <h1>{snapshot.event.title}</h1>
+              </div>
+              <p className="event-meta">
+                {participants.length} {participants.length === 1 ? "participant" : "participants"} · Created{" "}
+                {formatEventDate(snapshot.event.createdAt)} by {eventCreatedBy} · Link closes{" "}
+                {formatEventDate(snapshot.event.expiresAt)}
+              </p>
             </div>
-            <p className="event-meta">
-              {participants.length} {participants.length === 1 ? "participant" : "participants"} · Created{" "}
-              {formatEventDate(snapshot.event.createdAt)} by {eventCreatedBy}
-            </p>
-            <p className="event-privacy">
-              Anyone with this link can add or edit expenses until {formatEventDate(snapshot.event.expiresAt)}.
-            </p>
+            <div className={`event-share ${copyFallbackVisible ? "event-share-fallback" : ""}`} aria-live="polite">
+              {copyFallbackVisible ? (
+                <input
+                  ref={eventLinkRef}
+                  className="event-url-fallback"
+                  value={eventUrl}
+                  readOnly
+                  aria-label="Event link"
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              ) : null}
+              <button
+                type="button"
+                onClick={copyEventLink}
+                aria-label={copyFallbackVisible ? "Select event link" : undefined}
+              >
+                <DecorativeIcon icon={copyStatus === "Copied" ? Check : Copy} size={16} />
+                {copyStatus}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1249,12 +1398,16 @@ export function App() {
               title={editingExpenseId ? "Edit expense" : "Add expense"}
               muted={`Adding as ${current.name}`}
               action={
-                <InlineStatus
-                  icon={canSave ? Check : needsReview ? AlertCircle : FileText}
-                  tone={canSave ? "success" : needsReview ? "warning" : "neutral"}
-                >
-                  {saveStatus}
-                </InlineStatus>
+                hasRecentSave ? (
+                  <InlineStatus icon={Check}>{saveStatus}</InlineStatus>
+                ) : (
+                  <ProgressStatus
+                    label={expenseProgressLabel}
+                    max={4}
+                    tone={canSave ? "success" : needsReview ? "warning" : "neutral"}
+                    value={expenseReadyCount}
+                  />
+                )
               }
             />
 
@@ -1320,16 +1473,24 @@ export function App() {
                       <>
                         <Avatar participant={participant} small />
                         <span>{participant.name}</span>
-                        <button type="button" onClick={() => startParticipantEdit(participant)}>
-                          Rename
+                        <button
+                          className="icon-action"
+                          type="button"
+                          onClick={() => startParticipantEdit(participant)}
+                          aria-label={`Edit ${participant.name}`}
+                          title={`Edit ${participant.name}`}
+                        >
+                          <DecorativeIcon icon={Pencil} size={16} />
                         </button>
                         <button
-                          className="danger-action"
+                          className="danger-action icon-action"
                           type="button"
                           onClick={() => removeParticipant(participant)}
                           disabled={participants.length <= 1}
+                          aria-label={`Delete ${participant.name}`}
+                          title={participants.length <= 1 ? "At least one person is required" : `Delete ${participant.name}`}
                         >
-                          Remove
+                          <DecorativeIcon icon={Trash2} size={16} />
                         </button>
                       </>
                     )}
@@ -1433,7 +1594,7 @@ export function App() {
                 <span>{payerSummaryLabel}</span>
                 <strong>
                   {splitSummary}
-                  {selectedCount ? ` · ${perPersonMinor ? money(perPersonMinor) : "$0.00"} each` : ""}
+                  {selectedCount ? ` · ${exactSplitLabel}` : ""}
                 </strong>
               </div>
               <ActionButton
@@ -1502,6 +1663,25 @@ export function App() {
                       );
                     })}
                   </div>
+                  {draftShares.length > 0 ? (
+                    <div className="exact-split-preview" aria-live="polite">
+                      <div>
+                        <strong>Exact shares</strong>
+                        <span>{money(draftAmountMinor)} total</span>
+                      </div>
+                      <ul>
+                        {draftShares.map((share) => {
+                          const participant = participants.find((item) => item.id === share.participantId);
+                          return (
+                            <li key={share.participantId}>
+                              <span>{participant?.name ?? "Participant"}</span>
+                              <strong>{money(share.amountMinor)}</strong>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
                   <FieldError className="field-error-inline" id="included-error">
                     {visibleErrors.included}
                   </FieldError>
@@ -1644,11 +1824,6 @@ export function App() {
                 );
               })}
             </div>
-            <p className="history-count">
-              {eventRecordCount === 0
-                ? "History starts after the first saved expense."
-                : `Showing all ${eventRecordCount} event records`}
-            </p>
           </section>
         </div>
 
@@ -1656,7 +1831,6 @@ export function App() {
 
         <footer className="footer">
           <span>© 2026 SettleUp</span>
-          <span>Event expires {formatEventDate(snapshot.event.expiresAt)}.</span>
         </footer>
       </section>
 

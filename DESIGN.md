@@ -150,7 +150,7 @@ It explicitly rejects banking-heavy, playful-fintech, spreadsheet-dense, and gam
 **Key Characteristics:**
 - Restrained light UI with one strong blue action color.
 - Flat surfaces, firm borders, compact radii, and no decorative shadows.
-- Human payment language: `gets back`, `pays`, `Record payment`, `Mark as paid`.
+- Human payment language: `gets back`, `pays`, `Record $33.33`, `Mark $33.33 paid`.
 - Root create flow with no seeded event data.
 - Mobile-first capture flow with secondary payer/split details folded until needed.
 - Private-by-link clarity around shared changes and destructive actions.
@@ -207,7 +207,7 @@ The palette is cool, quiet, and status-rich. Blue is reserved for action, focus,
 ### Named Rules
 **The Product Scale Rule.** Use fixed rem sizes. Do not use fluid typography for operational UI except the compact brand wordmark already in the topbar.
 
-**The Concrete Label Rule.** Labels and buttons should name the action or state: `Save expense`, `Review fields`, `Record payment`, `Mark as paid`, `Everyone's balances`.
+**The Concrete Label Rule.** Labels and buttons should name the action or state and include a known amount when it reduces uncertainty: `Save $100.00 expense`, `Review fields`, `Record $33.33`, `Mark $33.33 paid`, `Everyone's balances`.
 
 ## Elevation
 
@@ -236,9 +236,10 @@ The reusable implementation is split between product primitives in `src/componen
 ### Create Event
 - **Role:** the default root view when no Event Link is present.
 - **Fields:** event name, currency, and the creator's participant name.
-- **Layout:** the create shell leads with the SettleUp wordmark and a compact hero. The form uses a full-width event name, creator name beside a compact right-aligned currency selector, one inline private-link note, and the primary action aligned to the trailing edge on wide screens.
-- **Copy:** keep setup language direct: `Give the event a name, add yourself, and set a currency.` Put link expiry in the inline note instead of duplicating it in the topbar or action area.
+- **Layout:** the create shell leads with the SettleUp wordmark and a compact hero. The form uses truthful required-field progress, a full-width event name, creator name beside a compact right-aligned currency selector, a three-step lifecycle, a dynamic private-link summary, and the primary action aligned to the trailing edge on wide screens.
+- **Copy:** keep setup language direct: `Give the event a name, add yourself, and set a currency.` Explain what opens now, what link holders can change, and the exact closing day without repeating expiry in the topbar.
 - **Behavior:** create the event through the API, replace the URL with `/e/:token`, then enter the event workspace.
+- **Primary action:** use `Start my event`, followed by the concrete next state: the private event opens with a link ready to share.
 - **Empty state:** never seed sample participants, expenses, balances, or history rows.
 
 ### Panels
@@ -250,7 +251,7 @@ The reusable implementation is split between product primitives in `src/componen
 - **Primary:** filled `blue`, white text, `7px` radius, minimum height `2.9rem`, heavy label weight.
 - **Primary review state:** soft amber background with amber text when required fields need review.
 - **Secondary:** transparent or white, blue text, same control radius and weight.
-- **Summary action:** filled blue for `Mark as paid`; it shares the primary action vocabulary.
+- **Summary action:** filled blue for amount-aware actions such as `Mark $33.33 paid`; it shares the primary action vocabulary.
 - **Focus:** all buttons use the shared blue focus ring.
 
 ### Inputs / Fields
@@ -258,6 +259,24 @@ The reusable implementation is split between product primitives in `src/componen
 - **Focus:** border shifts to `blue-2` and receives the focus ring.
 - **Error:** amber border and amber field copy that names the required fix.
 - **Select shell:** `SelectShell` wraps native selects with avatar/icon affordances while preserving native behavior.
+
+### Form Progress
+- **Role:** make short setup and capture tasks feel started without inventing progress or extra steps.
+- **Behavior:** count only real required inputs; valid smart defaults such as event currency, payer, and equal split count toward the starting state.
+- **Style:** a compact labeled track using action blue while in progress, success green when ready, and review amber only after validation has been triggered.
+- **Motion:** update the fill with a `180ms` transform transition and remove the transition when reduced motion is requested.
+
+### Decision Confidence
+- **Easy next question:** each surface asks for one concrete decision at a time and carries valid defaults forward instead of making people re-evaluate the whole workflow.
+- **Specificity over reassurance:** show exact dates, exact split amounts, and the result of the next action. Avoid vague promises such as `quick`, `easy`, or `about` when the interface knows the real value.
+- **Safety before commitment:** explain private-link expiry before event creation, distinguish recording a payment from transferring money, and keep undo paths visible where a shared record changes.
+- **Outcome-led actions:** action labels may include the known amount or outcome, such as `Save A$48.00 expense` or `Mark A$16.00 paid`, so the button answers what will happen before it is pressed.
+
+### Exact Split Preview
+- **Source of truth:** derive preview rows with the same shared `deriveEqualShares` function used by persistence.
+- **Collapsed summary:** group deterministic values as counts, for example `1 × $33.34 · 2 × $33.33`; never present an uncertain range.
+- **Expanded detail:** show every included participant beside their exact share and repeat the expense total for comparison.
+- **Minor-unit remainder:** assign remainder cents in selected-participant order exactly as the domain function does; do not round every row independently.
 
 ### Participant Segments
 - **Style:** compact `2.9rem` controls with avatar initials, visible checkbox affordances for split membership, and full-surface clickable labels.
@@ -268,7 +287,7 @@ The reusable implementation is split between product primitives in `src/componen
 - **Role:** inline event setup inside the capture panel, not a separate administration screen.
 - **Style:** a quiet `surface-2` manager with compact participant rows and one `Add person` input/action pair.
 - **Behavior:** adding a person updates event metadata, the identity selector, and the default split when the expense draft is still untouched.
-- **Participant edits:** `Rename` and `Remove` stay low-emphasis row actions. Removing is blocked for the last remaining person and server-side deletion only succeeds for unreferenced people.
+- **Participant edits:** edit and delete icon actions stay low-emphasis and require accessible names and titles. Removing is blocked for the last remaining person and server-side deletion only succeeds for unreferenced people.
 
 ### Balance Rows
 - **Layout:** person and paid/share metadata on the left, tabular net value on the right.
@@ -276,8 +295,8 @@ The reusable implementation is split between product primitives in `src/componen
 - **Mobile:** the preview row should summarize the most important payment, while full details stay in `Everyone's balances`.
 
 ### Settlement and Feedback
-- **Settlement prompt:** shows `Next payment` and `Record payment` whenever saved balances are open and no expense draft blocks settlement.
-- **Suggested payment:** `Mark as paid` stays the primary path for the recommended next payment.
+- **Settlement prompt:** shows `Next payment` and an exact `Record $amount` action whenever saved balances are open and no expense draft blocks settlement.
+- **Suggested payment:** `Mark $amount paid` stays the primary path for the recommended next payment, followed by visible undo reassurance.
 - **Manual payment:** use the collapsed `Record a different payment` details row for payment amounts or directions that differ from the suggestion; editing an existing payment opens the same form.
 - **Payment confirmation:** green status region with explicit `Undo payment`.
 - **Remove confirmation:** coral-soft alert with `Keep expense` and `Remove expense`.
@@ -296,7 +315,9 @@ The reusable implementation is split between product primitives in `src/componen
 - **Do** keep expense capture ahead of administration; payment tools appear once saved expenses create open balances or a recorded payment is being corrected.
 - **Do** preserve private-by-link clarity anywhere a change affects everyone with the link.
 - **Do** keep new events empty until a user explicitly adds people, expenses, or payments.
-- **Do** keep labels short and concrete: `Save expense`, `Record payment`, `Mark as paid`, `Record a different payment`, `Everyone's balances`.
+- **Do** keep labels short and concrete: `Save $amount expense`, `Record $amount`, `Mark $amount paid`, `Record a different payment`, `Everyone's balances`.
+- **Do** use truthful progress and smart defaults to reduce blank-form effort; never count decorative or hidden steps.
+- **Do** preserve an invested expense draft on the current device and identify restored work plainly.
 - **Do** use semantic status roles and accessible names for icon-led controls.
 - **Do** keep mobile controls stable at 320px and prevent horizontal overflow with `minmax(0, 1fr)` and `min-width: 0` where needed.
 - **Do** use the shared components in `src/components/design-system.jsx` and `src/components/event-ui.jsx` before adding local copies.
@@ -306,5 +327,6 @@ The reusable implementation is split between product primitives in `src/componen
 - **Don't** introduce account-management patterns, financial-product language, investment-dashboard visuals, dense ledger tables, or power-user table controls.
 - **Don't** reveal settlement controls while a draft expense is in progress.
 - **Don't** add nested cards, decorative shadows, broad gradients, glassmorphism, or ornamental backgrounds.
+- **Don't** use fake urgency, fake scarcity, fake progress, or loss-framed copy to pressure users.
 - **Don't** use side-stripe alert borders, gradient text, large marketing heroes, or decorative card grids.
 - **Don't** let mobile controls resize the layout or cover form fields without preserving scroll room.

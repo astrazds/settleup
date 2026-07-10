@@ -4,21 +4,24 @@ SettleUp is a no-login shared expense app for one trip, dinner, weekend, house s
 
 Create a private event link, add the people involved, capture expenses as they happen, and see who should pay whom when the group is ready to settle. It is built for mobile-first capture, plain payment language, and low ceremony: no accounts, no roles, no finance-dashboard feel.
 
-The app opens on event creation. A new event starts empty: the creator gives the event a name, adds their own name, sets a compact currency field, then shares the generated private link. People and expenses are added from the event page.
+The app opens on event creation. A new event starts empty: the creator gives the event a name, adds their own name, sets a compact currency field, reviews how the three-day private link works, then starts and shares the event. People and expenses are added from the event page.
 
 ## What It Does
 
 - Creates private-by-link expense events.
-- Keeps event creation focused on name, creator, currency, and a short private-link expiry note.
+- Keeps event creation focused on name, creator, currency, truthful field progress, and a concrete private-link lifecycle.
 - Adds participants without account setup.
 - Renames participants and removes participants that are not referenced by expenses or settlement payments.
 - Starts new events without sample participants, expenses, or placeholder data.
 - Tracks shared expenses in one event currency.
-- Splits expenses equally across selected participants.
+- Splits expenses equally across selected participants and previews the exact cent allocation before saving.
+- Uses amount-aware actions such as `Save $100.00 expense`, `Record $33.33`, and `Mark $33.33 paid` when the amount is known.
 - Shows balances in human terms: who pays, who gets back money, and what is already settled.
 - Records suggested or manual settlement payments so the group can mark money movement as done.
 - Edits or removes recorded settlement payments when the marked payment was wrong.
 - Sends saved event changes through a server-sent events stream, with normal API reads as fallback.
+- Restores an invested local expense draft after a refresh without letting realtime updates overwrite it.
+- Keeps shared changes reversible with expense removal undo and recorded-payment undo paths.
 - Keeps data short-lived by design: event links expire after three days and cleanup removes persisted event data after five days.
 
 ## Stack
@@ -82,6 +85,8 @@ npm run preview       # Preview the built client
 
 - `src/App.jsx`: main product UI.
 - `src/styles.css`: app styling and responsive behavior.
+- `src/components/design-system.jsx`: shared progress, status, avatar, button, and form primitives.
+- `src/components/event-ui.jsx`: balance, settlement, confirmation, removal, and undo patterns.
 - `src/client/api.ts`: browser API client.
 - `src/shared/domain.ts`: shared event, participant, expense, payment, and balance types.
 - `src/server/app.ts`: Hono routes and static client serving.

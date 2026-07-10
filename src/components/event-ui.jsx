@@ -52,7 +52,7 @@ export function BalanceRow({
   );
 }
 
-export function SettlementPrompt({ settlementSuggestion, onRecord }) {
+export function SettlementPrompt({ money, settlementSuggestion, onRecord }) {
   return (
     <aside className="settle-prompt" aria-label="Next payment">
       <div className="next-payment-copy">
@@ -66,7 +66,7 @@ export function SettlementPrompt({ settlementSuggestion, onRecord }) {
       {settlementSuggestion ? (
         <ActionButton className="settle-toggle" onClick={onRecord}>
           <DecorativeIcon icon={WalletCards} size={16} />
-          Record payment
+          Record {money(settlementSuggestion.amountMinor)}
         </ActionButton>
       ) : null}
     </aside>

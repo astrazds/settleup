@@ -28,11 +28,12 @@ SettleUp should not look banking-heavy, playful-fintech, or spreadsheet-dense. A
 
 - Capture before administration: expense entry, participant selection, and settlement actions should stay close to the event workflow.
 - Empty by default: newly created events must not include placeholder participants, expenses, balances, or sample history.
-- Focused event setup: the root create flow should ask only for the event name, the creator's name, and currency, with private-link expiry explained once inline.
-- Confidence over cleverness: money totals, balances, and settlement actions need plain labels, visible state, and predictable controls.
+- Focused event setup: the root create flow should ask only for the event name, the creator's name, and currency, supported by truthful required-field progress and a concise lifecycle preview.
+- Confidence over cleverness: money totals, balances, exact shares, and settlement actions need plain labels, visible state, predictable controls, and known amounts in the action when available.
 - Private-by-link clarity: make the sharing model understandable without turning it into an account or permission system.
-- Preserve flow: realtime refreshes and return visits must not overwrite active drafts or force users to restart context.
+- Preserve flow: realtime refreshes and return visits must not overwrite active drafts or force users to restart context; invested expense drafts should restore locally after a refresh.
 - Short-lived by design: expiry and cleanup should feel intentional, not like missing account features.
+- Easy next decisions: use concrete dates, totals, lifecycle states, and reversible outcomes to remove uncertainty instead of relying on vague reassurance or sales-oriented framing.
 
 ## Accessibility & Inclusion
 
