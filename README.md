@@ -92,9 +92,16 @@ npm run preview       # Preview the built client
 - `src/server/app.ts`: Hono routes and static client serving.
 - `src/server/event-service.ts`: event mutation and balance logic.
 - `src/server/database.ts`: SQLite schema and migrations.
-- `public/icon-updated.png`: source app and repository icon.
+- `public/icon-updated.png`: canonical 1024×1024 app and repository icon master.
+- `public/icon-512.png`, `public/icon-192.png`, `public/apple-touch-icon.png`, and `public/favicon*.png`: derived PWA, Apple touch, and browser icon assets.
 - `PRODUCT.md`: product scope and rules.
 - `DESIGN.md`: design system and interaction direction.
+
+## Brand Assets
+
+The SettleUp app icon uses three rounded forms gathered into one balanced mark. The deep blue and warm cream treatment is intended to read as cooperative, calm, and trustworthy without relying on currency, banking, calculator, spreadsheet, or payment-product imagery.
+
+Use `public/icon-updated.png` as the canonical master. Keep the important artwork inside its existing central safe area and regenerate every derived icon when the master changes. The web manifest consumes the 192px and 512px files; the document head consumes the Apple touch icon and 64px, 32px, and 16px favicons.
 
 ## Product Boundaries
 

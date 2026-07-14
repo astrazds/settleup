@@ -188,6 +188,24 @@ The palette is cool, quiet, and status-rich. Blue is reserved for action, focus,
 
 **The Money Direction Rule.** Positive balances use green and say `gets back`; negative balances use coral and say `pays`; settled states use muted text. Do not rely on color alone.
 
+## App Icon
+
+The app icon is a two-tone geometric mark: three softly rounded forms gather into one balanced whole, suggesting a small group sharing costs and reaching settlement. Its deep blue field and warm cream symbol should feel cooperative, calm, and trustworthy without making SettleUp look like a bank or financial product.
+
+### Asset Set
+
+- **Canonical master:** `public/icon-updated.png` at 1024×1024.
+- **PWA icons:** `public/icon-192.png` and `public/icon-512.png`, referenced by `public/manifest.webmanifest` for both standard and maskable use.
+- **Apple touch icon:** `public/apple-touch-icon.png` at 180×180.
+- **Browser favicons:** `public/favicon.png` at 64×64, plus `public/favicon-32.png` and `public/favicon-16.png`.
+
+### Usage Rules
+
+- Preserve the three-form composition, generous central safe area, and strong small-size silhouette.
+- Regenerate the complete asset set from the canonical master whenever the artwork changes.
+- Keep the icon free of text, letters, currency symbols, calculators, charts, spreadsheets, bank imagery, checkmarks, decorative shadows, and presentation framing.
+- Do not reuse the icon's blue as general decoration inside the product UI; the One Action Color Rule still governs operational surfaces.
+
 ## Typography
 
 **Display Font:** Inter with system sans fallbacks.
