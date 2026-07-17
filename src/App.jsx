@@ -732,11 +732,10 @@ export function App() {
             </div>
           </div>
 
-          <form className="panel create-panel" onSubmit={createNewEvent}>
+          <form className="panel create-panel" noValidate onSubmit={createNewEvent}>
             {hasVisibleCreateErrors ? (
-              <div className="form-error-summary create-error" role="alert">
-                <DecorativeIcon icon={AlertCircle} size={17} />
-                <p>{createValidationSummary}</p>
+              <div className="visually-hidden" role="alert">
+                {createValidationSummary}
               </div>
             ) : null}
 
@@ -766,7 +765,7 @@ export function App() {
                 <input
                   ref={eventTitleRef}
                   value={eventTitle}
-                  placeholder="e.g. Beach weekend"
+                  placeholder={visibleCreateErrors.title ? "" : "e.g. Beach weekend"}
                   onChange={(event) => {
                     setEventTitle(event.target.value);
                     setCreateError("");
@@ -774,8 +773,11 @@ export function App() {
                   aria-invalid={Boolean(visibleCreateErrors.title)}
                   aria-describedby={visibleCreateErrors.title ? "event-title-error" : undefined}
                   autoFocus
+                  required
                 />
-                <FieldError id="event-title-error">{visibleCreateErrors.title}</FieldError>
+                <FieldError className="create-field-error" id="event-title-error">
+                  {visibleCreateErrors.title}
+                </FieldError>
               </label>
 
               <label className="field create-participant-field">
@@ -791,8 +793,9 @@ export function App() {
                   aria-describedby={
                     visibleCreateErrors.firstParticipantName ? "first-participant-error" : undefined
                   }
+                  required
                 />
-                <FieldError id="first-participant-error">
+                <FieldError className="create-field-error" id="first-participant-error">
                   {visibleCreateErrors.firstParticipantName}
                 </FieldError>
               </label>

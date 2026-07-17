@@ -47,6 +47,12 @@ typography:
     fontWeight: 760
     lineHeight: 1.3
     letterSpacing: "0"
+  heading:
+    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 820
+    lineHeight: 1.2
+    letterSpacing: "0"
   body:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "1rem"
@@ -199,10 +205,12 @@ The palette is cool, quiet, and state-rich. Blue is operational; green, coral, a
 
 ### Hierarchy
 - **Display** (820, `2rem`, 1.12): Event titles and brand-size text only.
+- **Heading** (820, `1.5rem`, 1.2): Page-level task headings at compact and mobile sizes.
 - **Title** (760, `1.12rem`, 1.3): Section headings, settlement review values, and important row titles.
 - **Body** (400, `1rem`, 1.35): Form copy, summaries, and prose, capped near 65ch.
 - **Label** (650, `0.875rem`, 1.3): Field labels, compact metadata, commands, and status labels.
 - **Caption** (650, `0.78rem`, 1.25): Balance directions and the lowest-priority supporting text.
+- **Mobile caption** (650, `0.875rem`, 1.25): Caption roles step up to the label size below 700px for outdoor and handheld readability.
 - **Money Values** (820, `1.12rem`, 1.2): Right-aligned, tabular values in balance rows and totals.
 
 ### Named Rules
@@ -216,7 +224,7 @@ The palette is cool, quiet, and state-rich. Blue is operational; green, coral, a
 SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separators establish hierarchy. Ordinary panels, controls, summaries, and history rows never float.
 
 ### Shadow Vocabulary
-- **Focus Ring** (`0 0 0 3px rgba(14, 105, 255, 0.16)`): Keyboard focus and focused field shells only.
+- **Focus Ring** (`0 0 0 3px rgba(14, 105, 255, 0.72)`): Keyboard focus and focused field shells only.
 - **Mobile Action Bar** (`0 -6px 8px rgba(17, 24, 39, 0.08)`): The fixed mobile form action bar while expanded split controls are open.
 - **Selected Inset** (`inset 0 0 0 1px rgba(14, 105, 255, 0.2)`): Selected participant segments only.
 

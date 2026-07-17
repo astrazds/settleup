@@ -24,7 +24,8 @@ The app opens on event creation. A new event starts empty: the creator gives the
 - Restores an invested local expense draft after a refresh without letting realtime updates overwrite it.
 - Keeps shared changes reversible with expense removal undo and recorded-payment undo paths.
 - Keeps data short-lived by design: event links expire after three days and cleanup removes persisted event data after five days.
-- Keeps keyboard focus, validation alerts, readable placeholders, and mobile touch targets explicit across the primary flows.
+- Keeps required-field semantics, first-invalid-field focus, and validation announcements accessible while showing create errors inside their inputs without shifting the form.
+- Keeps readable placeholders and visible mobile controls at least 44px tall across the primary flows.
 
 ## Stack
 
