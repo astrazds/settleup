@@ -10,8 +10,9 @@ SettleUp is a mobile-first, no-login shared expense app for short-lived private-
 - Keep newly created events empty apart from the creator participant.
 - Treat private-link expiry, exact money amounts, shared mutations, and undo behavior as user-visible trust contracts.
 - Reuse `src/components/design-system.jsx` and `src/components/event-ui.jsx` before adding one-off UI patterns.
-- Preserve active expense drafts across refreshes and realtime updates.
+- Preserve invested create-event drafts across refreshes for up to 24 hours, and active expense drafts across refreshes and realtime updates.
 - Keep mobile layouts usable at 320px and verify primary UI work at 390×844.
+- Keep visible mobile controls at least 44px tall and preserve first-invalid-field focus after failed form submission.
 - Do not add decorative shadows, gradients, glass effects, fake urgency, vague progress, or sales-oriented financial language.
 
 ## Verification

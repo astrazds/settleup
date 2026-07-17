@@ -74,6 +74,7 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+  opacity: 0.58;
 }
 
 a {
@@ -619,7 +620,7 @@ h1 {
   gap: 0.35rem;
   min-width: 9rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   line-height: 1.25;
   text-align: right;
@@ -888,7 +889,7 @@ h1 {
 
 .create-form-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.85rem;
+  grid-template-columns: minmax(0, 1fr) 14rem;
   column-gap: var(--space-2);
   row-gap: var(--space-4);
   padding: var(--space-4);
@@ -961,7 +962,7 @@ h1 {
 }
 
 .event-lifecycle li > strong {
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
 }
 
 .event-lifecycle li > p {
@@ -981,7 +982,7 @@ h1 {
 .create-currency-field {
   grid-column: 2;
   justify-self: end;
-  width: 4.85rem;
+  width: 14rem;
 }
 
 .create-currency-field .select-shell {
@@ -1015,7 +1016,7 @@ h1 {
 .field span,
 .choice-group legend {
   color: var(--ink);
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
   font-weight: 650;
 }
 
@@ -1050,6 +1051,11 @@ h1 {
   outline: 0;
 }
 
+.field input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
 .field > input:focus,
 .input-with-icon:focus-within,
 .select-shell:focus-within {
@@ -1071,7 +1077,7 @@ input[aria-invalid="true"],
 
 .field-error {
   color: var(--amber);
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   line-height: 1.35;
 }
 
@@ -1346,6 +1352,11 @@ input[aria-invalid="true"],
   min-height: 2.9rem;
   border-radius: 7px;
   font-weight: 760;
+  transition:
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .primary-action {
@@ -1364,6 +1375,35 @@ input[aria-invalid="true"],
   border: 0;
   background: transparent;
   color: var(--blue);
+}
+
+@media (hover: hover) {
+  .primary-action:not(.needs-review):not(:disabled):hover {
+    border-color: var(--blue-2);
+    background: var(--blue-2);
+  }
+
+  .primary-action.needs-review:not(:disabled):hover {
+    background: color-mix(in srgb, var(--amber-soft) 78%, var(--surface));
+  }
+
+  .secondary-action:not(:disabled):hover {
+    background: var(--blue-soft);
+  }
+}
+
+.primary-action:not(.needs-review):not(:disabled):active {
+  border-color: color-mix(in srgb, var(--blue) 82%, var(--ink));
+  background: color-mix(in srgb, var(--blue) 82%, var(--ink));
+}
+
+.primary-action.needs-review:not(:disabled):active {
+  background: color-mix(in srgb, var(--amber-soft) 68%, var(--surface));
+}
+
+.secondary-action:not(:disabled):active {
+  background: var(--blue-soft);
+  color: var(--blue-2);
 }
 
 .form-actions .primary-action {
@@ -1783,6 +1823,8 @@ input[aria-invalid="true"],
     order: 1;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
   }
 
   .create-hero {
@@ -1891,8 +1933,8 @@ input[aria-invalid="true"],
   .create-hero {
     align-items: center;
     gap: 0.625rem;
-    padding-top: var(--space-3);
-    padding-bottom: var(--space-3);
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
   }
 
   .create-hero h1 {
@@ -1937,7 +1979,7 @@ input[aria-invalid="true"],
   }
 
   .event-share button {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
     padding: 0 var(--space-1);
   }
 
@@ -1968,29 +2010,34 @@ input[aria-invalid="true"],
   }
 
   .create-form-grid {
-    grid-template-columns: minmax(0, 1fr) 4.85rem;
+    grid-template-columns: minmax(0, 1fr) 14rem;
     column-gap: var(--space-2);
     row-gap: var(--space-3);
   }
 
   .create-progress {
     grid-template-columns: 1fr;
-    gap: var(--space-3);
-    padding: var(--space-3);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .create-progress > div:first-child > span {
+    display: none;
   }
 
   .create-progress .progress-status {
+    min-width: 0;
     text-align: left;
   }
 
   .event-lifecycle-heading {
     display: grid;
-    gap: 0.2rem;
+    gap: var(--space-1);
   }
 
   .event-lifecycle ol {
     grid-template-columns: 1fr;
-    gap: var(--space-3);
+    gap: var(--space-2);
   }
 
   .event-lifecycle li {
@@ -2002,6 +2049,25 @@ input[aria-invalid="true"],
   .event-lifecycle li::before {
     top: 0.25rem;
     left: 0;
+  }
+
+  .event-lifecycle {
+    gap: var(--space-2);
+    padding: 0 var(--space-3) var(--space-3);
+  }
+
+  .event-lifecycle li > span,
+  .event-lifecycle li > strong {
+    display: inline;
+  }
+
+  .event-lifecycle li > span {
+    margin-right: var(--space-2);
+    margin-bottom: 0;
+  }
+
+  .event-lifecycle li > p {
+    margin-top: var(--space-1);
   }
 
   .create-action-stack,
@@ -2028,7 +2094,7 @@ input[aria-invalid="true"],
 
   .create-currency-field {
     grid-column: 2;
-    width: 4.85rem;
+    width: 14rem;
   }
 
   .split-row,
@@ -2105,6 +2171,12 @@ input[aria-invalid="true"],
 
   .participant-chip {
     flex-wrap: wrap;
+  }
+
+  .participant-chip .icon-action {
+    width: 2.75rem;
+    min-height: 2.75rem;
+    flex-basis: 2.75rem;
   }
 
   .participant-chip input {
@@ -2289,6 +2361,11 @@ input[aria-invalid="true"],
     grid-column: 1 / -1;
   }
 
+  .payment-confirmation button,
+  .settlement-ledger button {
+    min-height: 2.75rem;
+  }
+
   .undo-toast {
     width: calc(100% - 2rem);
     flex-wrap: wrap;
@@ -2296,6 +2373,22 @@ input[aria-invalid="true"],
 
   .footer a:last-child {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .create-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .create-participant-field,
+  .create-currency-field {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  .create-currency-field {
+    justify-self: stretch;
   }
 }
 

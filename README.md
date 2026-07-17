@@ -4,7 +4,7 @@ SettleUp is a no-login shared expense app for one trip, dinner, weekend, house s
 
 Create a private event link, add the people involved, capture expenses as they happen, and see who should pay whom when the group is ready to settle. It is built for mobile-first capture, plain payment language, and low ceremony: no accounts, no roles, no finance-dashboard feel.
 
-The app opens on event creation. A new event starts empty: the creator gives the event a name, adds their own name, sets a compact currency field, reviews how the three-day private link works, then starts and shares the event. People and expenses are added from the event page.
+The app opens on event creation. A new event starts empty: the creator gives the event a name, adds their own name, chooses a currency, reviews how the three-day private link works, then starts and shares the event. People and expenses are added from the event page.
 
 ## What It Does
 
@@ -20,9 +20,11 @@ The app opens on event creation. A new event starts empty: the creator gives the
 - Records suggested or manual settlement payments so the group can mark money movement as done.
 - Edits or removes recorded settlement payments when the marked payment was wrong.
 - Sends saved event changes through a server-sent events stream, with normal API reads as fallback.
+- Restores an invested local create-event draft for up to 24 hours, while safely ignoring expired or malformed browser data.
 - Restores an invested local expense draft after a refresh without letting realtime updates overwrite it.
 - Keeps shared changes reversible with expense removal undo and recorded-payment undo paths.
 - Keeps data short-lived by design: event links expire after three days and cleanup removes persisted event data after five days.
+- Keeps keyboard focus, validation alerts, readable placeholders, and mobile touch targets explicit across the primary flows.
 
 ## Stack
 

@@ -31,10 +31,10 @@ SettleUp should not look banking-heavy, playful-fintech, or spreadsheet-dense. A
 - Focused event setup: the root create flow should ask only for the event name, the creator's name, and currency, supported by truthful required-field progress and a concise lifecycle preview.
 - Confidence over cleverness: money totals, balances, exact shares, and settlement actions need plain labels, visible state, predictable controls, and known amounts in the action when available.
 - Private-by-link clarity: make the sharing model understandable without turning it into an account or permission system.
-- Preserve flow: realtime refreshes and return visits must not overwrite active drafts or force users to restart context; invested expense drafts should restore locally after a refresh.
+- Preserve flow: realtime refreshes and return visits must not overwrite active drafts or force users to restart context; invested create-event and expense drafts should restore locally after a refresh.
 - Short-lived by design: expiry and cleanup should feel intentional, not like missing account features.
 - Easy next decisions: use concrete dates, totals, lifecycle states, and reversible outcomes to remove uncertainty instead of relying on vague reassurance or sales-oriented framing.
 
 ## Accessibility & Inclusion
 
-Target WCAG AA. Maintain readable contrast for text and controls, visible keyboard focus, accessible names for icon buttons, reduced-motion support for non-essential motion, and color-blind-safe state communication that does not rely on color alone.
+Target WCAG AA. Maintain readable contrast for text, placeholders, and controls; visible keyboard focus; alert semantics and first-invalid-field focus for failed submissions; accessible names for icon buttons; reduced-motion support for non-essential motion; mobile touch targets of at least 44px; and color-blind-safe state communication that does not rely on color alone.

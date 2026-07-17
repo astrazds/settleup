@@ -5,12 +5,12 @@ import {
   ChevronDown,
   Copy,
   FileText,
-  Home,
   Pencil,
   ReceiptText,
   Split,
   Trash2,
   UserPlus,
+  UsersRound,
   WalletCards,
 } from "lucide-react";
 import React from "react";
@@ -49,7 +49,69 @@ import {
 } from "./components/event-ui.jsx";
 import { deriveEqualShares, minorToDecimal, parseDecimalMoneyToMinor } from "./shared/domain.ts";
 
-const supportedCurrencies = ["AUD", "USD", "EUR", "GBP", "NZD"];
+const supportedCurrencies = [
+  { code: "AUD", name: "Australian dollar" },
+  { code: "USD", name: "US dollar" },
+  { code: "EUR", name: "Euro" },
+  { code: "GBP", name: "British pound" },
+  { code: "NZD", name: "New Zealand dollar" },
+];
+const supportedCurrencyCodes = supportedCurrencies.map((currency) => currency.code);
+const createEventDraftKey = "settleup:create-event-draft";
+const createEventDraftTtlMs = 24 * 60 * 60 * 1000;
+
+function emptyCreateEventDraft() {
+  return {
+    eventTitle: "",
+    eventCurrency: "AUD",
+    firstParticipantName: "",
+  };
+}
+
+function readCreateEventDraft() {
+  const emptyDraft = emptyCreateEventDraft();
+
+  try {
+    const storedValue = window.localStorage.getItem(createEventDraftKey);
+    if (!storedValue) {
+      return emptyDraft;
+    }
+
+    const draft = JSON.parse(storedValue);
+    if (
+      !draft ||
+      typeof draft !== "object" ||
+      Array.isArray(draft) ||
+      !Number.isFinite(draft.expiresAt) ||
+      draft.expiresAt <= Date.now()
+    ) {
+      window.localStorage.removeItem(createEventDraftKey);
+      return emptyDraft;
+    }
+
+    return {
+      eventTitle: typeof draft.eventTitle === "string" ? draft.eventTitle : "",
+      eventCurrency: supportedCurrencyCodes.includes(draft.eventCurrency) ? draft.eventCurrency : "AUD",
+      firstParticipantName:
+        typeof draft.firstParticipantName === "string" ? draft.firstParticipantName : "",
+    };
+  } catch {
+    try {
+      window.localStorage.removeItem(createEventDraftKey);
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsing contexts.
+    }
+    return emptyDraft;
+  }
+}
+
+function clearCreateEventDraft() {
+  try {
+    window.localStorage.removeItem(createEventDraftKey);
+  } catch {
+    // Creating an event still works when local storage is unavailable.
+  }
+}
 
 function isOpenBalance(valueMinor) {
   return Math.abs(valueMinor) > 0;
@@ -177,12 +239,15 @@ function toUiPayment(payment) {
 }
 
 export function App() {
+  const [initialCreateEventDraft] = useState(readCreateEventDraft);
   const [snapshot, setSnapshot] = useState(null);
   const [eventToken, setEventToken] = useState("");
   const [appStatus, setAppStatus] = useState({ type: "loading", message: "Loading event" });
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventCurrency, setEventCurrency] = useState("AUD");
-  const [firstParticipantName, setFirstParticipantName] = useState("");
+  const [eventTitle, setEventTitle] = useState(initialCreateEventDraft.eventTitle);
+  const [eventCurrency, setEventCurrency] = useState(initialCreateEventDraft.eventCurrency);
+  const [firstParticipantName, setFirstParticipantName] = useState(
+    initialCreateEventDraft.firstParticipantName,
+  );
   const [createAttempted, setCreateAttempted] = useState(false);
   const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -215,6 +280,8 @@ export function App() {
   const [settlementBlockNotice, setSettlementBlockNotice] = useState(false);
   const settlementStatusRef = useRef(null);
   const eventLinkRef = useRef(null);
+  const eventTitleRef = useRef(null);
+  const firstParticipantNameRef = useRef(null);
   const descriptionRef = useRef(null);
   const amountRef = useRef(null);
   const includedRef = useRef(null);
@@ -300,6 +367,32 @@ export function App() {
       window.clearInterval(poll);
     };
   }, [eventToken]);
+
+  useEffect(() => {
+    if (appStatus.type !== "create") {
+      return;
+    }
+
+    const hasInvestedDraft = Boolean(
+      eventTitle.trim() || firstParticipantName.trim() || eventCurrency !== "AUD",
+    );
+
+    if (!hasInvestedDraft) {
+      clearCreateEventDraft();
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(createEventDraftKey, JSON.stringify({
+        eventTitle,
+        eventCurrency,
+        firstParticipantName,
+        expiresAt: Date.now() + createEventDraftTtlMs,
+      }));
+    } catch {
+      // Draft recovery is best-effort and must never block event creation.
+    }
+  }, [appStatus.type, eventCurrency, eventTitle, firstParticipantName]);
 
   const participants = snapshot?.participants ?? [];
   const expenses = useMemo(() => snapshot?.expenses.map(toUiExpense) ?? [], [snapshot]);
@@ -577,6 +670,13 @@ export function App() {
     const errors = validateEventSetup({ title: eventTitle, firstParticipantName });
 
     if (Object.keys(errors).length > 0) {
+      const firstInvalidField = errors.title
+        ? eventTitleRef.current
+        : firstParticipantNameRef.current;
+      window.requestAnimationFrame(() => {
+        firstInvalidField?.focus();
+        scrollFieldIntoView(firstInvalidField);
+      });
       return;
     }
 
@@ -592,6 +692,7 @@ export function App() {
       setEventToken(created.token);
       setAppStatus({ type: "ready", message: "Ready" });
       setCreateSubmitting(false);
+      clearCreateEventDraft();
       window.history.replaceState(null, "", `/e/${created.token}`);
     } catch (error) {
       setCreateSubmitting(false);
@@ -602,6 +703,12 @@ export function App() {
   if (appStatus.type === "create") {
     const createValidation = validateEventSetup({ title: eventTitle, firstParticipantName });
     const visibleCreateErrors = createAttempted ? createValidation : {};
+    const hasVisibleCreateErrors = Object.keys(visibleCreateErrors).length > 0;
+    const createValidationSummary = visibleCreateErrors.title && visibleCreateErrors.firstParticipantName
+      ? "Enter an event name and your name."
+      : visibleCreateErrors.title
+        ? visibleCreateErrors.title
+        : visibleCreateErrors.firstParticipantName;
     const createReadyCount =
       Number(!createValidation.title) + Number(!createValidation.firstParticipantName) + 1;
     const linkClosesAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
@@ -618,7 +725,7 @@ export function App() {
 
           <div className="event-hero create-hero">
             <div className="event-mark">
-              <DecorativeIcon icon={Home} size={30} />
+              <DecorativeIcon icon={UsersRound} size={30} />
             </div>
             <div className="event-copy">
               <h1>Create an event</h1>
@@ -626,6 +733,13 @@ export function App() {
           </div>
 
           <form className="panel create-panel" onSubmit={createNewEvent}>
+            {hasVisibleCreateErrors ? (
+              <div className="form-error-summary create-error" role="alert">
+                <DecorativeIcon icon={AlertCircle} size={17} />
+                <p>{createValidationSummary}</p>
+              </div>
+            ) : null}
+
             {createError ? (
               <div className="form-error-summary create-error" role="alert">
                 <DecorativeIcon icon={AlertCircle} size={17} />
@@ -635,8 +749,8 @@ export function App() {
 
             <div className="create-progress">
               <div>
-                <strong>Start with the details you know</strong>
-                <span>Your currency is already set. Name the event and add yourself.</span>
+                <strong>Name your event and add yourself</strong>
+                <span>Currency is set to {eventCurrency}.</span>
               </div>
               <ProgressStatus
                 label={`${createReadyCount} of 3 event details ready`}
@@ -649,26 +763,25 @@ export function App() {
             <div className="create-form-grid">
               <label className="field create-event-name-field">
                 <span>Event name</span>
-                <div className="input-with-icon">
-                  <input
-                    value={eventTitle}
-                    placeholder="e.g. Beach weekend"
-                    onChange={(event) => {
-                      setEventTitle(event.target.value);
-                      setCreateError("");
-                    }}
-                    aria-invalid={Boolean(visibleCreateErrors.title)}
-                    aria-describedby={visibleCreateErrors.title ? "event-title-error" : undefined}
-                    autoFocus
-                  />
-                  <DecorativeIcon icon={FileText} size={17} />
-                </div>
+                <input
+                  ref={eventTitleRef}
+                  value={eventTitle}
+                  placeholder="e.g. Beach weekend"
+                  onChange={(event) => {
+                    setEventTitle(event.target.value);
+                    setCreateError("");
+                  }}
+                  aria-invalid={Boolean(visibleCreateErrors.title)}
+                  aria-describedby={visibleCreateErrors.title ? "event-title-error" : undefined}
+                  autoFocus
+                />
                 <FieldError id="event-title-error">{visibleCreateErrors.title}</FieldError>
               </label>
 
               <label className="field create-participant-field">
                 <span>Your name</span>
                 <input
+                  ref={firstParticipantNameRef}
                   value={firstParticipantName}
                   onChange={(event) => {
                     setFirstParticipantName(event.target.value);
@@ -693,8 +806,8 @@ export function App() {
                     onChange={(event) => setEventCurrency(event.target.value)}
                   >
                     {supportedCurrencies.map((currency) => (
-                      <option key={currency} value={currency}>
-                        {currency}
+                      <option key={currency.code} value={currency.code}>
+                        {currency.code} — {currency.name}
                       </option>
                     ))}
                   </select>
@@ -706,7 +819,7 @@ export function App() {
             <section className="event-lifecycle" aria-labelledby="event-lifecycle-title">
               <div className="event-lifecycle-heading">
                 <strong id="event-lifecycle-title">How your event works</strong>
-                <span>No account or payment details required.</span>
+                <span>No account or payment details needed.</span>
               </div>
               <ol>
                 <li>
@@ -715,14 +828,14 @@ export function App() {
                   <p>You get a shareable link with yourself already added.</p>
                 </li>
                 <li>
-                  <span>While it’s active</span>
-                  <strong>Everyone adds the real costs</strong>
-                  <p>Anyone with the link can add people, expenses, and payments.</p>
+                  <span>While active</span>
+                  <strong>Anyone with the link can contribute</strong>
+                  <p>They can add people, expenses, and payments.</p>
                 </li>
                 <li>
-                  <span>{formatEventDay(linkClosesAt)}</span>
-                  <strong>The link closes automatically</strong>
-                  <p>After three days, the event becomes unavailable.</p>
+                  <span>Closes {formatEventDay(linkClosesAt)}</span>
+                  <strong>The event becomes unavailable</strong>
+                  <p>The private link stays active for three days.</p>
                 </li>
               </ol>
             </section>
@@ -1339,7 +1452,7 @@ export function App() {
 
         <div className="event-hero">
           <div className="event-mark">
-            <DecorativeIcon icon={Home} size={30} />
+            <DecorativeIcon icon={UsersRound} size={30} />
           </div>
           <div className="event-hero-content">
             <div className="event-copy">
