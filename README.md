@@ -10,15 +10,17 @@ The app opens on event creation. A new event starts empty: the creator gives the
 
 - Creates private-by-link expense events.
 - Keeps event creation focused on name, creator, currency, truthful field progress, and a concrete private-link lifecycle.
-- Adds participants without account setup.
-- Renames participants and removes participants that are not referenced by expenses or settlement payments.
+- Leads the event workspace with description and amount, then payer, capture defaults, split controls, and save.
+- Keeps participant administration available behind a collapsed `Manage people` disclosure instead of placing it ahead of expense capture.
+- Adds and renames participants without account setup, and names the shared, non-undoable consequence before removing an unreferenced participant.
 - Starts new events without sample participants, expenses, or placeholder data.
 - Tracks shared expenses in one event currency.
 - Splits expenses equally across selected participants and previews the exact cent allocation before saving.
 - Uses amount-aware actions such as `Save $100.00 expense`, `Record $33.33`, and `Mark $33.33 paid` when the amount is known.
-- Shows balances in human terms: who pays, who gets back money, and what is already settled.
+- Leads balances with the single next payment, keeps the viewer's balance as supporting context, and exposes the full participant ledger through a mobile disclosure.
 - Records suggested or manual settlement payments so the group can mark money movement as done.
 - Edits or removes recorded settlement payments when the marked payment was wrong.
+- Keeps payment recording inside the balance surface and moves secondary history actions behind per-record `Manage` disclosures.
 - Sends saved event changes through a server-sent events stream, with normal API reads as fallback.
 - Restores an invested local create-event draft for up to 24 hours, while safely ignoring expired or malformed browser data.
 - Restores an invested local expense draft after a refresh without letting realtime updates overwrite it.
@@ -99,6 +101,8 @@ npm run preview       # Preview the built client
 - `public/icon-512.png`, `public/icon-192.png`, `public/apple-touch-icon.png`, and `public/favicon*.png`: derived PWA, Apple touch, and browser icon assets.
 - `PRODUCT.md`: product scope and rules.
 - `DESIGN.md`: design system and interaction direction.
+- `IDEA.md`: detailed product scope and behavioral rules.
+- `.codewiki.yaml`: binding for the repository's maintained CodeWiki Subfolder Wiki.
 
 ## Brand Assets
 

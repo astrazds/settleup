@@ -239,7 +239,7 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 ### Workspace and Navigation
 - **Workspace:** One white shell with a firm strong-line border and 10px desktop radius on App Paper; full-width with square side edges below 700px.
 - **Desktop structure:** Topbar, compact event hero, then a `1.35fr / 0.65fr` capture-and-summary grid with a `1.25rem` gap.
-- **Mobile structure:** Capture first, followed by settlement feedback, balances, history, and footer.
+- **Mobile structure:** Capture first, followed by the combined balances and settlement surface, compact history, and footer.
 - **Topbar:** Brand, identity, private-link sharing, and event context use one compact row and collapse structurally rather than shrinking type.
 
 ### Buttons
@@ -254,7 +254,7 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Panels:** White, 8px radius, one Line border, no shadow, and row-based internal structure.
 - **Headers:** Lucide icon, direct title, optional muted context, and optional compact action.
 - **Balance rows:** Participant and paid/share metadata left; exact tabular net value right; semantic direction is written as well as colored.
-- **History rows:** Supporting evidence with restrained edit/remove or edit/undo actions; payment history uses Quiet Surface and Soft Blue icon treatment.
+- **History rows:** Keep the record identity, amount, and supporting evidence visible; place edit/remove or edit/undo actions behind a 44px-tall `Manage` disclosure. Payment history uses Quiet Surface and Soft Blue icon treatment.
 
 ### Inputs and Fields
 - **Style:** White native controls with one Line border, 7px radius, 2.85–3rem height, and readable Ink text.
@@ -272,10 +272,15 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Segments:** Compact 2.9rem controls with avatars or visible real checkboxes and full-surface labels.
 - **Selected state:** Soft Blue surface, Focus Blue border, and Selected Inset.
 - **Exact split preview:** Uses the same domain calculation as persistence, shows deterministic cent allocation, and repeats the expense total for comparison.
+- **Capture order:** Description and amount lead; payer identity, capture defaults, split controls, and save follow.
+- **Participant administration:** Add, rename, and remove controls live behind a collapsed `Manage people` disclosure after the save action.
+- **Participant removal:** Confirmation names the participant, states that the shared change cannot be undone, and explains why a referenced participant may be protected.
 
 ### Settlement and Feedback
-- **Suggested payment:** Shows an exact next payment and amount-aware action before manual alternatives.
+- **Balance hierarchy:** Lead with the single exact next payment, then the viewer's quieter personal balance; place the full participant ledger behind `Everyone's balances` on mobile.
+- **Suggested payment:** Shows an exact next payment and amount-aware action before manual alternatives or the full ledger.
 - **Manual payment:** Collapsed until a user records a different amount/direction or edits an existing payment.
+- **Payment region:** Expands inside `Who pays what` with an internal divider instead of creating another panel.
 - **Success:** Green status region with explicit `Undo payment`.
 - **Destructive confirmation:** Soft Coral region with `Keep expense` and `Remove expense`.
 - **Undo toast:** Sticky Ink status with one visible `Undo` action.
@@ -290,6 +295,9 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 
 ### Do:
 - **Do** keep expense capture ahead of administration and settlement tools.
+- **Do** keep participant administration collapsed until someone explicitly opens `Manage people`.
+- **Do** lead the balance surface with one actionable next payment and keep full balances available without competing for initial mobile attention.
+- **Do** keep history evidence visible while placing secondary mutation actions behind `Manage`.
 - **Do** preserve the root create flow: event name, creator name, currency, truthful lifecycle preview, then `Start my event`.
 - **Do** keep newly created events empty apart from the creator participant.
 - **Do** show exact dates, amounts, split shares, lifecycle states, and reversible outcomes.
@@ -304,6 +312,8 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Don't** make SettleUp banking-heavy, playful-fintech, spreadsheet-dense, or gamified.
 - **Don't** introduce account-management patterns, financial-product language, investment dashboards, dense ledgers, or power-user tables.
 - **Don't** reveal settlement controls while an expense draft is in progress.
+- **Don't** place participant maintenance before the primary expense fields or save action.
+- **Don't** show a second “most important” balance preview beside the settlement suggestion.
 - **Don't** seed fake participants, expenses, balances, history, urgency, scarcity, or progress.
 - **Don't** add nested cards, decorative shadows, broad gradients, glassmorphism, glows, or ornamental backgrounds.
 - **Don't** use side-stripe alerts, gradient text, large marketing heroes, decorative card grids, or vague sales language.

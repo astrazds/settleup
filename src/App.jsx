@@ -169,16 +169,20 @@ function validatePayment({ amount, fromId, toId }) {
   return errors;
 }
 
-function formatNameList(items) {
+function formatList(items) {
   if (items.length === 0) {
     return "";
   }
 
   if (items.length === 1) {
-    return items[0].name;
+    return items[0];
   }
 
-  return `${items.slice(0, -1).map((item) => item.name).join(", ")} and ${items.at(-1).name}`;
+  return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+}
+
+function formatNameList(items) {
+  return formatList(items.map((item) => item.name));
 }
 
 function getScrollBehavior() {
@@ -262,9 +266,11 @@ export function App() {
   const [participantName, setParticipantName] = useState("");
   const [participantError, setParticipantError] = useState("");
   const [participantSubmitting, setParticipantSubmitting] = useState(false);
+  const [participantManagerOpen, setParticipantManagerOpen] = useState(false);
   const [editingParticipantId, setEditingParticipantId] = useState("");
   const [participantEditName, setParticipantEditName] = useState("");
   const [participantEditError, setParticipantEditError] = useState("");
+  const [pendingParticipantRemovalId, setPendingParticipantRemovalId] = useState("");
   const [lastSettlementId, setLastSettlementId] = useState("");
   const [editingPaymentId, setEditingPaymentId] = useState("");
   const [paymentFromId, setPaymentFromId] = useState("");
@@ -455,21 +461,13 @@ export function App() {
   const lastSettlementTo = lastSettlement
     ? participants.find((item) => item.id === lastSettlement.to)
     : null;
-  const mostRelevantOpenBalance = useMemo(() => {
-    const currentRow = balances[currentParticipant];
-    if (current && currentRow && isOpenBalance(currentRow.net)) {
-      return { participant: current, row: currentRow };
-    }
-
-    return participants
-      .map((participant) => ({ participant, row: balances[participant.id] }))
-      .filter(({ row }) => isOpenBalance(row.net))
-      .sort((a, b) => Math.abs(b.row.net) - Math.abs(a.row.net))[0];
-  }, [balances, current, currentParticipant]);
   const currentIsSettled = !isOpenBalance(currentBalance);
   const currencyCode = snapshot?.event.currency ?? "AUD";
   const eventUrl = snapshot ? `${window.location.origin}/e/${snapshot.event.token}` : "";
   const eventCreatedBy = participants[0]?.name ?? "Participant";
+  const pendingParticipantRemoval = participants.find(
+    (participant) => participant.id === pendingParticipantRemovalId,
+  );
   const eventRecordCount = payments.length + expenses.length;
   const currentBalanceLabel = currentIsSettled
     ? "You're settled"
@@ -526,13 +524,24 @@ export function App() {
     Number(!currentValidation.amount) +
     Number(Boolean(payer)) +
     Number(!currentValidation.included);
+  const missingExpenseFields = [
+    currentValidation.description ? "description" : "",
+    currentValidation.amount ? "amount" : "",
+    !payer ? "payer" : "",
+    currentValidation.included ? "split" : "",
+  ].filter(Boolean);
+  const missingExpenseLabel = formatList(missingExpenseFields);
   const expenseProgressLabel = hasRecentSave
     ? saveStatus
     : savedMessage === "Draft restored"
-      ? `Draft restored · ${expenseReadyCount} of 4 ready`
+      ? missingExpenseFields.length > 0
+        ? `Draft restored · add ${missingExpenseLabel}`
+        : "Draft restored · ready to save"
       : needsReview
-        ? `${expenseReadyCount} of 4 ready · review fields`
-        : `${expenseReadyCount} of 4 ready`;
+        ? `Review ${missingExpenseLabel}`
+        : missingExpenseFields.length > 0
+          ? `Add ${missingExpenseLabel}`
+          : "Ready to save";
   const shouldBlockSettlement = hasExpenseDraft || needsReview;
   const showSettlementTools = Boolean(settlementSuggestion && !shouldBlockSettlement);
   const settlementExplainer = settlementSuggestion
@@ -1007,11 +1016,13 @@ export function App() {
   async function removeParticipant(participant) {
     try {
       setSnapshot(await deleteParticipant(eventToken, participant.id));
+      setPendingParticipantRemovalId("");
       if (editingParticipantId === participant.id) {
         cancelParticipantEdit();
       }
     } catch (error) {
       setParticipantEditError(error instanceof Error ? error.message : "Could not remove this participant.");
+      setPendingParticipantRemovalId("");
     }
   }
 
@@ -1285,7 +1296,7 @@ export function App() {
     }
 
     return (
-      <section className="panel settlement-panel" aria-label="Record payment">
+      <section className="settlement-panel" aria-label="Record payment">
         <SectionHeader
           icon={WalletCards}
           title="Record payment"
@@ -1424,25 +1435,6 @@ export function App() {
     );
   }
 
-  function renderMobileBalancePreview() {
-    if (!mostRelevantOpenBalance) {
-      return null;
-    }
-
-    const positive = mostRelevantOpenBalance.row.net > 0;
-    return (
-      <BalanceRow
-        className="balance-row-preview"
-        participant={mostRelevantOpenBalance.participant}
-        currentParticipantId={currentParticipant}
-        label="Most important payment"
-        tone={positive ? "positive" : "negative"}
-        value={money(Math.abs(mostRelevantOpenBalance.row.net))}
-        description="Based on the largest amount left to settle."
-      />
-    );
-  }
-
   return (
     <main className="app-shell">
       <section className="workspace" aria-label="SettleUp event workspace">
@@ -1538,122 +1530,6 @@ export function App() {
               </div>
             ) : null}
 
-            <div className="participant-manager">
-              <div className="participant-manager-copy">
-                <span>People</span>
-                <strong>
-                  {participants.length} {participants.length === 1 ? "person" : "people"} in this event
-                </strong>
-              </div>
-              <div className="participant-chip-list" aria-label="People in this event">
-                {participants.map((participant) => (
-                  <div className="participant-chip" key={participant.id}>
-                    {editingParticipantId === participant.id ? (
-                      <>
-                        <Avatar participant={participant} small />
-                        <input
-                          value={participantEditName}
-                          onChange={(event) => {
-                            setParticipantEditName(event.target.value);
-                            setParticipantEditError("");
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              saveParticipantEdit(event);
-                            }
-                          }}
-                          aria-label={`Rename ${participant.name}`}
-                        />
-                        <button type="button" onClick={saveParticipantEdit}>
-                          Save
-                        </button>
-                        <button type="button" onClick={cancelParticipantEdit}>
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Avatar participant={participant} small />
-                        <span>{participant.name}</span>
-                        <button
-                          className="icon-action"
-                          type="button"
-                          onClick={() => startParticipantEdit(participant)}
-                          aria-label={`Edit ${participant.name}`}
-                          title={`Edit ${participant.name}`}
-                        >
-                          <DecorativeIcon icon={Pencil} size={16} />
-                        </button>
-                        <button
-                          className="danger-action icon-action"
-                          type="button"
-                          onClick={() => removeParticipant(participant)}
-                          disabled={participants.length <= 1}
-                          aria-label={`Delete ${participant.name}`}
-                          title={participants.length <= 1 ? "At least one person is required" : `Delete ${participant.name}`}
-                        >
-                          <DecorativeIcon icon={Trash2} size={16} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <FieldError className="participant-error" id="participant-edit-error">
-                {participantEditError}
-              </FieldError>
-              <div className="participant-add-form">
-                <label className="field">
-                  <span>Add person</span>
-                  <input
-                    value={participantName}
-                    onChange={(event) => {
-                      setParticipantName(event.target.value);
-                      setParticipantError("");
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        saveParticipant(event);
-                      }
-                    }}
-                    aria-invalid={Boolean(participantError)}
-                    aria-describedby={participantError ? "participant-error" : undefined}
-                  />
-                </label>
-                <ActionButton
-                  className="participant-add-button"
-                  variant="primary"
-                  onClick={saveParticipant}
-                  disabled={participantSubmitting}
-                >
-                  <DecorativeIcon icon={UserPlus} size={17} />
-                  {participantSubmitting ? "Adding" : "Add person"}
-                </ActionButton>
-                <FieldError className="participant-error" id="participant-error">
-                  {participantError}
-                </FieldError>
-              </div>
-            </div>
-
-            <label className="field identity-field">
-              <span>Your name</span>
-              <SelectShell wide>
-                <Avatar participant={current} small />
-                <select
-                  aria-label="Your name"
-                  value={currentParticipant}
-                  onChange={(event) => changeCurrentParticipant(event.target.value)}
-                >
-                  {participants.map((participant) => (
-                    <option key={participant.id} value={participant.id}>
-                      {participant.name}
-                    </option>
-                  ))}
-                </select>
-                <DecorativeIcon icon={ChevronDown} size={15} />
-              </SelectShell>
-            </label>
-
             <div className="field-grid">
               <label className="field span-2">
                 <span>Description</span>
@@ -1690,6 +1566,25 @@ export function App() {
                 <FieldError id="amount-error">{visibleErrors.amount}</FieldError>
               </label>
             </div>
+
+            <label className="field identity-field">
+              <span>Your name</span>
+              <SelectShell wide>
+                <Avatar participant={current} small />
+                <select
+                  aria-label="Your name"
+                  value={currentParticipant}
+                  onChange={(event) => changeCurrentParticipant(event.target.value)}
+                >
+                  {participants.map((participant) => (
+                    <option key={participant.id} value={participant.id}>
+                      {participant.name}
+                    </option>
+                  ))}
+                </select>
+                <DecorativeIcon icon={ChevronDown} size={15} />
+              </SelectShell>
+            </label>
 
             <div className="capture-defaults">
               <div>
@@ -1814,9 +1709,142 @@ export function App() {
                 {saveButtonLabel}
               </ActionButton>
             </div>
-          </form>
 
-          {renderSettlementPanel()}
+            <details
+              className="participant-manager"
+              open={participantManagerOpen}
+              onToggle={(event) => {
+                const isOpen = event.currentTarget.open;
+                setParticipantManagerOpen(isOpen);
+                if (!isOpen) {
+                  cancelParticipantEdit();
+                  setPendingParticipantRemovalId("");
+                }
+              }}
+            >
+              <summary>
+                <span>Manage people</span>
+                <strong>
+                  {participants.length} {participants.length === 1 ? "person" : "people"}
+                </strong>
+              </summary>
+              <div className="participant-manager-body">
+                <div className="participant-chip-list" aria-label="People in this event">
+                  {participants.map((participant) => (
+                    <div className="participant-chip" key={participant.id}>
+                      {editingParticipantId === participant.id ? (
+                        <>
+                          <Avatar participant={participant} small />
+                          <input
+                            value={participantEditName}
+                            onChange={(event) => {
+                              setParticipantEditName(event.target.value);
+                              setParticipantEditError("");
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                saveParticipantEdit(event);
+                              }
+                            }}
+                            aria-label={`Rename ${participant.name}`}
+                          />
+                          <button type="button" onClick={saveParticipantEdit}>
+                            Save
+                          </button>
+                          <button type="button" onClick={cancelParticipantEdit}>
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <Avatar participant={participant} small />
+                          <span>{participant.name}</span>
+                          <button
+                            className="icon-action"
+                            type="button"
+                            onClick={() => startParticipantEdit(participant)}
+                            aria-label={`Edit ${participant.name}`}
+                            title={`Edit ${participant.name}`}
+                          >
+                            <DecorativeIcon icon={Pencil} size={16} />
+                          </button>
+                          <button
+                            className="danger-action icon-action"
+                            type="button"
+                            onClick={() => setPendingParticipantRemovalId(participant.id)}
+                            disabled={participants.length <= 1}
+                            aria-label={`Delete ${participant.name}`}
+                            aria-expanded={pendingParticipantRemovalId === participant.id}
+                            title={participants.length <= 1 ? "At least one person is required" : `Delete ${participant.name}`}
+                          >
+                            <DecorativeIcon icon={Trash2} size={16} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {pendingParticipantRemoval ? (
+                  <div className="participant-remove-confirmation" role="alert">
+                    <div>
+                      <strong>Remove {pendingParticipantRemoval.name}?</strong>
+                      <span>
+                        This changes the event for everyone and cannot be undone. People used in saved
+                        expenses or payments cannot be removed.
+                      </span>
+                    </div>
+                    <div>
+                      <button type="button" onClick={() => setPendingParticipantRemovalId("")}>
+                        Keep {pendingParticipantRemoval.name}
+                      </button>
+                      <button
+                        className="danger-action"
+                        type="button"
+                        onClick={() => removeParticipant(pendingParticipantRemoval)}
+                      >
+                        <DecorativeIcon icon={Trash2} size={15} />
+                        Remove {pendingParticipantRemoval.name}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <FieldError className="participant-error" id="participant-edit-error">
+                  {participantEditError}
+                </FieldError>
+                <div className="participant-add-form">
+                  <label className="field">
+                    <span>Add person</span>
+                    <input
+                      value={participantName}
+                      onChange={(event) => {
+                        setParticipantName(event.target.value);
+                        setParticipantError("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          saveParticipant(event);
+                        }
+                      }}
+                      aria-invalid={Boolean(participantError)}
+                      aria-describedby={participantError ? "participant-error" : undefined}
+                    />
+                  </label>
+                  <ActionButton
+                    className="participant-add-button"
+                    variant="primary"
+                    onClick={saveParticipant}
+                    disabled={participantSubmitting}
+                  >
+                    <DecorativeIcon icon={UserPlus} size={17} />
+                    {participantSubmitting ? "Adding" : "Add person"}
+                  </ActionButton>
+                  <FieldError className="participant-error" id="participant-error">
+                    {participantError}
+                  </FieldError>
+                </div>
+              </div>
+            </details>
+          </form>
 
           <section className="panel balances-panel">
             <SectionHeader
@@ -1824,17 +1852,15 @@ export function App() {
               title="Who pays what"
               action={<span className="subtle-label">All amounts in {snapshot.event.currency}</span>}
             />
+            {showSettlementTools ? renderSettlePrompt() : null}
+            <div className="personal-balance-summary">
+              <strong>Your balance</strong>
+              <span className={currentBalanceTone}>{currentBalanceLabel}</span>
+            </div>
             <div className="balance-list full-balance-list">
               {renderBalanceRows()}
             </div>
-            <footer className="panel-total">
-              <strong>Your payment status</strong>
-              <span className={currentBalanceTone}>{currentBalanceLabel}</span>
-            </footer>
-            {showSettlementTools ? renderSettlePrompt() : null}
-            <div className="mobile-balance-preview">
-              {renderMobileBalancePreview()}
-            </div>
+            {renderSettlementPanel()}
             <details className="mobile-balance-details">
               <summary>Everyone's balances</summary>
               <div className="balance-list mobile-balance-list">{renderBalanceRows()}</div>
@@ -1868,14 +1894,21 @@ export function App() {
                         </strong>
                         <span>{payment.date} · Payment marked paid</span>
                       </div>
-                      <strong className="history-amount">{money(payment.amountMinor)}</strong>
-                      <div className="history-actions payment-actions">
-                        <button type="button" onClick={() => editPayment(payment)}>
-                          Edit
-                        </button>
-                        <button type="button" onClick={() => undoSettlement(payment.id)}>
-                          Undo payment
-                        </button>
+                      <div className="history-end">
+                        <strong className="history-amount">{money(payment.amountMinor)}</strong>
+                        <details className="history-menu">
+                          <summary aria-label={`Manage payment from ${from.name} to ${to.name}`}>
+                            Manage
+                          </summary>
+                          <div className="history-actions payment-actions">
+                            <button type="button" onClick={() => editPayment(payment)}>
+                              Edit
+                            </button>
+                            <button type="button" onClick={() => undoSettlement(payment.id)}>
+                              Undo payment
+                            </button>
+                          </div>
+                        </details>
                       </div>
                     </div>
                   </article>
@@ -1894,24 +1927,29 @@ export function App() {
                           {expense.includedIds.length === 1 ? "person" : "people"}
                         </span>
                       </div>
-                      <strong className="history-amount">{money(expense.amountMinor)}</strong>
-                      <div className="history-actions">
-                        <button
-                          type="button"
-                          onClick={() => editExpense(expense)}
-                          aria-label={`Edit ${expense.description}`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="danger-action"
-                          type="button"
-                          onClick={() => requestExpenseRemoval(expense.id)}
-                          aria-expanded={pendingRemovalId === expense.id}
-                          aria-label={`Remove ${expense.description}`}
-                        >
-                          Remove
-                        </button>
+                      <div className="history-end">
+                        <strong className="history-amount">{money(expense.amountMinor)}</strong>
+                        <details className="history-menu">
+                          <summary aria-label={`Manage ${expense.description}`}>Manage</summary>
+                          <div className="history-actions">
+                            <button
+                              type="button"
+                              onClick={() => editExpense(expense)}
+                              aria-label={`Edit ${expense.description}`}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="danger-action"
+                              type="button"
+                              onClick={() => requestExpenseRemoval(expense.id)}
+                              aria-expanded={pendingRemovalId === expense.id}
+                              aria-label={`Remove ${expense.description}`}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </details>
                       </div>
                     </div>
                     {pendingRemovalId === expense.id ? (

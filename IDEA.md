@@ -12,14 +12,18 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Share an opaque Event Link.
 - Let anyone with the Event Link view and edit Event data.
 - Let visitors choose, remember, and switch their local Participant default.
-- Add, rename, and delete unreferenced Participants.
+- Keep Expense description and amount first, followed by payer identity, capture defaults, split controls, and save.
+- Keep Participant administration behind a collapsed `Manage people` disclosure after the capture action.
+- Add and rename Participants, and delete unreferenced Participants only after a named confirmation explains the shared, non-undoable consequence.
 - Add, edit, and delete Expenses with Included Participants.
 - Equal-split Expenses across the selected Included Participants.
 - Preview the exact derived Share for every Included Participant before saving, including deterministic minor-unit remainder allocation.
 - Add, edit, and delete Settlement Payments.
-- Show Balances.
+- Lead Balances with the single next Settlement Payment, show the current Participant's Balance as supporting context, and keep the full ledger available behind a mobile disclosure.
 - Record owed Balances directly from a Participant row.
 - Record manual Settlement Payments.
+- Keep Settlement Payment recording nested inside the Balance surface.
+- Keep Event History compact by leaving record evidence and amounts visible while placing edit, remove, and undo actions behind `Manage`.
 - Refresh saved Event state through realtime notifications, with polling fallback.
 - Preserve active draft forms when saved Event state changes.
 - Restore invested Expense drafts from local browser storage after a refresh and clear the stored draft after save, discard, or edit-mode handoff.
@@ -40,6 +44,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Saved Expense commands accept Included Participants and derive equal Shares before persistence.
 - Events must retain at least one Participant.
 - Participants can be deleted only when they are not referenced by Expenses, Expense Shares, or Settlement Payments.
+- Participant deletion confirmation must name the Participant, state that the shared change cannot be undone, and describe the referenced-record restriction.
 - SQLite-backed multi-record Event mutations must be all-or-nothing.
 - Balances reflect only saved Expenses and Settlement Payments.
 - Settlement Payments may overpay.
@@ -48,6 +53,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Invalid create submission must expose an alert summary and move focus to the first invalid field without preventing recovery from a saved local draft.
 - Primary mobile controls and compact mutation actions must retain at least a 44px touch target without horizontal overflow at 320px.
 - Settlement controls can be shown whenever saved Balances are open, but draft Expense work blocks recording a payment until the draft is saved, discarded, or cleared.
+- Mobile Balance presentation must not add a competing “most important” preview beside the single Settlement suggestion.
 - Recording a Settlement Payment must say that no money is transferred and that the record can be undone from Event history.
 - Realtime messages announce saved Event changes only; SQLite remains the source of truth.
 - Concurrent edits are last-write-wins for the MVP.
