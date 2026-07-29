@@ -12,8 +12,9 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Share an opaque Event Link.
 - Let anyone with the Event Link view and edit Event data.
 - Let visitors choose, remember, and switch their local Participant default.
-- Keep Expense description and amount first, followed by payer identity, capture defaults, split controls, and save.
+- Keep Expense description, amount, and save first.
 - Keep Participant administration behind a collapsed `Manage people` disclosure after the capture action.
+- Follow Participant administration with a collapsed `Payer and split defaults` disclosure that combines the local Participant default, payer default, and Included Participant controls.
 - Add and rename Participants, and delete unreferenced Participants only after a named confirmation explains the shared, non-undoable consequence.
 - Add, edit, and delete Expenses with Included Participants.
 - Equal-split Expenses across the selected Included Participants.
@@ -51,6 +52,7 @@ SettleUp is a no-login group expense splitter for one bounded shared-cost Event.
 - Suggested Settlement Payments are convenience commands; manual Settlement Payments can be recorded and edited when the real payment differs.
 - Draft forms must not be overwritten by realtime or polling refreshes.
 - Invalid create submission must expose an alert summary and move focus to the first invalid field without preventing recovery from a saved local draft.
+- Invalid Expense submission must place Description and Amount guidance inside the affected input shells, open `Payer and split defaults` when an Included Participant error needs attention, and move focus to the first invalid control.
 - Primary mobile controls and compact mutation actions must retain at least a 44px touch target without horizontal overflow at 320px.
 - Settlement controls can be shown whenever saved Balances are open, but draft Expense work blocks recording a payment until the draft is saved, discarded, or cleared.
 - Mobile Balance presentation must not add a competing “most important” preview beside the single Settlement suggestion.

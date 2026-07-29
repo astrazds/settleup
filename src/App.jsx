@@ -281,6 +281,7 @@ export function App() {
   const [pendingRemovalId, setPendingRemovalId] = useState("");
   const [recentlyRemovedExpense, setRecentlyRemovedExpense] = useState(null);
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [payerDefaultsOpen, setPayerDefaultsOpen] = useState(false);
   const [splitControlsOpen, setSplitControlsOpen] = useState(false);
   const [settleModeOpen, setSettleModeOpen] = useState(false);
   const [settlementBlockNotice, setSettlementBlockNotice] = useState(false);
@@ -602,6 +603,7 @@ export function App() {
       setAmount(typeof draft.amount === "string" ? draft.amount : "");
       setPayerId(restoredPayerId);
       setIncludedIds(restoredIncludedIds);
+      setPayerDefaultsOpen(Boolean(draft.splitControlsOpen));
       setSplitControlsOpen(Boolean(draft.splitControlsOpen));
       setSavedMessage("Draft restored");
     } catch {
@@ -871,21 +873,6 @@ export function App() {
     );
   }
 
-  if (appStatus.type === "loading" || !snapshot || !current || participants.length === 0) {
-    return (
-      <main className="app-shell">
-        <section className="workspace" aria-label="SettleUp event workspace">
-          <div className="event-hero">
-            <div className="event-copy">
-              <h1>SettleUp</h1>
-              <p className="event-privacy">{appStatus.message}</p>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   if (appStatus.type === "error") {
     return (
       <main className="app-shell">
@@ -899,6 +886,21 @@ export function App() {
                   Create new event
                 </a>
               </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (appStatus.type === "loading" || !snapshot || !current || participants.length === 0) {
+    return (
+      <main className="app-shell">
+        <section className="workspace" aria-label="SettleUp event workspace">
+          <div className="event-hero">
+            <div className="event-copy">
+              <h1>SettleUp</h1>
+              <p className="event-privacy">{appStatus.message}</p>
             </div>
           </div>
         </section>
@@ -928,6 +930,7 @@ export function App() {
     }
 
     if (errors.included) {
+      setPayerDefaultsOpen(true);
       setSplitControlsOpen(true);
       window.setTimeout(() => {
         firstIncludedInputRef.current?.focus();
@@ -1053,9 +1056,9 @@ export function App() {
       setLastSettlementId(nextSnapshot.payments[0]?.id ?? "");
       setSettleModeOpen(true);
       resetPaymentDraft();
-      window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
         settlementStatusRef.current?.focus();
-      }, 0);
+      });
     } catch (error) {
       setSavedMessage(error instanceof Error ? error.message : "Could not record payment");
     }
@@ -1084,9 +1087,9 @@ export function App() {
       setLastSettlementId(editingPaymentId || nextSnapshot.payments[0]?.id || "");
       resetPaymentDraft();
       setSettleModeOpen(true);
-      window.setTimeout(() => {
+      window.requestAnimationFrame(() => {
         settlementStatusRef.current?.focus();
-      }, 0);
+      });
     } catch (error) {
       setPaymentError(error instanceof Error ? error.message : "Could not save payment.");
     }
@@ -1152,6 +1155,7 @@ export function App() {
       setEditingExpenseId("");
       setAttemptedSubmit(false);
       setSettlementBlockNotice(false);
+      setPayerDefaultsOpen(false);
       setSplitControlsOpen(false);
       descriptionRef.current?.focus();
     } catch (error) {
@@ -1166,6 +1170,7 @@ export function App() {
     setPayerId(expense.payerId);
     setIncludedIds(expense.includedIds);
     setAttemptedSubmit(false);
+    setPayerDefaultsOpen(true);
     setSplitControlsOpen(true);
     setSavedMessage("Editing expense");
     setSettlementBlockNotice(false);
@@ -1180,6 +1185,7 @@ export function App() {
     setSavedMessage("Add details");
     setAttemptedSubmit(false);
     setSettlementBlockNotice(false);
+    setPayerDefaultsOpen(false);
     setSplitControlsOpen(false);
   }
 
@@ -1212,6 +1218,7 @@ export function App() {
     setIncludedIds(allParticipantIds);
     setSavedMessage("Add details");
     setAttemptedSubmit(false);
+    setPayerDefaultsOpen(false);
     setSplitControlsOpen(false);
     setSettlementBlockNotice(false);
     fillPaymentDraftFromSuggestion();
@@ -1308,20 +1315,30 @@ export function App() {
           }
         />
         {settlementSuggestion ? (
-          <div className="settlement-review">
-            <div className="settlement-next">
+          <div className="settlement-review settlement-review--compact">
+            <div className="settlement-payment-route">
               <span>Who pays next</span>
               <strong>
-                {settlementSuggestion.from.name} pays {settlementSuggestion.to.name}{" "}
-                {money(settlementSuggestion.amountMinor)}
+                <span className="settlement-payment-party">{settlementSuggestion.from.name}</span>
+                <span className="visually-hidden">pays</span>
+                <span className="settlement-payment-arrow" aria-hidden="true">→</span>
+                <span className="settlement-payment-party">{settlementSuggestion.to.name}</span>
               </strong>
             </div>
-            <p>{settlementExplainer}</p>
-            <ActionButton variant="summary" onClick={recordSuggestedPayment}>
-              <DecorativeIcon icon={WalletCards} size={16} />
-              Mark {money(settlementSuggestion.amountMinor)} paid
-            </ActionButton>
-            <span className="settlement-safety">You can undo this from event history.</span>
+            <div className="settlement-payment-amount">
+              <span>Amount</span>
+              <strong>{money(settlementSuggestion.amountMinor)}</strong>
+            </div>
+            <p className="settlement-review-copy">
+              Send this amount outside SettleUp. Marking it paid only updates this event.
+            </p>
+            <div className="settlement-review-actions">
+              <ActionButton variant="summary" onClick={recordSuggestedPayment}>
+                <DecorativeIcon icon={WalletCards} size={16} />
+                Mark {money(settlementSuggestion.amountMinor)} paid
+              </ActionButton>
+              <span className="settlement-safety">You can undo this from event history.</span>
+            </div>
           </div>
         ) : (
           <div className="settlement-review">
@@ -1437,56 +1454,54 @@ export function App() {
 
   return (
     <main className="app-shell">
-      <section className="workspace" aria-label="SettleUp event workspace">
-        <header className="topbar">
+      <section className="workspace event-workspace" aria-label="SettleUp event workspace">
+        <header className="topbar event-topbar">
           <a className="brand" href="/" aria-label="SettleUp home">
             <span>Settle</span>
             <strong>Up</strong>
           </a>
+          <div className={`event-share ${copyFallbackVisible ? "event-share-fallback" : ""}`} aria-live="polite">
+            {copyFallbackVisible ? (
+              <input
+                ref={eventLinkRef}
+                className="event-url-fallback"
+                value={eventUrl}
+                readOnly
+                aria-label="Event link"
+                onFocus={(event) => event.currentTarget.select()}
+              />
+            ) : null}
+            <button
+              type="button"
+              onClick={copyEventLink}
+              aria-label={copyFallbackVisible ? "Select event link" : undefined}
+            >
+              <DecorativeIcon icon={copyStatus === "Copied" ? Check : Copy} size={16} />
+              {copyStatus}
+            </button>
+          </div>
         </header>
 
-        <div className="event-hero">
+        <div className="event-hero event-hero-ready">
           <div className="event-mark">
             <DecorativeIcon icon={UsersRound} size={30} />
           </div>
-          <div className="event-hero-content">
-            <div className="event-copy">
-              <div className="event-title-row">
-                <h1>{snapshot.event.title}</h1>
-              </div>
-              <p className="event-meta">
-                {participants.length} {participants.length === 1 ? "participant" : "participants"} · Created{" "}
-                {formatEventDate(snapshot.event.createdAt)} by {eventCreatedBy} · Link closes{" "}
-                {formatEventDate(snapshot.event.expiresAt)}
-              </p>
+          <div className="event-copy">
+            <div className="event-title-row">
+              <h1>{snapshot.event.title}</h1>
             </div>
-            <div className={`event-share ${copyFallbackVisible ? "event-share-fallback" : ""}`} aria-live="polite">
-              {copyFallbackVisible ? (
-                <input
-                  ref={eventLinkRef}
-                  className="event-url-fallback"
-                  value={eventUrl}
-                  readOnly
-                  aria-label="Event link"
-                  onFocus={(event) => event.currentTarget.select()}
-                />
-              ) : null}
-              <button
-                type="button"
-                onClick={copyEventLink}
-                aria-label={copyFallbackVisible ? "Select event link" : undefined}
-              >
-                <DecorativeIcon icon={copyStatus === "Copied" ? Check : Copy} size={16} />
-                {copyStatus}
-              </button>
-            </div>
+            <p className="event-meta">
+              {participants.length} {participants.length === 1 ? "participant" : "participants"} · Created{" "}
+              {formatEventDate(snapshot.event.createdAt)} by {eventCreatedBy} · Link closes{" "}
+              {formatEventDate(snapshot.event.expiresAt)}
+            </p>
           </div>
         </div>
 
         <div className="grid">
           {renderPaymentConfirmation()}
 
-          <form className="panel expense-panel" onSubmit={saveExpense}>
+          <form className="panel expense-panel expense-panel--compact" onSubmit={saveExpense}>
             <SectionHeader
               icon={ReceiptText}
               title={editingExpenseId ? "Edit expense" : "Add expense"}
@@ -1533,167 +1548,42 @@ export function App() {
             <div className="field-grid">
               <label className="field span-2">
                 <span>Description</span>
-                <div className="input-with-icon">
-                  <input
-                    ref={descriptionRef}
-                    value={description}
-                    onChange={(event) => {
-                      setDescription(event.target.value);
-                      setSavedMessage("Add details");
-                      setSettlementBlockNotice(false);
-                    }}
-                    aria-invalid={Boolean(visibleErrors.description)}
-                    aria-describedby={visibleErrors.description ? "description-error" : undefined}
-                  />
-                  <DecorativeIcon icon={FileText} size={17} />
+                <div className="field-control">
+                  <div className="input-with-icon">
+                    <input
+                      ref={descriptionRef}
+                      value={description}
+                      onChange={(event) => {
+                        setDescription(event.target.value);
+                        setSavedMessage("Add details");
+                        setSettlementBlockNotice(false);
+                      }}
+                      aria-invalid={Boolean(visibleErrors.description)}
+                      aria-describedby={visibleErrors.description ? "description-error" : undefined}
+                    />
+                    <DecorativeIcon icon={FileText} size={17} />
+                  </div>
+                  <FieldError id="description-error">{visibleErrors.description}</FieldError>
                 </div>
-                <FieldError id="description-error">{visibleErrors.description}</FieldError>
               </label>
               <label className="field">
                 <span>Amount ({snapshot.event.currency})</span>
-                <input
-                  ref={amountRef}
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => {
-                    setAmount(event.target.value);
-                    setSavedMessage("Add details");
-                    setSettlementBlockNotice(false);
-                  }}
-                  aria-invalid={Boolean(visibleErrors.amount)}
-                  aria-describedby={visibleErrors.amount ? "amount-error" : undefined}
-                />
-                <FieldError id="amount-error">{visibleErrors.amount}</FieldError>
+                <div className="field-control">
+                  <input
+                    ref={amountRef}
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(event) => {
+                      setAmount(event.target.value);
+                      setSavedMessage("Add details");
+                      setSettlementBlockNotice(false);
+                    }}
+                    aria-invalid={Boolean(visibleErrors.amount)}
+                    aria-describedby={visibleErrors.amount ? "amount-error" : undefined}
+                  />
+                  <FieldError id="amount-error">{visibleErrors.amount}</FieldError>
+                </div>
               </label>
-            </div>
-
-            <label className="field identity-field">
-              <span>Your name</span>
-              <SelectShell wide>
-                <Avatar participant={current} small />
-                <select
-                  aria-label="Your name"
-                  value={currentParticipant}
-                  onChange={(event) => changeCurrentParticipant(event.target.value)}
-                >
-                  {participants.map((participant) => (
-                    <option key={participant.id} value={participant.id}>
-                      {participant.name}
-                    </option>
-                  ))}
-                </select>
-                <DecorativeIcon icon={ChevronDown} size={15} />
-              </SelectShell>
-            </label>
-
-            <div className="capture-defaults">
-              <div>
-                <span>{payerSummaryLabel}</span>
-                <strong>
-                  {splitSummary}
-                  {selectedCount ? ` · ${exactSplitLabel}` : ""}
-                </strong>
-              </div>
-              <ActionButton
-                aria-expanded={splitControlsOpen}
-                onClick={() => setSplitControlsOpen((isOpen) => !isOpen)}
-              >
-                Edit payer and split
-              </ActionButton>
-            </div>
-
-            {splitControlsOpen ? (
-              <div className="split-controls">
-                <fieldset className="choice-group">
-                  <legend>Paid by</legend>
-                  <div className="participant-segments">
-                    {participants.map((participant) => (
-                      <button
-                        key={participant.id}
-                        className={participant.id === payerId ? "selected" : ""}
-                        type="button"
-                        aria-pressed={participant.id === payerId}
-                        onClick={() => setPayerId(participant.id)}
-                      >
-                        <Avatar participant={participant} small />
-                        {participant.name}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <fieldset
-                  className="choice-group"
-                  aria-invalid={Boolean(visibleErrors.included)}
-                  aria-describedby={visibleErrors.included ? "included-error" : undefined}
-                >
-                  <legend ref={includedRef}>Split with</legend>
-                  <div className="legend-row">
-                    <div className="legend-actions">
-                      <button type="button" onClick={() => setIncludedIds(allParticipantIds)}>
-                        Everyone
-                      </button>
-                      <button type="button" onClick={() => setIncludedIds([])}>
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                  <div className="participant-segments checkbox-segments">
-                    {participants.map((participant, index) => {
-                      const checked = includedIds.includes(participant.id);
-                      return (
-                        <label
-                          key={participant.id}
-                          className={`segment-check ${checked ? "selected" : ""}`}
-                        >
-                          <input
-                            ref={index === 0 ? firstIncludedInputRef : undefined}
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleIncluded(participant.id)}
-                          />
-                          <span className={`checkbox ${checked ? "checked" : ""}`}>
-                            {checked ? <DecorativeIcon icon={Check} size={14} /> : null}
-                          </span>
-                          <span>{participant.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {draftShares.length > 0 ? (
-                    <div className="exact-split-preview" aria-live="polite">
-                      <div>
-                        <strong>Exact shares</strong>
-                        <span>{money(draftAmountMinor)} total</span>
-                      </div>
-                      <ul>
-                        {draftShares.map((share) => {
-                          const participant = participants.find((item) => item.id === share.participantId);
-                          return (
-                            <li key={share.participantId}>
-                              <span>{participant?.name ?? "Participant"}</span>
-                              <strong>{money(share.amountMinor)}</strong>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <FieldError className="field-error-inline" id="included-error">
-                    {visibleErrors.included}
-                  </FieldError>
-                </fieldset>
-              </div>
-            ) : visibleErrors.included ? (
-              <FieldError className="collapsed-split-error" id="included-error">
-                {visibleErrors.included}
-              </FieldError>
-            ) : null}
-
-            <div className="split-row">
-              <p>
-                Equal split <span>·</span> {splitSummary}
-              </p>
             </div>
 
             <div className="form-actions">
@@ -1842,6 +1732,146 @@ export function App() {
                     {participantError}
                   </FieldError>
                 </div>
+              </div>
+            </details>
+
+            <details
+              className="participant-manager payer-defaults"
+              open={payerDefaultsOpen}
+              onToggle={(event) => setPayerDefaultsOpen(event.currentTarget.open)}
+            >
+              <summary>
+                <span>Payer and split defaults</span>
+                <strong>
+                  {current.name} · {splitSummary}
+                </strong>
+              </summary>
+              <div className="payer-defaults-body">
+                <label className="field identity-field">
+                  <span>Your name</span>
+                  <SelectShell wide>
+                    <Avatar participant={current} small />
+                    <select
+                      aria-label="Your name"
+                      value={currentParticipant}
+                      onChange={(event) => changeCurrentParticipant(event.target.value)}
+                    >
+                      {participants.map((participant) => (
+                        <option key={participant.id} value={participant.id}>
+                          {participant.name}
+                        </option>
+                      ))}
+                    </select>
+                    <DecorativeIcon icon={ChevronDown} size={15} />
+                  </SelectShell>
+                </label>
+
+                <div className="capture-defaults">
+                  <div>
+                    <span>{payerSummaryLabel}</span>
+                    <strong>
+                      {splitSummary}
+                      {selectedCount ? ` · ${exactSplitLabel}` : ""}
+                    </strong>
+                  </div>
+                  <ActionButton
+                    aria-controls="payer-split-controls"
+                    aria-expanded={splitControlsOpen}
+                    onClick={() => setSplitControlsOpen((isOpen) => !isOpen)}
+                  >
+                    Edit payer and split
+                  </ActionButton>
+                </div>
+
+                {splitControlsOpen ? (
+                  <div className="split-controls" id="payer-split-controls">
+                    <fieldset className="choice-group">
+                      <legend>Paid by</legend>
+                      <div className="participant-segments">
+                        {participants.map((participant) => (
+                          <button
+                            key={participant.id}
+                            className={participant.id === payerId ? "selected" : ""}
+                            type="button"
+                            aria-pressed={participant.id === payerId}
+                            onClick={() => setPayerId(participant.id)}
+                          >
+                            <Avatar participant={participant} small />
+                            {participant.name}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    <fieldset
+                      className="choice-group"
+                      aria-invalid={Boolean(visibleErrors.included)}
+                      aria-describedby={visibleErrors.included ? "included-error" : undefined}
+                    >
+                      <legend ref={includedRef}>Split with</legend>
+                      <div className="legend-row">
+                        <div className="legend-actions">
+                          <button type="button" onClick={() => setIncludedIds(allParticipantIds)}>
+                            Everyone
+                          </button>
+                          <button type="button" onClick={() => setIncludedIds([])}>
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                      <div className="participant-segments checkbox-segments">
+                        {participants.map((participant, index) => {
+                          const checked = includedIds.includes(participant.id);
+                          return (
+                            <label
+                              key={participant.id}
+                              className={`segment-check ${checked ? "selected" : ""}`}
+                            >
+                              <input
+                                ref={index === 0 ? firstIncludedInputRef : undefined}
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleIncluded(participant.id)}
+                              />
+                              <span className={`checkbox ${checked ? "checked" : ""}`}>
+                                {checked ? <DecorativeIcon icon={Check} size={14} /> : null}
+                              </span>
+                              <span>{participant.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {draftShares.length > 0 ? (
+                        <div className="exact-split-preview" aria-live="polite">
+                          <div>
+                            <strong>Exact shares</strong>
+                            <span>{money(draftAmountMinor)} total</span>
+                          </div>
+                          <ul>
+                            {draftShares.map((share) => {
+                              const participant = participants.find(
+                                (item) => item.id === share.participantId,
+                              );
+                              return (
+                                <li key={share.participantId}>
+                                  <span>{participant?.name ?? "Participant"}</span>
+                                  <strong>{money(share.amountMinor)}</strong>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
+                      <FieldError className="field-error-inline" id="included-error">
+                        {visibleErrors.included}
+                      </FieldError>
+                    </fieldset>
+                  </div>
+                ) : visibleErrors.included ? (
+                  <FieldError className="collapsed-split-error" id="included-error">
+                    {visibleErrors.included}
+                  </FieldError>
+                ) : null}
               </div>
             </details>
           </form>

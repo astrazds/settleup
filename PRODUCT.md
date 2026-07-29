@@ -35,7 +35,7 @@ The private link is intentionally temporary: event access expires after three da
 - Preserve the root create flow: event name, creator name, currency, a truthful lifecycle preview, then `Start my event`.
 - Start each event with only the creator participant and no sample expenses, balances, payments, or history.
 - Support participant management, equal expense splits across selected people, exact cent allocation, derived balances, and suggested or manual settlement payments.
-- Keep description and amount first in the event capture flow, followed by payer identity, defaults, split controls, and save; keep participant administration behind a collapsed `Manage people` disclosure.
+- Keep description, amount, and save first in the event capture flow. Place participant administration behind a collapsed `Manage people` disclosure, then combine the local person, payer, and split settings inside a collapsed `Payer and split defaults` disclosure.
 - Name the participant in removal confirmation, state that the shared change cannot be undone, and explain that referenced participants cannot be removed.
 - Lead the balance surface with the single next payment, present the viewer's balance as supporting context, and keep the full participant ledger available behind a mobile disclosure.
 - Keep payment recording inside the balance surface and retain compact record evidence while placing edit, undo, and remove actions behind a `Manage` disclosure.
@@ -66,7 +66,7 @@ No customer testimonials, usage benchmarks, press claims, pricing claims, or nam
 
 ## Product Principles
 
-- Capture before administration: keep description, amount, payer, defaults, split, and save ahead of participant maintenance; let settlement follow only after saved balances exist.
+- Capture before configuration: keep description, amount, and save ahead of participant maintenance and payer/split defaults; let settlement follow only after saved balances exist.
 - Make money explainable: show exact amounts, deterministic shares, plain balance directions, and the known consequence of each action.
 - Preserve work in progress: shared refreshes and return visits must not erase an invested local draft or silently change the user's task.
 - Make shared change recoverable: mutations that affect everyone with the link need clear consequences, correction paths, and honest undo behavior.

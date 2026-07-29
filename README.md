@@ -10,8 +10,8 @@ The app opens on event creation. A new event starts empty: the creator gives the
 
 - Creates private-by-link expense events.
 - Keeps event creation focused on name, creator, currency, truthful field progress, and a concrete private-link lifecycle.
-- Leads the event workspace with description and amount, then payer, capture defaults, split controls, and save.
-- Keeps participant administration available behind a collapsed `Manage people` disclosure instead of placing it ahead of expense capture.
+- Leads the event workspace with description, amount, and save so routine capture stays immediate.
+- Keeps participant administration behind a collapsed `Manage people` disclosure, followed by a separate collapsed `Payer and split defaults` disclosure that combines the local person, payer, and split settings.
 - Adds and renames participants without account setup, and names the shared, non-undoable consequence before removing an unreferenced participant.
 - Starts new events without sample participants, expenses, or placeholder data.
 - Tracks shared expenses in one event currency.
@@ -26,7 +26,7 @@ The app opens on event creation. A new event starts empty: the creator gives the
 - Restores an invested local expense draft after a refresh without letting realtime updates overwrite it.
 - Keeps shared changes reversible with expense removal undo and recorded-payment undo paths.
 - Keeps data short-lived by design: event links expire after three days and cleanup removes persisted event data after five days.
-- Keeps required-field semantics, first-invalid-field focus, and validation announcements accessible while showing create errors inside their inputs without shifting the form.
+- Keeps required-field semantics, first-invalid-field focus, and validation announcements accessible while showing create and expense errors inside their inputs without shifting the form.
 - Keeps readable placeholders and visible mobile controls at least 44px tall across the primary flows.
 
 ## Stack

@@ -2,44 +2,44 @@
 name: SettleUp design system
 description: A calm shared-expense workspace for quick capture and confident settlement.
 colors:
-  paper: "#f6f8fb"
+  paper: "#f7f7f5"
   surface: "#ffffff"
-  surface-2: "#f9fafc"
-  ink: "#111827"
-  muted: "#5f6878"
-  faint: "#8a94a6"
-  line: "#dfe4ec"
-  line-strong: "#cbd5e1"
-  blue: "#075be8"
-  blue-2: "#0e69ff"
-  blue-soft: "#eaf2ff"
-  blue-line: "#c7dcff"
-  green: "#06763a"
-  green-soft: "#dff7e8"
-  green-line: "#b6e4c4"
-  green-line-strong: "#8ed6a8"
-  coral: "#c51f35"
-  coral-soft: "#ffe8eb"
-  amber: "#8a4b00"
-  amber-soft: "#fff2d6"
-  event-mark: "#0a8f45"
-  avatar-green-bg: "#dff7e8"
-  avatar-green-fg: "#057b34"
-  avatar-blue-bg: "#e8f0ff"
-  avatar-blue-line: "#9cc2ff"
-  avatar-blue-fg: "#0c60d4"
-  avatar-violet-bg: "#f0e8ff"
-  avatar-violet-line: "#cbb3ff"
-  avatar-violet-fg: "#7147c7"
-  avatar-orange-bg: "#fff0df"
-  avatar-orange-line: "#ffc087"
-  avatar-orange-fg: "#9d4206"
+  surface-2: "#f7f7f5"
+  ink: "#37352f"
+  muted: "#6f6e69"
+  faint: "#9b9a97"
+  line: "#e7e7e4"
+  line-strong: "#d3d3cf"
+  blue: "#2383e2"
+  blue-2: "#0b6dca"
+  blue-soft: "#e9f3fb"
+  blue-line: "#bedcf3"
+  green: "#0f7b3e"
+  green-soft: "#edf6ee"
+  green-line: "#c8dfcb"
+  green-line-strong: "#9fc8a5"
+  coral: "#b4232f"
+  coral-soft: "#fbeff0"
+  amber: "#855000"
+  amber-soft: "#fbf3df"
+  event-mark: "#f1f1ef"
+  avatar-green-bg: "#edf6ee"
+  avatar-green-fg: "#2f6f45"
+  avatar-blue-bg: "#e9f3fb"
+  avatar-blue-line: "#bedcf3"
+  avatar-blue-fg: "#1f6fae"
+  avatar-violet-bg: "#f2edf7"
+  avatar-violet-line: "#d9cbe7"
+  avatar-violet-fg: "#76558e"
+  avatar-orange-bg: "#faeee2"
+  avatar-orange-line: "#ead0b4"
+  avatar-orange-fg: "#93623b"
 typography:
   display:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-    fontSize: "2rem"
+    fontSize: "clamp(1.55rem, 2vw, 2rem)"
     fontWeight: 820
-    lineHeight: 1.12
+    lineHeight: 1.35
     letterSpacing: "0"
   title:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
@@ -52,6 +52,12 @@ typography:
     fontSize: "1.5rem"
     fontWeight: 820
     lineHeight: 1.2
+    letterSpacing: "0"
+  section:
+    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 760
+    lineHeight: 1.3
     letterSpacing: "0"
   body:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
@@ -73,10 +79,10 @@ typography:
     letterSpacing: "0"
 rounded:
   checkbox: "4px"
-  tag: "5px"
-  control: "7px"
-  panel: "8px"
-  workspace: "10px"
+  tag: "3px"
+  control: "4px"
+  panel: "5px"
+  workspace: "6px"
   avatar: "50%"
 spacing:
   space-1: "0.25rem"
@@ -147,45 +153,48 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Shared Table"**
+**Creative North Star: "The Working Document"**
 
-SettleUp is a focused product surface for one small group expense event. Like a shared table, it keeps the active work close: add a cost, see the exact split, understand who pays, and record settlement without stepping into account administration.
+SettleUp is a focused working document for one small group expense event. It keeps the active work close: add a cost, see the exact split, understand who pays, and record settlement without stepping into account administration.
 
-The visual system is restrained and task-led. A pale app background holds one white workspace with firm borders, compact radii, familiar controls, and visible semantic states. Expense capture remains primary; balances explain the result; settlement tools appear only when saved activity makes them useful.
+The visual system uses a warm Notion-like paper canvas, white working surfaces, hairline separators, compact radii, familiar controls, and visible semantic states. Expense capture remains primary; balances explain the result; settlement tools appear only when saved activity makes them useful.
+
+The root create landing page is the visual calibration surface for shared product chrome. Ready event workspaces inherit its text sizing, topbar and hero spacing, event-mark scale, icon scale, and compact section rhythm; event-specific controls may add function without creating a second visual hierarchy.
 
 The system explicitly rejects banking-heavy, playful-fintech, spreadsheet-dense, and gamified visual language. It must never resemble an account dashboard, financial product, investment interface, or power-user ledger.
 
 **Key Characteristics:**
-- Restrained light surfaces with one strong blue action color.
+- Warm document surfaces with one restrained blue action color.
 - Flat construction using borders, tonal layers, and row rhythm instead of decorative depth.
+- Landing-calibrated chrome and hierarchy across create and ready-event surfaces.
 - Compact, mobile-first controls that remain usable at 320px.
 - Exact, human money language: `gets back`, `pays`, and amount-aware actions.
 - Private-by-link consequences and undo paths shown before or immediately after shared mutations.
 
 ## Colors
 
-The palette is cool, quiet, and state-rich. Blue is operational; green, coral, and amber communicate outcomes without relying on color alone; neutrals carry most of every screen.
+The palette is warm, quiet, and state-rich. Blue is operational; green, coral, and amber communicate outcomes without relying on color alone; warm neutrals carry most of every screen.
 
 ### Primary
-- **Action Blue** (`#075be8`): Primary actions, focus, selection, and link-like commands only.
-- **Focus Blue** (`#0e69ff`): Focus borders and the anchor hue of the shared focus ring.
-- **Soft Blue** (`#eaf2ff`): Selected participant controls, payment-history icons, and exact-split previews.
-- **Blue Line** (`#c7dcff`): Informational and selected-state borders.
+- **Action Blue** (`#2383e2`): Primary actions, focus, selection, and link-like commands only.
+- **Focus Blue** (`#0b6dca`): Focus borders and the anchor hue of the shared focus ring.
+- **Soft Blue** (`#e9f3fb`): Selected participant controls, payment-history icons, and exact-split previews.
+- **Blue Line** (`#bedcf3`): Informational and selected-state borders.
 
 ### Secondary
-- **Event Green** (`#0a8f45`): The circular event mark; never a second general action color.
-- **Success Green** (`#06763a`): Positive balances and successful recorded-payment states.
-- **Coral Risk** (`#c51f35`): Negative balance direction and destructive expense actions.
-- **Review Amber** (`#8a4b00`): Required-field feedback and blocked or review-required states.
+- **Event Mark** (`#f1f1ef`): A neutral document icon surface; never a second general action color.
+- **Success Green** (`#0f7b3e`): Positive balances and successful recorded-payment states.
+- **Coral Risk** (`#b4232f`): Negative balance direction and destructive expense actions.
+- **Review Amber** (`#855000`): Required-field feedback and blocked or review-required states.
 
 ### Neutral
-- **App Paper** (`#f6f8fb`): Body background only.
+- **App Paper** (`#f7f7f5`): Body background and quiet document grouping.
 - **Surface** (`#ffffff`): Workspace, panels, controls, and action text on saturated backgrounds.
-- **Quiet Surface** (`#f9fafc`): Passive summaries, totals, defaults, history distinctions, and mobile previews.
-- **Ink** (`#111827`): Primary copy and financial values.
-- **Muted Text** (`#5f6878`): Explanations, metadata, and low-priority controls.
-- **Faint Text** (`#8a94a6`): Lowest-priority helper copy only; never body text.
-- **Line / Strong Line** (`#dfe4ec` / `#cbd5e1`): Dividers, panel borders, and the workspace shell.
+- **Quiet Surface** (`#f7f7f5`): Passive summaries, totals, defaults, history distinctions, and mobile previews.
+- **Ink** (`#37352f`): Primary copy and financial values.
+- **Muted Text** (`#6f6e69`): Explanations, metadata, and low-priority controls.
+- **Faint Text** (`#9b9a97`): Lowest-priority helper copy only; never body text.
+- **Line / Strong Line** (`#e7e7e4` / `#d3d3cf`): Dividers, panel borders, and the workspace shell.
 
 ### Named Rules
 
@@ -204,9 +213,10 @@ The palette is cool, quiet, and state-rich. Blue is operational; green, coral, a
 **Character:** One tuned product sans carries the complete interface. Hierarchy comes from fixed size, weight, spacing, and tabular numerals rather than decorative pairing.
 
 ### Hierarchy
-- **Display** (820, `2rem`, 1.12): Event titles and brand-size text only.
-- **Heading** (820, `1.5rem`, 1.2): Page-level task headings at compact and mobile sizes.
-- **Title** (760, `1.12rem`, 1.3): Section headings, settlement review values, and important row titles.
+- **Display** (820, `clamp(1.55rem, 2vw, 2rem)`, 1.35): Compact SettleUp wordmark only.
+- **Heading** (820, `1.5rem`, 1.2): Create-page task headings and ready-event titles at every supported size.
+- **Section** (760, `1rem`, 1.3): Ready-event panel headings.
+- **Title** (760, `1.12rem`, 1.3): Settlement review values and important row titles.
 - **Body** (400, `1rem`, 1.35): Form copy, summaries, and prose, capped near 65ch.
 - **Label** (650, `0.875rem`, 1.3): Field labels, compact metadata, commands, and status labels.
 - **Caption** (650, `0.78rem`, 1.25): Balance directions and the lowest-priority supporting text.
@@ -219,7 +229,19 @@ The palette is cool, quiet, and state-rich. Blue is operational; green, coral, a
 
 **The Concrete Label Rule.** Actions name the outcome and include a known amount when it reduces uncertainty: `Save A$100.00 expense`, `Record A$33.33`, `Mark A$33.33 paid`.
 
-## Elevation
+## Layout
+
+The root create landing page is the master calibration surface for shared chrome. Its ready-state proportions carry into event workspaces: topbars use `0.5rem` vertical padding, ready heroes use a `1.5rem` title, `0.75rem` desktop gap, `1rem` vertical padding, a `3rem` event mark, and a `1.35rem` mark icon. The private-link action stays in the topbar so event metadata receives the full hero copy width.
+
+The create workspace is capped at `48rem`; the event workspace can grow to `100rem`. Both sit on App Paper with a `1.25rem` outer rhythm. The ready event body uses a `1.35fr / 0.65fr` capture-and-summary grid with a `1.25rem` gap, collapsing to one column at `980px`.
+
+Below `700px`, workspaces become full-width with square side edges and `1rem` content gutters. The calibrated hero tightens to `0.5rem` vertical padding, a `0.625rem` gap, a `2.5rem` mark, and a `1.15rem` icon. Ready-event section headers use `0.5rem 0.75rem` padding and `0.5rem` title/icon spacing; only the expense header stacks its progress state. Panels stretch to the same width, visible controls remain at least `44px` tall, and the complete flow must remain usable at `320px` and be verified at `390×844`.
+
+### Named Rules
+
+**The Landing Calibration Rule.** When create and ready-event surfaces share a visual role, the root landing implementation sets the text size, spacing, mark scale, and icon scale. Event-specific variants may add necessary controls but must not enlarge or loosen the shared hierarchy.
+
+## Elevation & Depth
 
 SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separators establish hierarchy. Ordinary panels, controls, summaries, and history rows never float.
 
@@ -234,16 +256,21 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 
 **The No Decorative Glow Rule.** Card shadows, glows, glass effects, gradients, and ornamental backgrounds are forbidden.
 
+## Shapes
+
+SettleUp uses compact document rounding: `3px` for tags, `4px` for controls and checkboxes, `5px` for panels, and `6px` for the desktop workspace shell. Avatars are circular. Borders stay one pixel and structural; mobile workspaces drop side borders and shell rounding rather than nesting another rounded container.
+
 ## Components
 
 ### Workspace and Navigation
-- **Workspace:** One white shell with a firm strong-line border and 10px desktop radius on App Paper; full-width with square side edges below 700px.
+- **Workspace:** One white shell with a firm strong-line border and 6px desktop radius on App Paper; full-width with square side edges below 700px.
 - **Desktop structure:** Topbar, compact event hero, then a `1.35fr / 0.65fr` capture-and-summary grid with a `1.25rem` gap.
 - **Mobile structure:** Capture first, followed by the combined balances and settlement surface, compact history, and footer.
-- **Topbar:** Brand, identity, private-link sharing, and event context use one compact row and collapse structurally rather than shrinking type.
+- **Topbar:** Brand and private-link sharing use the landing-calibrated compact row. A copy fallback may span the row without changing the hero width.
+- **Ready-event hero:** Mirrors the create hero’s title, spacing, event-mark, and icon metrics. It holds event identity and metadata only; sharing remains in the topbar.
 
 ### Buttons
-- **Shape:** Compact controls with 7px radius and a minimum height of 2.9rem.
+- **Shape:** Compact controls with 4px radius and a minimum height of 2.9rem.
 - **Mobile target:** Visible compact actions, including share, participant edit/remove, and payment undo, retain at least a 44px touch target.
 - **Primary:** Action Blue fill, white text, and a matching solid border; no decorative shadow.
 - **Secondary:** Transparent surface with Action Blue text and the same typographic weight.
@@ -251,16 +278,17 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Focus:** The shared Focus Ring is always visible for keyboard users.
 
 ### Panels and Rows
-- **Panels:** White, 8px radius, one Line border, no shadow, and row-based internal structure.
-- **Headers:** Lucide icon, direct title, optional muted context, and optional compact action.
+- **Panels:** White, 5px radius, one Line border, no shadow, and row-based internal structure.
+- **Headers:** An 18px Lucide icon, direct 1rem ready-event title, optional muted context separated by 0.25rem, and an optional compact action.
+- **Mobile expense header:** Stacks progress below the title while other section headers remain compact and action-aligned.
 - **Balance rows:** Participant and paid/share metadata left; exact tabular net value right; semantic direction is written as well as colored.
 - **History rows:** Keep the record identity, amount, and supporting evidence visible; place edit/remove or edit/undo actions behind a 44px-tall `Manage` disclosure. Payment history uses Quiet Surface and Soft Blue icon treatment.
 
 ### Inputs and Fields
-- **Style:** White native controls with one Line border, 7px radius, 2.85–3rem height, and readable Ink text.
+- **Style:** White native controls with one Line border, 4px radius, 2.85–3rem height, and readable Ink text.
 - **Placeholder:** Muted Text at full opacity so example text retains WCAG AA contrast.
 - **Focus:** Border shifts to Focus Blue and receives the shared Focus Ring.
-- **Error:** Amber border plus specific amber copy naming the required fix; a failed create submission announces a summary and focuses the first invalid field.
+- **Error:** Amber border plus specific amber copy inside the affected description or amount shell; a failed submission announces a summary and focuses the first invalid field.
 - **Selects:** Native selection behavior remains intact inside a shared visual shell.
 
 ### Form Progress and Lifecycle
@@ -272,8 +300,9 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Segments:** Compact 2.9rem controls with avatars or visible real checkboxes and full-surface labels.
 - **Selected state:** Soft Blue surface, Focus Blue border, and Selected Inset.
 - **Exact split preview:** Uses the same domain calculation as persistence, shows deterministic cent allocation, and repeats the expense total for comparison.
-- **Capture order:** Description and amount lead; payer identity, capture defaults, split controls, and save follow.
+- **Capture order:** Description, amount, and save lead. Configuration follows capture rather than interrupting it.
 - **Participant administration:** Add, rename, and remove controls live behind a collapsed `Manage people` disclosure after the save action.
+- **Payer and split defaults:** A second collapsed disclosure follows `Manage people` and combines the local person selector, payer default, split summary, Included Participant controls, and exact-share preview. Split validation opens this disclosure when attention is required.
 - **Participant removal:** Confirmation names the participant, states that the shared change cannot be undone, and explains why a referenced participant may be protected.
 
 ### Settlement and Feedback
@@ -294,8 +323,10 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep expense capture ahead of administration and settlement tools.
+- **Do** use the root landing page as the master reference for shared text sizing, header spacing, event-mark scale, and icon scale.
+- **Do** keep description, amount, and save ahead of administration, payer/split configuration, and settlement tools.
 - **Do** keep participant administration collapsed until someone explicitly opens `Manage people`.
+- **Do** keep local person, payer, and split settings together behind `Payer and split defaults`.
 - **Do** lead the balance surface with one actionable next payment and keep full balances available without competing for initial mobile attention.
 - **Do** keep history evidence visible while placing secondary mutation actions behind `Manage`.
 - **Do** preserve the root create flow: event name, creator name, currency, truthful lifecycle preview, then `Start my event`.
@@ -309,6 +340,7 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Do** reuse `src/components/design-system.jsx` and `src/components/event-ui.jsx` before adding local UI patterns.
 
 ### Don't:
+- **Don't** let a ready-event variant enlarge or loosen shared chrome beyond the landing calibration without an explicit product need.
 - **Don't** make SettleUp banking-heavy, playful-fintech, spreadsheet-dense, or gamified.
 - **Don't** introduce account-management patterns, financial-product language, investment dashboards, dense ledgers, or power-user tables.
 - **Don't** reveal settlement controls while an expense draft is in progress.
@@ -318,5 +350,5 @@ SettleUp is flat by default. Borders, tonal surfaces, spacing, and row separator
 - **Don't** add nested cards, decorative shadows, broad gradients, glassmorphism, glows, or ornamental backgrounds.
 - **Don't** use side-stripe alerts, gradient text, large marketing heroes, decorative card grids, or vague sales language.
 - **Don't** use blue as decoration or a second accent as a competing action color.
-- **Don't** round panels beyond the documented 8–10px vocabulary.
+- **Don't** round panels beyond the documented 5–6px vocabulary.
 - **Don't** let mobile controls resize the layout, create horizontal overflow, or cover fields without preserving scroll room.
