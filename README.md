@@ -41,11 +41,12 @@ Expense forms preview the exact per-person minor-unit split, including remainder
 cents, and saved expenses keep that server-authored breakdown available.
 The API rejects a mutation before writing if the event's combined expense and
 payment amounts would exceed the exact safe-integer range.
-Every mutation treats the returned server snapshot as authoritative. Live
-updates are invalidation messages only; the browser refetches the snapshot
-after a newer event version, reconnection, focus, or return online. If live
-details change while a transaction form is open, saving pauses until the latest
-version is loaded and reviewed.
+Mutation responses are validated, then route actions revalidate the event
+loader so the latest server snapshot remains authoritative. Live updates are
+invalidation messages only; the browser refetches the snapshot after a newer
+event version, reconnection, focus, or return online. If live details change
+while a transaction form is open, saving pauses until the latest version is
+loaded and reviewed.
 
 Browser preferences are limited to the current tab session and store only a
 participant ID keyed by the public event ID. Event tokens and snapshots are
@@ -97,9 +98,10 @@ Supported currencies are `AUD`, `USD`, `EUR`, `GBP`, and `NZD`.
 
 An event snapshot contains the event, participants, expenses, recorded
 payments, balances, and the next settlement suggestion. Expense shares,
-balances, and settlement suggestions are recomputed from persisted rows; they
-are not stored summary values. Each successful mutation increments the event
-version.
+are derived deterministically when an expense is saved and persisted with it.
+Balances and settlement suggestions are recomputed from the persisted ledger
+rather than stored as summary values. Each successful mutation increments the
+event version.
 
 `GET /api/events/:token/stream` opens a server-sent events stream. It sends an
 initial `connected` event and then `changed` events whose data contains only
@@ -112,9 +114,10 @@ source of truth.
 The server uses `better-sqlite3`, enables foreign keys and WAL mode, and
 applies its schema at startup. Event tokens are stored as hashes.
 
-Private event links work for three days. Expired links return `410`; their rows
-remain until the five-day cleanup deadline. Cleanup runs at startup and hourly,
-with related participant, expense, share, and payment rows removed by cascade.
+Private event links work for three days after creation. Expired links return
+`410`; their rows remain until the cleanup deadline five days after creation.
+Cleanup runs at startup and hourly, with related participant, expense, share,
+and payment rows removed by cascade.
 
 ## Environment
 
@@ -127,8 +130,13 @@ with related participant, expense, share, and payment rows removed by cascade.
 
 `npm run build:all` produces:
 
-- `dist/server` for the API process.
-- `apps/web/build/client` for any static web host.
+- `dist` as the compiled API tree, including the `dist/server/server.js`
+  entrypoint and its `dist/shared` dependencies. It is not a standalone
+  bundle; deploy its production dependencies, including the built
+  `@settleup/contracts` workspace package.
+- `apps/web/build/client` as the static web-host payload. React Router also
+  emits `apps/web/build/server` while building the SPA; it is not the API
+  service and is not the directory to publish to the static host.
 
 Expose both through one public origin. Route `/api/*` to the API before the
 static-host fallback, and route all other paths to the SPA `index.html`. The
