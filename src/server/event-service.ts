@@ -1,23 +1,37 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
+import type {
+  CreateEventCommand,
+  CreateEventResponse,
+  CurrencyCode,
+  EventSnapshot,
+  Expense,
+  ExpenseCommand,
+  ExpenseShare,
+  Participant,
+  ParticipantCommand,
+  PaymentCommand,
+  SettlementPayment,
+} from "@settleup/contracts";
+
 import {
   calculateBalances,
   deriveEqualShares,
   getSettlementSuggestion,
-  type CurrencyCode,
-  type EventSnapshot,
-  type Expense,
-  type ExpenseShare,
-  type Participant,
-  type SettlementPayment,
 } from "../shared/domain.js";
-import { badRequest, expired, notFound } from "./errors.js";
+import {
+  badRequest,
+  expired,
+  notFound,
+  preconditionFailed,
+} from "./errors.js";
 import type { SqliteDatabase } from "./database.js";
 
 const tokenAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
 const tokenLength = 14;
 const eventLifetimeMs = 3 * 24 * 60 * 60 * 1000;
 const cleanupLifetimeMs = 5 * 24 * 60 * 60 * 1000;
+const maximumExactEventAmountMinor = BigInt(Number.MAX_SAFE_INTEGER);
 
 interface EventRow {
   id: string;
@@ -59,35 +73,12 @@ interface PaymentRow {
   updatedAt: string;
 }
 
-export interface CreateEventCommand {
-  title: string;
-  currency: CurrencyCode;
-  firstParticipantName: string;
-}
-
-export interface ParticipantCommand {
-  name: string;
-}
-
-export interface ExpenseCommand {
-  description: string;
-  amountMinor: number;
-  payerId: string;
-  includedParticipantIds: string[];
-}
-
-export interface PaymentCommand {
-  from: string;
-  to: string;
-  amountMinor: number;
-}
-
-interface CreatedEvent {
-  token: string;
-  snapshot: EventSnapshot;
-}
-
 type NowProvider = () => Date;
+
+export interface EventVersionPrecondition {
+  matchesAny: boolean;
+  versions: readonly number[];
+}
 
 export class EventService {
   constructor(
@@ -95,7 +86,7 @@ export class EventService {
     private readonly now: NowProvider = () => new Date(),
   ) {}
 
-  createEvent(command: CreateEventCommand): CreatedEvent {
+  createEvent(command: CreateEventCommand): CreateEventResponse {
     const token = generateToken();
     const now = this.now();
     const createdAt = now.toISOString();
@@ -148,13 +139,18 @@ export class EventService {
     return this.loadSnapshot(event, token);
   }
 
-  addParticipant(token: string, command: ParticipantCommand): EventSnapshot {
+  addParticipant(
+    token: string,
+    command: ParticipantCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     const createdAt = this.now().toISOString();
     const nextSortOrder = this.getNextParticipantSortOrder(event.id);
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
       this.db
         .prepare(
           `
@@ -177,13 +173,19 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  renameParticipant(token: string, participantId: string, command: ParticipantCommand): EventSnapshot {
+  renameParticipant(
+    token: string,
+    participantId: string,
+    command: ParticipantCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requireParticipant(event.id, participantId);
     const updatedAt = this.now().toISOString();
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
       this.db
         .prepare("UPDATE participants SET name = ?, updated_at = ? WHERE id = ? AND event_id = ?")
         .run(command.name, updatedAt, participantId, event.id);
@@ -194,7 +196,11 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  deleteParticipant(token: string, participantId: string): EventSnapshot {
+  deleteParticipant(
+    token: string,
+    participantId: string,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requireParticipant(event.id, participantId);
@@ -208,6 +214,7 @@ export class EventService {
     }
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
       this.db.prepare("DELETE FROM participants WHERE id = ? AND event_id = ?").run(participantId, event.id);
       this.bumpVersion(event.id);
     });
@@ -216,7 +223,11 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  createExpense(token: string, command: ExpenseCommand): EventSnapshot {
+  createExpense(
+    token: string,
+    command: ExpenseCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     const expenseId = randomUUID();
@@ -225,6 +236,8 @@ export class EventService {
     const shares = deriveEqualShares(command.amountMinor, command.includedParticipantIds);
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
+      this.assertSafeEventAmountTotal(event.id, command.amountMinor);
       this.db
         .prepare(
           `
@@ -242,7 +255,12 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  updateExpense(token: string, expenseId: string, command: ExpenseCommand): EventSnapshot {
+  updateExpense(
+    token: string,
+    expenseId: string,
+    command: ExpenseCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requireExpense(event.id, expenseId);
@@ -251,6 +269,12 @@ export class EventService {
     const updatedAt = this.now().toISOString();
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
+      this.assertSafeEventAmountTotal(
+        event.id,
+        command.amountMinor,
+        expenseId,
+      );
       this.db
         .prepare(
           `
@@ -269,12 +293,17 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  deleteExpense(token: string, expenseId: string): EventSnapshot {
+  deleteExpense(
+    token: string,
+    expenseId: string,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requireExpense(event.id, expenseId);
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
       this.db.prepare("DELETE FROM expenses WHERE id = ? AND event_id = ?").run(expenseId, event.id);
       this.bumpVersion(event.id);
     });
@@ -283,7 +312,11 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  createPayment(token: string, command: PaymentCommand): EventSnapshot {
+  createPayment(
+    token: string,
+    command: PaymentCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     const paymentId = randomUUID();
@@ -291,6 +324,8 @@ export class EventService {
     this.validatePaymentParticipants(event.id, command);
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
+      this.assertSafeEventAmountTotal(event.id, command.amountMinor);
       this.db
         .prepare(
           `
@@ -307,7 +342,12 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  updatePayment(token: string, paymentId: string, command: PaymentCommand): EventSnapshot {
+  updatePayment(
+    token: string,
+    paymentId: string,
+    command: PaymentCommand,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requirePayment(event.id, paymentId);
@@ -315,6 +355,13 @@ export class EventService {
     const updatedAt = this.now().toISOString();
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
+      this.assertSafeEventAmountTotal(
+        event.id,
+        command.amountMinor,
+        undefined,
+        paymentId,
+      );
       this.db
         .prepare(
           `
@@ -331,12 +378,17 @@ export class EventService {
     return this.getSnapshotByToken(token);
   }
 
-  deletePayment(token: string, paymentId: string): EventSnapshot {
+  deletePayment(
+    token: string,
+    paymentId: string,
+    versionPrecondition?: EventVersionPrecondition,
+  ): EventSnapshot {
     const event = this.getEventByToken(token);
     this.assertNotExpired(event);
     this.requirePayment(event.id, paymentId);
 
     const write = this.db.transaction(() => {
+      this.assertVersionPrecondition(event.id, versionPrecondition);
       this.db.prepare("DELETE FROM settlement_payments WHERE id = ? AND event_id = ?").run(paymentId, event.id);
       this.bumpVersion(event.id);
     });
@@ -391,6 +443,7 @@ export class EventService {
     const participants = this.loadParticipants(event.id);
     const expenses = this.loadExpenses(event.id);
     const payments = this.loadPayments(event.id);
+    assertLoadedEventAmountTotalSafe(expenses, payments);
     const balances = calculateBalances(participants, expenses, payments);
 
     return {
@@ -602,6 +655,118 @@ export class EventService {
 
   private bumpVersion(eventId: string): void {
     this.db.prepare("UPDATE events SET version = version + 1 WHERE id = ?").run(eventId);
+  }
+
+  private assertVersionPrecondition(
+    eventId: string,
+    precondition: EventVersionPrecondition | undefined,
+  ): void {
+    if (precondition !== undefined) {
+      const currentVersion = readIntegerField(
+        this.db.prepare("SELECT version FROM events WHERE id = ?").get(eventId),
+        "version",
+      );
+
+      if (
+        !precondition.matchesAny &&
+        !precondition.versions.includes(currentVersion)
+      ) {
+        throw preconditionFailed(
+          "This event changed before your update was saved. Load the latest version and try again.",
+        );
+      }
+    }
+
+    this.assertStoredEventAmountTotalSafe(eventId);
+  }
+
+  private assertSafeEventAmountTotal(
+    eventId: string,
+    nextAmountMinor: number,
+    excludedExpenseId?: string,
+    excludedPaymentId?: string,
+  ): void {
+    const totalMinor =
+      BigInt(nextAmountMinor) +
+      this.readStoredEventAmountTotalMinor(
+        eventId,
+        excludedExpenseId,
+        excludedPaymentId,
+      );
+
+    if (totalMinor > maximumExactEventAmountMinor) {
+      throw badRequest(
+        "The combined event amount is too large to calculate exactly.",
+      );
+    }
+  }
+
+  private assertStoredEventAmountTotalSafe(eventId: string): void {
+    if (
+      this.readStoredEventAmountTotalMinor(eventId) >
+      maximumExactEventAmountMinor
+    ) {
+      throw new Error(
+        "Stored event amounts exceed the exact safe-integer range.",
+      );
+    }
+  }
+
+  private readStoredEventAmountTotalMinor(
+    eventId: string,
+    excludedExpenseId?: string,
+    excludedPaymentId?: string,
+  ): bigint {
+    let totalMinor = 0n;
+    const expenseRows = this.db
+      .prepare(
+        `
+        SELECT amount_minor AS amountMinor
+        FROM expenses
+        WHERE event_id = ? AND (? IS NULL OR id <> ?)
+      `,
+      )
+      .all(
+        eventId,
+        excludedExpenseId ?? null,
+        excludedExpenseId ?? null,
+      );
+    const paymentRows = this.db
+      .prepare(
+        `
+        SELECT amount_minor AS amountMinor
+        FROM settlement_payments
+        WHERE event_id = ? AND (? IS NULL OR id <> ?)
+      `,
+      )
+      .all(
+        eventId,
+        excludedPaymentId ?? null,
+        excludedPaymentId ?? null,
+      );
+
+    for (const row of [...expenseRows, ...paymentRows]) {
+      totalMinor += BigInt(readIntegerField(row, "amountMinor"));
+    }
+
+    return totalMinor;
+  }
+}
+
+function assertLoadedEventAmountTotalSafe(
+  expenses: Expense[],
+  payments: SettlementPayment[],
+): void {
+  let totalMinor = 0n;
+
+  for (const item of [...expenses, ...payments]) {
+    totalMinor += BigInt(item.amountMinor);
+  }
+
+  if (totalMinor > maximumExactEventAmountMinor) {
+    throw new Error(
+      "Stored event amounts exceed the exact safe-integer range.",
+    );
   }
 }
 

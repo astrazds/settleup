@@ -4,22 +4,43 @@
   "private": true,
   "type": "module",
   "packageManager": "npm@12.0.1",
+  "workspaces": [
+    "apps/web",
+    "packages/contracts"
+  ],
   "engines": {
-    "node": "20.x || 22.x || >=24",
+    "node": "^22.22.0 || >=24.0.0",
     "npm": ">=12"
   },
   "scripts": {
-    "dev": "tsx watch src/server/server.ts",
-    "dev:api": "npm run dev",
+    "dev": "npm run dev:api",
+    "dev:api:watch": "tsx watch src/server/server.ts",
+    "dev:web:watch": "npm run dev --workspace @settleup/web",
+    "dev:api": "npm run build:contracts && npm run dev:api:watch",
+    "dev:web": "npm run build:contracts && npm run dev:web:watch",
+    "dev:all": "npm run build:contracts && concurrently --kill-others --names api,web --prefix-colors blue,green \"npm:dev:api:watch\" \"npm:dev:web:watch\"",
+    "typecheck:server": "tsc -p tsconfig.json --noEmit",
+    "typecheck:contracts": "npm run typecheck --workspace @settleup/contracts",
+    "typecheck:web": "npm run typecheck --workspace @settleup/web",
+    "typecheck": "npm run build:contracts && npm run typecheck:contracts && npm run typecheck:server && npm run typecheck:web",
+    "test:server": "vitest run --config vitest.config.ts",
+    "test:contracts": "npm run test --workspace @settleup/contracts",
+    "test:web": "npm run test --workspace @settleup/web",
+    "test": "npm run build:contracts && npm run test:contracts && npm run test:server && npm run test:web",
+    "test:e2e": "npm run test:e2e --workspace @settleup/web",
+    "lint": "npm run build:contracts && npm run lint --workspace @settleup/web",
+    "clean:server": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { force: true, recursive: true })\"",
+    "clean": "npm run clean:server && npm run clean --workspace @settleup/contracts && npm run clean --workspace @settleup/web",
+    "build:contracts": "npm run build --workspace @settleup/contracts",
+    "build:server": "npm run build:contracts && npm run clean:server && tsc -p tsconfig.server.json",
+    "build:web": "npm run build:contracts && npm run build --workspace @settleup/web",
+    "build": "npm run build:server",
+    "build:all": "npm run build:server && npm run build --workspace @settleup/web",
     "start": "node dist/server/server.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { force: true, recursive: true })\"",
-    "build": "npm run clean && tsc -p tsconfig.server.json",
-    "build:server": "npm run build",
-    "build:all": "npm run build"
+    "preview:web": "npm run preview --workspace @settleup/web"
   },
   "dependencies": {
+    "@settleup/contracts": "0.1.0",
     "@hono/node-server": "^2.0.4",
     "better-sqlite3": "^12.10.0",
     "hono": "^4.12.24"
@@ -27,6 +48,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.2",
+    "concurrently": "^9.2.1",
     "tsx": "^4.22.4",
     "typescript": "^5.8.3",
     "vitest": "^4.1.8"

@@ -1,69 +1,26 @@
-export const currencyCodes = ["AUD", "USD", "EUR", "GBP", "NZD"] as const;
+import {
+  currencyCodes,
+  type Balance,
+  type CurrencyCode,
+  type Expense,
+  type ExpenseShare,
+  type Participant,
+  type SettlementPayment,
+  type SettlementSuggestion,
+} from "@settleup/contracts";
 
-export type CurrencyCode = (typeof currencyCodes)[number];
-
-export interface EventSummary {
-  id: string;
-  title: string;
-  currency: CurrencyCode;
-  createdAt: string;
-  expiresAt: string;
-  cleanupAfter: string;
-  version: number;
-  token: string;
-}
-
-export interface Participant {
-  id: string;
-  name: string;
-  sortOrder: number;
-}
-
-export interface ExpenseShare {
-  participantId: string;
-  amountMinor: number;
-}
-
-export interface Expense {
-  id: string;
-  description: string;
-  amountMinor: number;
-  payerId: string;
-  shares: ExpenseShare[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SettlementPayment {
-  id: string;
-  from: string;
-  to: string;
-  amountMinor: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Balance {
-  participantId: string;
-  paidMinor: number;
-  owedMinor: number;
-  netMinor: number;
-}
-
-export interface SettlementSuggestion {
-  from: string;
-  to: string;
-  amountMinor: number;
-}
-
-export interface EventSnapshot {
-  event: EventSummary;
-  participants: Participant[];
-  expenses: Expense[];
-  payments: SettlementPayment[];
-  balances: Balance[];
-  settlementSuggestion: SettlementSuggestion | null;
-}
+export { currencyCodes };
+export type {
+  Balance,
+  CurrencyCode,
+  EventSnapshot,
+  EventSummary,
+  Expense,
+  ExpenseShare,
+  Participant,
+  SettlementPayment,
+  SettlementSuggestion,
+} from "@settleup/contracts";
 
 export function assertCurrencyCode(value: string): CurrencyCode {
   if (currencyCodes.includes(value as CurrencyCode)) {

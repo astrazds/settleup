@@ -2,7 +2,17 @@
 
 ## Project
 
-SettleUp currently contains a backend-only, no-login shared-expense API for short-lived private-by-link events. Preserve event-token scoping, integer minor-unit money, deterministic equal splits, transactional SQLite mutations, recomputed full snapshots, version-only SSE invalidation, and the three-day access/five-day cleanup lifecycle. Keep non-API paths at 404. Treat any future frontend as a separately scoped project; backend work must not reintroduce static serving or presentation fields incidentally.
+SettleUp is a mobile-first, no-login shared-expense app for short-lived
+private-by-link events. Keep the product focused on fast expense capture,
+exact and understandable splits, and confident settlement without introducing
+account, banking-dashboard, or spreadsheet-heavy patterns.
+
+The frontend lives in `apps/web` and consumes the API through relative `/api`
+requests. The backend remains independently deployable and must not serve
+static files or client routes. Preserve event-token scoping, integer minor-unit
+money, deterministic equal splits, transactional SQLite mutations, recomputed
+full snapshots, version-only SSE invalidation, and the three-day access/five-day
+cleanup lifecycle.
 
 ## Verification
 

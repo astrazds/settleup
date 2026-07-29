@@ -101,6 +101,124 @@ describe("EventService", () => {
     expect(() => service.deleteParticipant(created.token, andrejs)).toThrow(AppError);
   });
 
+  it("rejects aggregate amounts that cannot be calculated exactly", () => {
+    const db = openDatabase(":memory:");
+    const service = new EventService(db);
+    const created = service.createEvent({
+      title: "Large event",
+      currency: "AUD",
+      firstParticipantName: "Andrejs",
+    });
+    let snapshot = service.addParticipant(created.token, { name: "Mia" });
+    const andrejs = participantId(snapshot, "Andrejs");
+    const mia = participantId(snapshot, "Mia");
+    snapshot = service.createExpense(created.token, {
+      description: "Large expense",
+      amountMinor: Number.MAX_SAFE_INTEGER - 1,
+      payerId: andrejs,
+      includedParticipantIds: [andrejs],
+    });
+    const expenseId = snapshot.expenses[0]?.id;
+    if (!expenseId) {
+      throw new Error("Missing large expense.");
+    }
+
+    snapshot = service.createPayment(created.token, {
+      amountMinor: 1,
+      from: mia,
+      to: andrejs,
+    });
+    const paymentId = snapshot.payments[0]?.id;
+    if (!paymentId) {
+      throw new Error("Missing settlement payment.");
+    }
+
+    snapshot = service.updateExpense(created.token, expenseId, {
+      description: "Updated large expense",
+      amountMinor: Number.MAX_SAFE_INTEGER - 1,
+      payerId: andrejs,
+      includedParticipantIds: [andrejs],
+    });
+    snapshot = service.updatePayment(created.token, paymentId, {
+      amountMinor: 1,
+      from: mia,
+      to: andrejs,
+    });
+    const versionBeforeRejectedWrites = snapshot.event.version;
+
+    const exactnessError = expect.objectContaining({
+      message: "The combined event amount is too large to calculate exactly.",
+      status: 400,
+    });
+    expect(() => service.createExpense(created.token, {
+      description: "One more cent",
+      amountMinor: 1,
+      payerId: andrejs,
+      includedParticipantIds: [andrejs],
+    })).toThrow(exactnessError);
+    expect(() => service.updateExpense(created.token, expenseId, {
+      description: "Too-large update",
+      amountMinor: Number.MAX_SAFE_INTEGER,
+      payerId: andrejs,
+      includedParticipantIds: [andrejs],
+    })).toThrow(exactnessError);
+    expect(() => service.createPayment(created.token, {
+      amountMinor: 1,
+      from: mia,
+      to: andrejs,
+    })).toThrow(exactnessError);
+    expect(() => service.updatePayment(created.token, paymentId, {
+      amountMinor: 2,
+      from: mia,
+      to: andrejs,
+    })).toThrow(
+      expect.objectContaining({
+        message: "The combined event amount is too large to calculate exactly.",
+        status: 400,
+      }),
+    );
+
+    const unchanged = service.getSnapshotByToken(created.token);
+    expect(unchanged.event.version).toBe(versionBeforeRejectedWrites);
+    expect(unchanged.expenses).toHaveLength(1);
+    expect(unchanged.payments).toHaveLength(1);
+
+    db.prepare(
+      `
+      INSERT INTO settlement_payments
+        (id, event_id, from_participant_id, to_participant_id, amount_minor, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `,
+    ).run(
+      "legacy-overflow-payment",
+      unchanged.event.id,
+      mia,
+      andrejs,
+      1,
+      unchanged.event.createdAt,
+      unchanged.event.createdAt,
+    );
+
+    expect(() => service.getSnapshotByToken(created.token)).toThrow(
+      "Stored event amounts exceed the exact safe-integer range.",
+    );
+    expect(() =>
+      service.renameParticipant(created.token, andrejs, {
+        name: "Changed after legacy overflow",
+      }),
+    ).toThrow("Stored event amounts exceed the exact safe-integer range.");
+    expect(
+      db
+        .prepare("SELECT name FROM participants WHERE id = ?")
+        .get(andrejs),
+    ).toEqual({ name: "Andrejs" });
+    expect(
+      db
+        .prepare("SELECT version FROM events WHERE id = ?")
+        .get(unchanged.event.id),
+    ).toEqual({ version: versionBeforeRejectedWrites });
+  });
+
   it("stops resolving expired events and deletes them after cleanup retention", () => {
     let now = new Date("2026-06-01T00:00:00.000Z");
     const service = new EventService(openDatabase(":memory:"), () => now);

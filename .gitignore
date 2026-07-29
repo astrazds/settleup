@@ -3,6 +3,10 @@ node_modules/
 
 # Build output
 dist/
+apps/web/.react-router/
+apps/web/build/
+apps/web/playwright-report/
+apps/web/test-results/
 
 # Local automation and agent artifacts
 .agents/
