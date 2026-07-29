@@ -1,36 +1,39 @@
 {
-  "name": "settleup-ui",
+  "name": "settleup-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@12.0.1",
+  "engines": {
+    "node": "20.x || 22.x || >=24",
+    "npm": ">=12"
+  },
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "dev:api": "tsx watch src/server/server.ts",
+    "dev": "tsx watch src/server/server.ts",
+    "dev:api": "npm run dev",
     "start": "node dist/server/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "build": "vite build",
-    "build:server": "tsc -p tsconfig.server.json",
-    "build:all": "npm run build && npm run build:server",
-    "preview": "vite preview --host 127.0.0.1"
+    "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { force: true, recursive: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.server.json",
+    "build:server": "npm run build",
+    "build:all": "npm run build"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.4",
-    "@vitejs/plugin-react": "^5.0.0",
     "better-sqlite3": "^12.10.0",
-    "hono": "^4.12.24",
-    "lucide-react": "^0.468.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "typescript": "^5.8.3",
-    "vite": "^7.0.0"
+    "hono": "^4.12.24"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^25.9.2",
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
     "tsx": "^4.22.4",
+    "typescript": "^5.8.3",
     "vitest": "^4.1.8"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.10.0": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.1": true
   }
 }

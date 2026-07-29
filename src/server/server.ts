@@ -8,7 +8,6 @@ import { EventService } from "./event-service.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8787", 10);
 const databasePath = process.env.SETTLEUP_DB ?? resolve("data/settleup.sqlite");
-const publicDir = process.env.SETTLEUP_PUBLIC_DIR ?? resolve("dist/client");
 const db = openDatabase(databasePath);
 const service = new EventService(db);
 
@@ -19,7 +18,6 @@ const cleanupInterval = setInterval(() => {
 
 const app = createApp({
   broker: new ChangeBroker(),
-  publicDir,
   service,
 });
 

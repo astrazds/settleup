@@ -2,10 +2,6 @@ export const currencyCodes = ["AUD", "USD", "EUR", "GBP", "NZD"] as const;
 
 export type CurrencyCode = (typeof currencyCodes)[number];
 
-export const participantColors = ["green", "blue", "violet", "orange"] as const;
-
-export type ParticipantColor = (typeof participantColors)[number];
-
 export interface EventSummary {
   id: string;
   title: string;
@@ -20,8 +16,6 @@ export interface EventSummary {
 export interface Participant {
   id: string;
   name: string;
-  initials: string;
-  color: ParticipantColor;
   sortOrder: number;
 }
 
@@ -77,29 +71,6 @@ export function assertCurrencyCode(value: string): CurrencyCode {
   }
 
   throw new Error(`Unsupported currency: ${value}`);
-}
-
-export function parseDecimalMoneyToMinor(value: string): number {
-  const trimmed = value.trim();
-  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(trimmed);
-
-  if (!match) {
-    throw new Error("Money amount must use whole units with up to two decimals.");
-  }
-
-  const whole = Number.parseInt(match[1] ?? "0", 10);
-  const cents = Number.parseInt((match[2] ?? "").padEnd(2, "0"), 10);
-  const amount = whole * 100 + cents;
-
-  if (!Number.isSafeInteger(amount) || amount <= 0) {
-    throw new Error("Money amount must be greater than zero.");
-  }
-
-  return amount;
-}
-
-export function minorToDecimal(amountMinor: number): number {
-  return amountMinor / 100;
 }
 
 export function deriveEqualShares(amountMinor: number, participantIds: string[]): ExpenseShare[] {

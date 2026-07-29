@@ -1,6 +1,4 @@
 import { Hono } from "hono";
-import { readFile } from "node:fs/promises";
-import { extname, join, relative, resolve } from "node:path";
 
 import { ChangeBroker } from "./change-broker.js";
 import { AppError } from "./errors.js";
@@ -20,11 +18,10 @@ import {
 
 interface AppOptions {
   broker?: ChangeBroker;
-  publicDir?: string;
   service: EventService;
 }
 
-export function createApp({ broker = new ChangeBroker(), publicDir = "dist/client", service }: AppOptions): Hono {
+export function createApp({ broker = new ChangeBroker(), service }: AppOptions): Hono {
   const app = new Hono();
 
   app.use("*", async (context, next) => {
@@ -143,8 +140,6 @@ export function createApp({ broker = new ChangeBroker(), publicDir = "dist/clien
     return context.json(snapshot);
   });
 
-  app.get("*", async (context) => serveBuiltClient(context.req.path, publicDir));
-
   return app;
 }
 
@@ -177,43 +172,4 @@ function parsePaymentCommand(value: unknown): PaymentCommand {
 
 function publishSnapshot(broker: ChangeBroker, eventId: string, version: number): void {
   broker.publish({ eventId, version });
-}
-
-async function serveBuiltClient(pathname: string, publicDir: string): Promise<Response> {
-  const root = resolve(publicDir);
-  const requestedPath = pathname === "/" || pathname.startsWith("/e/")
-    ? join(root, "index.html")
-    : join(root, pathname);
-  const resolvedPath = resolve(requestedPath);
-  const relativePath = relative(root, resolvedPath);
-
-  if (relativePath.startsWith("..")) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  try {
-    const file = await readFile(resolvedPath);
-    return new Response(file, {
-      headers: {
-        "Content-Type": contentTypeFor(resolvedPath),
-      },
-    });
-  } catch {
-    return new Response("Not found", { status: 404 });
-  }
-}
-
-function contentTypeFor(pathname: string): string {
-  switch (extname(pathname)) {
-    case ".css":
-      return "text/css; charset=utf-8";
-    case ".html":
-      return "text/html; charset=utf-8";
-    case ".js":
-      return "text/javascript; charset=utf-8";
-    case ".svg":
-      return "image/svg+xml";
-    default:
-      return "application/octet-stream";
-  }
 }

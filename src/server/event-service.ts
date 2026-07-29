@@ -4,7 +4,6 @@ import {
   calculateBalances,
   deriveEqualShares,
   getSettlementSuggestion,
-  participantColors,
   type CurrencyCode,
   type EventSnapshot,
   type Expense,
@@ -33,8 +32,6 @@ interface EventRow {
 interface ParticipantRow {
   id: string;
   name: string;
-  initials: string;
-  color: Participant["color"];
   sortOrder: number;
 }
 
@@ -128,16 +125,14 @@ export class EventService {
       this.db
         .prepare(
           `
-          INSERT INTO participants (id, event_id, name, initials, color, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+          INSERT INTO participants (id, event_id, name, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, 0, ?, ?)
         `,
         )
         .run(
           participantId,
           eventId,
           command.firstParticipantName,
-          initialsFor(command.firstParticipantName),
-          participantColors[0],
           createdAt,
           createdAt,
         );
@@ -158,22 +153,19 @@ export class EventService {
     this.assertNotExpired(event);
     const createdAt = this.now().toISOString();
     const nextSortOrder = this.getNextParticipantSortOrder(event.id);
-    const color = participantColors[nextSortOrder % participantColors.length];
 
     const write = this.db.transaction(() => {
       this.db
         .prepare(
           `
-          INSERT INTO participants (id, event_id, name, initials, color, sort_order, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO participants (id, event_id, name, sort_order, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
         `,
         )
         .run(
           randomUUID(),
           event.id,
           command.name,
-          initialsFor(command.name),
-          color,
           nextSortOrder,
           createdAt,
           createdAt,
@@ -193,8 +185,8 @@ export class EventService {
 
     const write = this.db.transaction(() => {
       this.db
-        .prepare("UPDATE participants SET name = ?, initials = ?, updated_at = ? WHERE id = ? AND event_id = ?")
-        .run(command.name, initialsFor(command.name), updatedAt, participantId, event.id);
+        .prepare("UPDATE participants SET name = ?, updated_at = ? WHERE id = ? AND event_id = ?")
+        .run(command.name, updatedAt, participantId, event.id);
       this.bumpVersion(event.id);
     });
 
@@ -424,7 +416,7 @@ export class EventService {
     return this.db
       .prepare(
         `
-        SELECT id, name, initials, color, sort_order AS sortOrder
+        SELECT id, name, sort_order AS sortOrder
         FROM participants
         WHERE event_id = ?
         ORDER BY sort_order ASC
@@ -628,12 +620,6 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function initialsFor(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  const initials = words.slice(0, 2).map((word) => word[0]?.toUpperCase() ?? "").join("");
-  return initials || "P";
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -672,16 +658,9 @@ function parseEventRow(row: unknown): EventRow {
 }
 
 function parseParticipantRow(row: unknown): ParticipantRow {
-  const color = readStringField(row, "color");
-  if (!participantColors.includes(color as Participant["color"])) {
-    throw new Error(`Database row has unsupported participant color ${color}.`);
-  }
-
   return {
     id: readStringField(row, "id"),
     name: readStringField(row, "name"),
-    initials: readStringField(row, "initials"),
-    color: color as Participant["color"],
     sortOrder: readIntegerField(row, "sortOrder"),
   };
 }

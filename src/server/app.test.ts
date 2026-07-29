@@ -25,6 +25,10 @@ describe("API app", () => {
       status: 201,
     });
 
+    expect(snapshot.participants.every((participant) => (
+      !("initials" in participant) && !("color" in participant)
+    ))).toBe(true);
+
     const andrejs = participantId(snapshot, "Andrejs");
     const mia = participantId(snapshot, "Mia");
 
@@ -113,6 +117,17 @@ describe("API app", () => {
     expect(await response.json()).toEqual({
       error: "currency must be one of AUD, USD, EUR, GBP, or NZD.",
     });
+  });
+
+  it("returns 404 for client routes", async () => {
+    const app = createApp({ service: new EventService(openDatabase(":memory:")) });
+
+    for (const path of ["/", "/e/legacy-token"]) {
+      const response = await app.request(path);
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    }
   });
 });
 
