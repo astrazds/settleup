@@ -181,7 +181,10 @@ export default function Settle() {
                 const to = participantName(snapshot, payment.to);
                 return (
                   <li className={styles.listItem} key={payment.id}>
-                    <div aria-hidden="true" className={styles.avatar}>
+                    <div
+                      aria-hidden="true"
+                      className={`${styles.avatar} ${styles.entryMark}`}
+                    >
                       <SettleIcon height="18" width="18" />
                     </div>
                     <div className={styles.listMain}>
@@ -189,9 +192,6 @@ export default function Settle() {
                         <p className={styles.listTitle}>
                           {from} → {to}
                         </p>
-                        <span className={styles.listAmount}>
-                          {formatMoney(payment.amountMinor, snapshot.event.currency)}
-                        </span>
                       </div>
                       <p className={styles.listMeta}>
                         Recorded
@@ -200,6 +200,9 @@ export default function Settle() {
                           : ""}
                       </p>
                     </div>
+                    <span className={styles.listAmount}>
+                      {formatMoney(payment.amountMinor, snapshot.event.currency)}
+                    </span>
                     <div className={styles.itemActions}>
                       <Link
                         aria-label={`Edit payment from ${from} to ${to}`}

@@ -1,3 +1,18 @@
+/*
+THESIS: One live event register, not a stack of finance cards; a narrow split
+spine keeps identity and navigation fixed while the active route reads as a
+ruled working document.
+OWN-WORLD: Ink spine, mustard folio, cream paper, teal current field, and brick
+commitments/errors; League Gothic titles, Barlow copy, square controls, hard
+one-pixel rules, and no ambient shadow.
+STORY: Confirm the event and live state, choose Expenses, Settle, or People,
+make one exact change, and understand any reconnect or edit conflict.
+FIRST VIEWPORT: Desktop gives 240px to the register and the rest to the active
+ledger; mobile stacks masthead, folio, status, and a sticky three-cell index
+before the route heading and action.
+FORM: Side-car Register, position 3 of 6; approved Split Spine staging; seed
+c6026cc7.
+*/
 import {
   useCallback,
   useEffect,
@@ -17,9 +32,6 @@ import { Brand } from "../components/brand";
 import type { EventOutletContext } from "../components/event-context";
 import {
   CalendarIcon,
-  PeopleIcon,
-  ReceiptIcon,
-  SettleIcon,
   ShareIcon,
 } from "../components/icons";
 import { getEvent } from "../lib/api";
@@ -144,38 +156,35 @@ export default function EventLayout() {
   }
 
   return (
-    <>
-      <header className={`${styles.shell} ${styles.eventHeader}`}>
-        <div className={styles.eventTopbar}>
-          <Brand />
-          <button
-            className={`${styles.button} ${styles.buttonSecondary}`}
-            onClick={() => void shareEvent()}
-            type="button"
-          >
-            <ShareIcon />
-            Share
-          </button>
-          {shareMessage ? (
-            <span
-              aria-live="polite"
-              className={styles.shareStatus}
-              role="status"
+    <div className={styles.eventWorkspace}>
+      <aside className={styles.eventSpine}>
+        <header className={styles.eventHeader}>
+          <div className={styles.eventTopbar}>
+            <Brand variant="event" />
+            <button
+              className={`${styles.button} ${styles.buttonSecondary} ${styles.shareButton}`}
+              onClick={() => void shareEvent()}
+              type="button"
             >
-              {shareMessage}
-            </span>
-          ) : null}
-        </div>
+              <ShareIcon />
+              <span>Share</span>
+            </button>
+          </div>
 
-        <div className={styles.eventIdentity}>
-          <h1 className={styles.eventTitle}>{snapshot.event.title}</h1>
+          <div className={styles.eventIdentity}>
+            <div>
+              <p className={styles.eventKicker}>Private event</p>
+              <h1 className={styles.eventTitle}>{snapshot.event.title}</h1>
+            </div>
+            <p className={styles.eventCurrency}>{snapshot.event.currency}</p>
+          </div>
+
           <div className={styles.eventMeta}>
             <span className={styles.eventMetaItem}>
-              {snapshot.event.currency}
-            </span>
-            <span className={styles.eventMetaItem}>
               <CalendarIcon height="16" width="16" />
-              {expiryLabel(snapshot.event.expiresAt)}
+              <time dateTime={snapshot.event.expiresAt}>
+                {expiryLabel(snapshot.event.expiresAt)}
+              </time>
             </span>
             <span
               className={styles.eventMetaItem}
@@ -198,54 +207,90 @@ export default function EventLayout() {
                   : "Reconnecting"}
             </span>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <nav aria-label="Event" className={styles.nav}>
-        <div className={`${styles.shell} ${styles.navInner}`}>
-          <NavLink className={navClassName} end={false} to="expenses">
-            <ReceiptIcon />
-            Expenses
-          </NavLink>
-          <NavLink className={navClassName} end={false} to="settle">
-            <SettleIcon />
-            Settle
-          </NavLink>
-          <NavLink className={navClassName} end={false} to="people">
-            <PeopleIcon />
-            People
-          </NavLink>
-        </div>
-      </nav>
+        <nav aria-label="Event" className={styles.nav}>
+          <div className={styles.navInner}>
+            <NavLink
+              aria-label="Expenses"
+              className={navClassName}
+              end={false}
+              to="expenses"
+            >
+              <span aria-hidden="true" className={styles.navNumber}>01</span>
+              <span className={styles.navCopy}>
+                <span className={styles.navLabel}>Expenses</span>
+                <span className={styles.navDescription}>Shared costs</span>
+              </span>
+            </NavLink>
+            <NavLink
+              aria-label="Settle"
+              className={navClassName}
+              end={false}
+              to="settle"
+            >
+              <span aria-hidden="true" className={styles.navNumber}>02</span>
+              <span className={styles.navCopy}>
+                <span className={styles.navLabel}>Settle</span>
+                <span className={styles.navDescription}>What remains</span>
+              </span>
+            </NavLink>
+            <NavLink
+              aria-label="People"
+              className={navClassName}
+              end={false}
+              to="people"
+            >
+              <span aria-hidden="true" className={styles.navNumber}>03</span>
+              <span className={styles.navCopy}>
+                <span className={styles.navLabel}>People</span>
+                <span className={styles.navDescription}>The group</span>
+              </span>
+            </NavLink>
+          </div>
+        </nav>
+      </aside>
 
-      {stream.status !== "connected" ? (
-        <aside
-          aria-live="polite"
-          className={`${styles.shell} ${styles.connectionNotice}`}
-        >
-          <span>
-            {stream.isOffline
-              ? "You’re offline. Existing details stay visible, but changes need a connection."
-              : "Live updates are reconnecting. Refresh if someone else just made a change."}
-          </span>
-          <button
-            className={styles.textButton}
-            onClick={revalidate}
-            type="button"
+      <div className={styles.eventDocument}>
+        {stream.status !== "connected" ? (
+          <aside
+            aria-live="polite"
+            className={styles.connectionNotice}
           >
-            Refresh now
-          </button>
-        </aside>
-      ) : null}
+            <span>
+              {stream.isOffline
+                ? "You’re offline. Existing details stay visible, but changes need a connection."
+                : "Live updates are reconnecting. Refresh if someone else just made a change."}
+            </span>
+            <button
+              className={styles.textButton}
+              onClick={revalidate}
+              type="button"
+            >
+              Refresh now
+            </button>
+          </aside>
+        ) : null}
 
-      <main
-        aria-label={`${snapshot.event.title} event workspace`}
-        className={`${styles.shell} ${styles.main}`}
-        id="main-content"
-        tabIndex={-1}
-      >
-        <Outlet context={context} />
-      </main>
-    </>
+        <main
+          aria-label={`${snapshot.event.title} event workspace`}
+          className={styles.main}
+          id="main-content"
+          tabIndex={-1}
+        >
+          <Outlet context={context} />
+        </main>
+      </div>
+
+      {shareMessage ? (
+        <span
+          aria-live="polite"
+          className={styles.shareStatus}
+          role="status"
+        >
+          {shareMessage}
+        </span>
+      ) : null}
+    </div>
   );
 }

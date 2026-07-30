@@ -172,6 +172,12 @@ export function PaymentForm({
         />
       ) : null}
 
+      {snapshot.participants.length < 2 ? (
+        <p className={styles.formError} role="alert">
+          Add another person before recording a payment.
+        </p>
+      ) : null}
+
       <div className={styles.dialogActions}>
         <button
           className={`${styles.button} ${styles.buttonPrimary}`}

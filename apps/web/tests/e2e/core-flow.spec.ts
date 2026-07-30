@@ -9,7 +9,7 @@ test("creates, edits, settles, and cleans up a shared event", async ({
 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Split the moment. Keep it simple.",
+    "Everyone pays. Every cent lands.",
   );
 
   await page.getByLabel("What are you splitting?").fill(eventTitle);

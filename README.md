@@ -15,6 +15,19 @@ wire-contract package:
 The API never serves frontend assets or client routes. Direct non-API requests
 to the backend continue to return `404 Not Found`.
 
+## Product and interface documentation
+
+- [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md) defines the users, product
+  boundary, trust model, capabilities, brand commitments, and accessibility
+  requirements.
+- [`apps/web/DESIGN.md`](apps/web/DESIGN.md) defines the current visual system,
+  responsive composition, brand mark, and reusable landing and event-workspace
+  patterns.
+
+These are current-state contracts rather than redesign history. Product
+behavior remains authoritative in the shared schemas, server implementation,
+frontend routes, and tests.
+
 ## Run locally
 
 Use Node.js 22.22.x, or Node.js 24 and newer, with npm 12.
@@ -31,11 +44,24 @@ Run either surface separately with `npm run dev:web` or `npm run dev:api`.
 
 ## Frontend
 
-The frontend is a static React Router SPA with three event sections:
+The frontend is a static React Router SPA. Its landing page creates a private
+event; each event uses a responsive Split Spine workspace with three peer
+sections:
 
-- Expenses: record equal-split expenses and see current balances.
-- Settle: follow the next settlement suggestion and record offline payments.
-- People: add, rename, or remove eligible participants.
+- Expenses: record equal-split expenses, inspect exact per-person shares, and
+  review total-spend and live-sync facts.
+- Settle: review current balances, follow the next settlement suggestion, and
+  record payments made outside SettleUp.
+- People: add, rename, or remove eligible participants and see each person’s
+  current net position.
+
+The landing page presents event creation as a high-energy “Shared Session”
+using the Settle Cut mark, hard screen-printed color fields, and one
+illustrative cent-exact split. Event routes translate that visual language into
+a calmer Split Spine register: persistent event identity and section navigation
+on desktop, a compact stacked folio and sticky section index on mobile, and
+ruled operational documents for Expenses, Settle, and People. The interface is
+complete at 320px and includes dark, reduced-motion, and forced-colors states.
 
 Expense forms preview the exact per-person minor-unit split, including remainder
 cents, and saved expenses keep that server-authored breakdown available.
@@ -51,6 +77,11 @@ loaded and reviewed.
 Browser preferences are limited to the current tab session and store only a
 participant ID keyed by the public event ID. Event tokens and snapshots are
 not persisted.
+
+Playwright baselines cover the landing page and the complete event workspace on
+mobile and desktop, including empty and populated Expenses, the expense sheet,
+Settle, People, and dark mode. The same browser suite checks semantic
+accessibility, forced colors, and horizontal overflow.
 
 ## Shared contracts
 
@@ -97,8 +128,8 @@ Supported currencies are `AUD`, `USD`, `EUR`, `GBP`, and `NZD`.
 ## Snapshots and realtime updates
 
 An event snapshot contains the event, participants, expenses, recorded
-payments, balances, and the next settlement suggestion. Expense shares,
-are derived deterministically when an expense is saved and persisted with it.
+payments, balances, and the next settlement suggestion. Expense shares are
+derived deterministically when an expense is saved and persisted with it.
 Balances and settlement suggestions are recomputed from the persisted ledger
 rather than stored as summary values. Each successful mutation increments the
 event version.

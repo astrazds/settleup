@@ -40,12 +40,18 @@ function expenseDate(value: string): string {
 
 export default function Expenses() {
   const context = useEventContext();
-  const { snapshot } = context;
+  const { snapshot, streamStatus } = context;
   const fetcher = useFetcher<typeof clientAction>();
   const totalMinor = snapshot.expenses.reduce(
     (total, expense) => total + BigInt(expense.amountMinor),
     0n,
   );
+  const syncLabel =
+    streamStatus === "connected"
+      ? "Up to date"
+      : streamStatus === "offline"
+        ? "Offline"
+        : "Reconnecting";
 
   return (
     <>
@@ -66,18 +72,26 @@ export default function Expenses() {
 
         {snapshot.expenses.length > 0 ? (
           <>
-            <div className={styles.summaryGrid}>
-              <div className={styles.summaryCard}>
-                <p className={styles.summaryLabel}>Total spent</p>
-                <p className={styles.summaryValue}>
+            <dl className={styles.summaryGrid}>
+              <div className={`${styles.summaryCard} ${styles.summaryCardPrimary}`}>
+                <dt className={styles.summaryLabel}>Total spent</dt>
+                <dd className={styles.summaryValue}>
                   {formatMoney(totalMinor, snapshot.event.currency)}
-                </p>
+                </dd>
               </div>
               <div className={styles.summaryCard}>
-                <p className={styles.summaryLabel}>Expenses</p>
-                <p className={styles.summaryValue}>{snapshot.expenses.length}</p>
+                <dt className={styles.summaryLabel}>Expenses</dt>
+                <dd className={styles.summaryValue}>{snapshot.expenses.length}</dd>
               </div>
-            </div>
+              <div className={styles.summaryCard}>
+                <dt className={styles.summaryLabel}>Currency</dt>
+                <dd className={styles.summaryValue}>{snapshot.event.currency}</dd>
+              </div>
+              <div className={styles.summaryCard}>
+                <dt className={styles.summaryLabel}>Live state</dt>
+                <dd className={styles.summaryValue}>{syncLabel}</dd>
+              </div>
+            </dl>
 
             {fetcher.data && "error" in fetcher.data ? (
               <p aria-live="polite" className={styles.formError} role="alert">
@@ -95,15 +109,15 @@ export default function Expenses() {
                   const peopleCount = expense.shares.length;
                   return (
                     <li className={styles.listItem} key={expense.id}>
-                      <div aria-hidden="true" className={styles.avatar}>
+                      <div
+                        aria-hidden="true"
+                        className={`${styles.avatar} ${styles.entryMark}`}
+                      >
                         <ReceiptIcon height="18" width="18" />
                       </div>
                       <div className={styles.listMain}>
                         <div className={styles.listTitleRow}>
                           <p className={styles.listTitle}>{expense.description}</p>
-                          <span className={styles.listAmount}>
-                            {formatMoney(expense.amountMinor, snapshot.event.currency)}
-                          </span>
                         </div>
                         <p className={styles.listMeta}>
                           {payer} paid · split {peopleCount === 1 ? "with 1 person" : `with ${peopleCount} people`}
@@ -135,6 +149,9 @@ export default function Expenses() {
                           </ul>
                         </details>
                       </div>
+                      <span className={styles.listAmount}>
+                        {formatMoney(expense.amountMinor, snapshot.event.currency)}
+                      </span>
                       <div className={styles.itemActions}>
                         <Link
                           aria-label={`Edit ${expense.description}`}
