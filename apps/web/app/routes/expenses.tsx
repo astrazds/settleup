@@ -1,6 +1,6 @@
 import { Link, Outlet, useFetcher } from "react-router";
 
-import { DeleteConfirm } from "../components/dialog";
+import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
 import {
   actionErrorMessage,
@@ -13,6 +13,11 @@ import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/expenses";
+
+const expenseDateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+});
 
 export async function clientAction({ params, request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -32,10 +37,7 @@ function expenseDate(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? ""
-    : new Intl.DateTimeFormat(undefined, {
-        day: "numeric",
-        month: "short",
-      }).format(date);
+    : expenseDateFormatter.format(date);
 }
 
 export default function Expenses() {
@@ -61,13 +63,15 @@ export default function Expenses() {
             <h2 className={styles.pageTitle}>Expenses</h2>
             <p className={styles.pageIntro}>Add each shared cost as it happens.</p>
           </div>
-          <Link
-            className={`${styles.button} ${styles.buttonPrimary}`}
-            to="new"
-          >
-            <PlusIcon />
-            <span>Add expense</span>
-          </Link>
+          {snapshot.expenses.length > 0 ? (
+            <Link
+              className={`${styles.button} ${styles.buttonPrimary}`}
+              to="new"
+            >
+              <PlusIcon />
+              <span>Add expense</span>
+            </Link>
+          ) : null}
         </div>
 
         {snapshot.expenses.length > 0 ? (
@@ -107,6 +111,7 @@ export default function Expenses() {
                 {snapshot.expenses.map((expense) => {
                   const payer = participantName(snapshot, expense.payerId);
                   const peopleCount = expense.shares.length;
+                  const dateLabel = expenseDate(expense.createdAt);
                   return (
                     <li className={styles.listItem} key={expense.id}>
                       <div
@@ -121,9 +126,7 @@ export default function Expenses() {
                         </div>
                         <p className={styles.listMeta}>
                           {payer} paid · split {peopleCount === 1 ? "with 1 person" : `with ${peopleCount} people`}
-                          {expenseDate(expense.createdAt)
-                            ? ` · ${expenseDate(expense.createdAt)}`
-                            : ""}
+                          {dateLabel ? ` · ${dateLabel}` : ""}
                         </p>
                         <details className={styles.shareDetails}>
                           <summary className={styles.shareSummary}>
@@ -160,6 +163,9 @@ export default function Expenses() {
                           to={`${expense.id}/edit`}
                         >
                           <EditIcon />
+                          <span aria-hidden="true" className={styles.actionLabel}>
+                            Edit
+                          </span>
                         </Link>
                         <DeleteConfirm
                           description={`This permanently removes “${expense.description}” and recalculates everyone's balances.`}

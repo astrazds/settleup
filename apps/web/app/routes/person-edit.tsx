@@ -1,8 +1,8 @@
 import { redirect, useActionData } from "react-router";
 
-import { RouteDialog } from "../components/dialog";
 import { actionErrorMessage, useEventContext } from "../components/event-context";
 import { PersonForm } from "../components/person-form";
+import { RouteDialog } from "../components/route-dialog";
 import { renameParticipant } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import styles from "../styles/app.module.css";
@@ -38,7 +38,7 @@ export default function EditPerson({ params }: Route.ComponentProps) {
 
   return (
     <RouteDialog
-      closeTo="../.."
+      closeTo=".."
       description="The new name appears everywhere in this event."
       title="Edit person"
     >

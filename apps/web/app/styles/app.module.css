@@ -1,39 +1,3 @@
-.app {
-  min-height: 100vh;
-}
-
-.skipLink {
-  position: fixed;
-  z-index: 200;
-  top: 10px;
-  left: 10px;
-  min-height: var(--tap);
-  padding: 11px 15px;
-  border: 1px solid var(--ink);
-  border-radius: 0;
-  color: var(--poster-cream);
-  background: var(--session-brick);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  text-transform: uppercase;
-  transform: translateY(-160%);
-}
-
-.skipLink:focus {
-  transform: translateY(0);
-}
-
-.shell {
-  width: min(calc(100% - 32px), var(--content));
-  margin-inline: auto;
-}
-
-.homeHeader {
-  padding-block: 22px;
-}
-
 .form {
   display: grid;
   gap: 18px;
@@ -157,11 +121,14 @@ fieldset.field {
 }
 
 .button {
+  max-width: 100%;
   min-width: max-content;
+  overflow-wrap: anywhere;
   padding: 11px 18px;
   border: 1px solid var(--border-strong);
   font-size: 0.76rem;
   letter-spacing: 0.075em;
+  text-align: center;
   text-transform: uppercase;
 }
 
@@ -255,10 +222,10 @@ fieldset.field {
 }
 
 .eventWorkspace {
-  --spine-paper: #f2e8d1;
-  --spine-ink: #0b0b0b;
-  --spine-mustard: #e0b12e;
-  --spine-teal: #075f5e;
+  --spine-paper: var(--poster-cream);
+  --spine-ink: var(--ink-black);
+  --spine-mustard: var(--session-mustard);
+  --spine-teal: var(--field-teal);
   display: grid;
   min-height: 100svh;
   color: var(--ink);
@@ -395,7 +362,7 @@ fieldset.field {
 }
 
 .navLink:hover {
-  background: #25231e;
+  background: var(--spine-hover);
 }
 
 .navLinkActive {
@@ -438,6 +405,8 @@ fieldset.field {
 }
 
 .navLabel {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-family: "Session Display", Impact, sans-serif;
   font-size: 2rem;
   letter-spacing: 0.005em;
@@ -497,8 +466,8 @@ fieldset.field {
 }
 
 .pageTitle,
-.dialogTitle,
-.errorTitle {
+.dialogTitle {
+  overflow-wrap: anywhere;
   margin: 0;
   font-family: "Session Display", Impact, sans-serif;
   font-weight: 400;
@@ -749,6 +718,10 @@ fieldset.field {
   gap: 2px;
 }
 
+.actionLabel {
+  display: none;
+}
+
 .empty {
   display: grid;
   min-height: 190px;
@@ -791,8 +764,11 @@ fieldset.field {
 }
 
 .empty > .button {
+  min-width: 0;
+  overflow-wrap: anywhere;
   grid-row: 1 / span 2;
   grid-column: 3;
+  white-space: normal;
 }
 
 .balanceList {
@@ -918,7 +894,7 @@ fieldset.field {
 }
 
 .settledCard .hint {
-  color: #3f370f;
+  color: var(--ink-on-mustard);
 }
 
 .settledIcon {
@@ -999,7 +975,7 @@ fieldset.field {
   position: fixed;
   z-index: 90;
   inset: 0;
-  background: rgb(11 11 11 / 78%);
+  background: var(--dialog-scrim);
   animation: fadeIn 150ms ease-out;
 }
 
@@ -1060,6 +1036,11 @@ fieldset.field {
   top: 50%;
   left: 50%;
   width: min(calc(100% - 32px), 460px);
+  max-height: calc(
+    100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 24px;
   border: 1px solid var(--border-strong);
   border-top: 8px solid var(--session-brick);
@@ -1077,79 +1058,6 @@ fieldset.field {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 26px;
-}
-
-.skeleton {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-muted);
-}
-
-.skeleton::after {
-  display: block;
-  width: 44%;
-  height: 100%;
-  background: var(--session-mustard);
-  animation: shimmer 1.3s infinite;
-  content: "";
-}
-
-.skeletonTitle {
-  width: min(72%, 420px);
-  height: 68px;
-}
-
-.skeletonLine {
-  width: 45%;
-  height: 18px;
-}
-
-.skeletonCard {
-  height: 110px;
-}
-
-.loadingPage {
-  display: grid;
-  gap: 24px;
-  padding-block: 42px;
-}
-
-.errorPage {
-  display: grid;
-  min-height: 70vh;
-  align-content: center;
-  justify-items: start;
-  padding-block: 48px;
-}
-
-.errorCode {
-  width: fit-content;
-  margin: 0 0 14px;
-  padding: 5px 8px;
-  color: var(--poster-cream);
-  background: var(--session-brick);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.errorTitle {
-  max-width: 14ch;
-  font-size: clamp(3.2rem, 9vw, 5.8rem);
-}
-
-.errorText {
-  max-width: 58ch;
-  margin: 18px 0 28px;
-  color: var(--ink-muted);
-}
-
-.errorActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }
 
 .shareStatus {
@@ -1190,16 +1098,6 @@ fieldset.field {
   from {
     opacity: 0.75;
     transform: translate(-50%, calc(-50% + 10px));
-  }
-}
-
-@keyframes shimmer {
-  from {
-    transform: translateX(-100%);
-  }
-
-  to {
-    transform: translateX(280%);
   }
 }
 
@@ -1386,6 +1284,21 @@ fieldset.field {
     justify-self: end;
   }
 
+  .itemActions .iconButton {
+    width: auto;
+    min-width: var(--tap);
+    flex: 0 0 auto;
+    gap: 6px;
+    padding-inline: 10px;
+  }
+
+  .itemActions .actionLabel {
+    display: inline;
+    font-size: 0.7rem;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+  }
+
   .empty {
     grid-template-columns: 52px minmax(0, 1fr);
     row-gap: 6px;
@@ -1523,6 +1436,7 @@ fieldset.field {
   .eventSpine,
   .nav,
   .navLink,
+  .navLink:hover,
   .settlementCard {
     border-color: CanvasText;
     color: CanvasText;
@@ -1541,10 +1455,11 @@ fieldset.field {
     color: inherit;
   }
 
-  .navLinkActive {
-    border-color: HighlightText;
-    color: HighlightText;
-    background: Highlight;
+  .navLinkActive,
+  .navLinkActive:hover {
+    border-color: Highlight;
+    color: CanvasText;
+    background: Canvas;
     outline: 3px solid Highlight;
     outline-offset: -4px;
   }

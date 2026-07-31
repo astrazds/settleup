@@ -9,7 +9,12 @@ colors:
   brick-beat: "#b23a2e"
   poster-cream: "#f2e8d1"
   paper-bright: "#fff9e8"
+  paper-hover: "#fffdf5"
   muted-ink: "#655e50"
+  muted-on-ink: "#d7cab0"
+  spine-hover: "#25231e"
+  ink-on-mustard: "#3f370f"
+  dialog-scrim: "rgb(11 11 11 / 78%)"
 typography:
   display:
     fontFamily: '"Session Display", Impact, sans-serif'
@@ -142,7 +147,15 @@ field; the others create cuts, contrast, or state.
 - **Poster Cream** (`#f2e8d1`): readable paper field, form panel, and reversed
   text on ink.
 - **Paper Bright** (`#fff9e8`): input fill on cream.
+- **Paper Hover** (`#fffdf5`): the small interactive lift for light inputs.
 - **Muted Ink** (`#655e50`): secondary copy on light paper only.
+- **Muted on Ink** (`#d7cab0`): secondary reversed copy on the dark landing
+  field.
+- **Spine Hover** (`#25231e`): the event-register hover field.
+- **Ink on Mustard** (`#3f370f`): accessible secondary copy on the settlement
+  field.
+- **Dialog Scrim** (`rgb(11 11 11 / 78%)`): the route-sheet and confirmation
+  backdrop.
 
 **The Field Before Accent Rule.** Color owns complete regions. Do not scatter
 mustard, teal, and brick across neutral cards as small decorative accents.
@@ -150,6 +163,10 @@ mustard, teal, and brick across neutral cards as small decorative accents.
 **The Ledger Meaning Rule.** Product states stay understandable without hue.
 Brick and teal may reinforce a state only after text, structure, or an
 accessible label establishes its meaning.
+
+**The Token Ownership Rule.** Authored palette literals belong in the global
+token layer. Brand, landing, root, and event CSS consume semantic custom
+properties; forced-colors adaptations use platform system colors.
 
 ## Typography
 
@@ -309,6 +326,9 @@ soft floating panels.
 - **Content:** Settle Cut lockup, Share, title, currency, expiry/live state,
   and Expenses/Settle/People only. No owner, role, archive, or invitation
   controls.
+- **Live state:** Connected, reconnecting, and offline changes reuse one stable
+  atomic status node. The longer reconnect notice remains non-live so the same
+  transition is not announced twice.
 - **Responsive:** persistent on desktop; stacked above a sticky peer-section
   index below `820px`.
 
@@ -326,24 +346,50 @@ soft floating panels.
 - **Style:** one square outer rule and continuous row dividers. Descriptions
   and names wrap; money owns a stable tabular column; edit/delete controls stay
   explicit.
+- **Actions:** below `820px`, Edit and Delete labels stay visible beside their
+  icons. Desktop keeps compact icon actions with complete accessible names and
+  title text.
 - **Disclosure:** exact expense shares remain native `details`/`summary`
   content, not a chevron to a nonexistent detail page.
 - **People:** circles are reserved for participant initials and live status;
   expense/payment glyphs use square ink plates.
 
+### Empty Expenses
+
+- **Action:** the empty document contains one “Add the first expense” action.
+  The page-header action appears only after at least one expense exists, so the
+  first-use state never presents duplicate commitments.
+
 ### Route Sheet
 
 - **Style:** square paper sheet with a mustard top rule, hard title divider,
   and no blur, ambient shadow, pill handle, or rounded bottom-sheet chrome.
-- **Behavior:** Radix focus trapping and focus return remain authoritative.
-  Mobile keeps the submit commitment visible in a fixed ruled footer while the
-  form body scrolls behind it.
+- **Behavior:** Radix focus trapping remains authoritative. Dismissal resolves
+  to the sheet’s immediate Expenses, Settle, or People parent rather than the
+  event index. A launcher-opened sheet returns focus to that launcher; a direct
+  deep link falls back to the event workspace main region.
+- **Mobile:** the submit commitment remains visible in a fixed ruled footer
+  while the form body scrolls behind it.
+- **Loading boundary:** route sheets and destructive confirmations remain
+  separate implementations. The lightweight delete trigger keeps AlertDialog
+  out of the initial list-route graph, preloads it on pointer or keyboard
+  intent, and mounts it only when confirmation is requested.
+
+### Destructive Confirmation
+
+- **Containment:** the square AlertDialog remains inside safe-area-adjusted
+  viewport bounds and scrolls internally when content or text scaling exceeds
+  the available height.
+- **Commitments:** Keep and Delete stay reachable at 200% text and in short
+  landscape viewports. Closing returns focus to the triggering delete control.
 
 ## Accessibility and State Adaptation
 
 - **Responsive floor:** compositions must remain complete at `320px` without
   horizontal scrolling. Labels and primary actions stay visible; secondary
-  ledger metadata wraps or moves to another row.
+  ledger metadata wraps or moves to another row. Portable `200%` zoom,
+  `200%` text, and short landscape viewports keep their primary controls and
+  dialog commitments usable.
 - **Dark mode:** the operational paper inverts while the five-ink identity
   remains recognizable. Contrast is rechecked rather than assumed from the
   light palette.
@@ -352,9 +398,11 @@ soft floating panels.
   and current location remain visible without relying on authored hue.
 - **Reduced motion:** remove the hard-cut entrance and route transitions while
   preserving the final composition and focus movement.
-- **Visual verification:** Playwright snapshots cover landing and event-route
-  states at mobile and desktop sizes; Axe checks accompany the responsive,
-  dark, and forced-colors states.
+- **Visual verification:** Chromium snapshots cover landing, root-error, and
+  event-route states at mobile and desktop sizes. The same semantic flows,
+  overflow checks, Axe checks, responsive stress cases, dark mode, and
+  forced-colors behavior run in mobile and desktop Chromium, desktop Firefox,
+  and mobile WebKit.
 
 ## Do's and Don'ts
 

@@ -1,9 +1,6 @@
 .homePage {
-  --session-brick: #b23a2e;
-  --session-cream: #f2e8d1;
-  --session-ink: #0b0b0b;
-  --session-mustard: #e0b12e;
-  --session-teal: #0e7c7b;
+  --session-cream: var(--poster-cream);
+  --session-ink: var(--ink-black);
   min-height: 100vh;
   overflow: clip;
   color: var(--session-ink);
@@ -230,20 +227,20 @@
   border: 1px solid var(--session-ink);
   border-radius: 2px;
   color: var(--session-ink);
-  background: #fff9e8;
+  background: var(--paper-bright);
   box-shadow: none;
   font: inherit;
   transition: background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .field input::placeholder {
-  color: #655e50;
+  color: var(--muted-ink);
   opacity: 1;
 }
 
 .field input:hover,
 .field select:hover {
-  background: #fffdf5;
+  background: var(--paper-hover);
 }
 
 .field input:focus,
@@ -372,7 +369,7 @@
 }
 
 .splitIntro > p {
-  color: #655e50;
+  color: var(--muted-ink);
 }
 
 .splitIntro h2 {
@@ -876,11 +873,20 @@
   }
 
   .splitIntro > p {
-    color: #d7cab0;
+    color: var(--muted-on-ink);
   }
 
   .shareList strong {
     color: var(--session-mustard);
   }
 
+}
+
+@media (forced-colors: active) {
+  .field input:focus-visible,
+  .field select:focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }

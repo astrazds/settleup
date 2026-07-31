@@ -2,10 +2,36 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test("creates, edits, settles, and cleans up a shared event", async ({
+  browserName,
   page,
 }) => {
   const suffix = Date.now().toString().slice(-6);
   const eventTitle = `Coast weekend ${suffix}`;
+
+  if (browserName !== "chromium") {
+    await page.addInitScript(() => {
+      let clipboardText = "";
+
+      Object.defineProperty(navigator, "share", {
+        configurable: true,
+        value: undefined,
+      });
+      Object.defineProperty(navigator, "canShare", {
+        configurable: true,
+        value: undefined,
+      });
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+          readText: () => Promise.resolve(clipboardText),
+          writeText: (value: string) => {
+            clipboardText = value;
+            return Promise.resolve();
+          },
+        },
+      });
+    });
+  }
 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -44,13 +70,21 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   await page.getByRole("button", { name: "Add person" }).click();
   await expect(page.getByText("Noah", { exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: "Edit Noah" }).click();
+  const editNoahLink = page.getByRole("link", { name: "Edit Noah" });
+  await editNoahLink.click();
+  await expect(page).toHaveURL(/\/people\/[^/]+\/edit$/);
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page).toHaveURL(/\/people$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(editNoahLink).toBeFocused();
+
+  await editNoahLink.click();
   await page.getByLabel("Name").fill("Noah K");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Noah K", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Expenses" }).click();
-  await page.getByRole("link", { name: "Add expense" }).click();
+  await page.getByRole("link", { name: "Add the first expense" }).click();
   await page.getByLabel("What was it?").fill("Dinner");
   await page.getByLabel("Amount").fill("40.00");
   const expenseDialog = page.getByRole("dialog");
@@ -91,9 +125,33 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   await page.getByRole("button", { name: "Record payment" }).click();
   await expect(page.getByRole("heading", { name: "Everyone is settled" })).toBeVisible();
 
-  await page
-    .getByRole("link", { name: "Edit payment from Noah K to Mia" })
-    .click();
+  const editPaymentLink = page.getByRole("link", {
+    name: "Edit payment from Noah K to Mia",
+  });
+  const deletePaymentButton = page.getByRole("button", {
+    name: "Delete payment from Noah K to Mia",
+  });
+  const mobileActionsAreVisible = (page.viewportSize()?.width ?? 0) <= 819;
+  const editPaymentLabel = editPaymentLink.getByText("Edit", { exact: true });
+  const deletePaymentLabel = deletePaymentButton.getByText("Delete", {
+    exact: true,
+  });
+  if (mobileActionsAreVisible) {
+    await expect(editPaymentLabel).toBeVisible();
+    await expect(deletePaymentLabel).toBeVisible();
+  } else {
+    await expect(editPaymentLabel).toBeHidden();
+    await expect(deletePaymentLabel).toBeHidden();
+  }
+
+  await editPaymentLink.click();
+  await expect(page).toHaveURL(/\/settle\/[^/]+\/edit$/);
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page).toHaveURL(/\/settle$/);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(editPaymentLink).toBeFocused();
+
+  await editPaymentLink.click();
   await page.getByLabel("Amount").fill("20.00");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(
@@ -139,7 +197,7 @@ test("adds a new participant to an existing expense", async ({ page }) => {
   await page.getByLabel("Your name").fill("Mia");
   await page.getByRole("button", { name: "Create private event" }).click();
 
-  await page.getByRole("link", { name: "Add expense" }).click();
+  await page.getByRole("link", { name: "Add the first expense" }).click();
   await page.getByLabel("What was it?").fill("Dinner");
   await page.getByLabel("Amount").fill("10.00");
   await page.getByRole("button", { name: "Add expense" }).click();
@@ -156,7 +214,7 @@ test("adds a new participant to an existing expense", async ({ page }) => {
   const expenseDialog = page.getByRole("dialog");
   const noahCheckbox = expenseDialog.getByLabel("Noah", { exact: true });
   await expect(noahCheckbox).not.toBeChecked();
-  await noahCheckbox.check();
+  await noahCheckbox.locator("xpath=following-sibling::label").click();
   await expect(noahCheckbox).toBeChecked();
   await expect(
     expenseDialog.getByRole("heading", { name: "Exact split" }),

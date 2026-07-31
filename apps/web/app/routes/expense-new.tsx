@@ -1,8 +1,8 @@
 import { redirect, useActionData } from "react-router";
 
-import { RouteDialog } from "../components/dialog";
 import { actionErrorMessage } from "../components/event-context";
 import { ExpenseForm } from "../components/expense-form";
+import { RouteDialog } from "../components/route-dialog";
 import { createExpense } from "../lib/api";
 import {
   readFormCurrency,

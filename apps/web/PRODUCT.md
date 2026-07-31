@@ -113,13 +113,16 @@ event link remains the access credential, and SettleUp records—not moves—mon
   history.
 - The code-native mark lives in `apps/web/app/components/icons.tsx`; favicon,
   touch-icon, and social derivatives live in `apps/web/public/`.
-- Mobile and desktop reference screenshots cover the landing page and
-  Expenses, Settle, People, empty, dialog, and dark event states in
-  `apps/web/tests/e2e/states.spec.ts-snapshots/`.
+- Mobile and desktop Chromium reference screenshots cover the landing page,
+  root error state, and Expenses, Settle, People, empty, dialog, and dark event
+  states in `apps/web/tests/e2e/states.spec.ts-snapshots/`.
 - End-to-end coverage exercises event creation, participant and expense
   management, exact split disclosure, settlement, deletion, concurrent
-  updates, horizontal-overflow prevention, and light, dark, and forced-colors
-  accessibility checks.
+  updates, stable connection-state announcements, route-sheet dismissal and
+  focus return, short-viewport confirmation usability, horizontal-overflow
+  prevention, responsive zoom and text stress, and light, dark, and
+  forced-colors accessibility checks in mobile and desktop Chromium, desktop
+  Firefox, and mobile WebKit.
 - There are no verified testimonials, customer logos, usage metrics, case
   studies, press quotes, pricing claims, or third-party proof assets in the
   repository. Future work must not fabricate them.
@@ -144,6 +147,10 @@ overflow at widths down to 320px, and conform to WCAG 2.2 AA. Interaction
 targets, visible focus, semantic structure, live status and error announcements,
 light and dark schemes, reduced-motion preferences, forced-colors adaptation,
 and fixed mobile dialog commitments must continue to support that requirement.
+Portable 200% zoom, 200% text, and short landscape viewports must retain usable
+primary actions and confirmation controls. Closing a route sheet must return to
+its parent section and, when opened from an in-page control, restore focus to
+that control.
 
 No additional product-specific accessibility needs, localization requirements,
 or launch-geography commitments have been confirmed.

@@ -1,8 +1,8 @@
 import { redirect, useActionData } from "react-router";
 
-import { RouteDialog } from "../components/dialog";
 import { actionErrorMessage, useEventContext } from "../components/event-context";
 import { ExpenseForm } from "../components/expense-form";
+import { RouteDialog } from "../components/route-dialog";
 import { updateExpense } from "../lib/api";
 import {
   readFormCurrency,
@@ -51,7 +51,7 @@ export default function EditExpense({ params }: Route.ComponentProps) {
 
   return (
     <RouteDialog
-      closeTo="../.."
+      closeTo=".."
       description="Balances update as soon as you save."
       title="Edit expense"
     >

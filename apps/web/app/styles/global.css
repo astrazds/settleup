@@ -33,27 +33,37 @@
 
 :root {
   color-scheme: light dark;
-  --accent-field: #075f5e;
-  --accent-ink: #075f5e;
-  --border: #8f846e;
-  --border-strong: #0b0b0b;
-  --canvas: #f2e8d1;
-  --focus: #0e7c7b;
-  --ink: #0b0b0b;
+  --session-mustard: #e0b12e;
   --ink-black: #0b0b0b;
+  --cut-teal: #0e7c7b;
+  --field-teal: #075f5e;
+  --brick-beat: #b23a2e;
+  --poster-cream: #f2e8d1;
+  --paper-bright: #fff9e8;
+  --paper-hover: #fffdf5;
+  --muted-ink: #655e50;
+  --muted-on-ink: #d7cab0;
+  --spine-hover: #25231e;
+  --ink-on-mustard: #3f370f;
+  --dialog-scrim: rgb(11 11 11 / 78%);
+  --accent-field: var(--field-teal);
+  --accent-ink: var(--field-teal);
+  --border: #8f846e;
+  --border-strong: var(--ink-black);
+  --canvas: var(--poster-cream);
+  --focus: var(--cut-teal);
+  --ink: var(--ink-black);
   --ink-faint: #756c5a;
   --ink-muted: #5f5748;
   --negative: #922b23;
   --negative-ink: #6f1f19;
   --negative-soft: #f0c9c2;
-  --positive: #075f5e;
-  --poster-cream: #f2e8d1;
-  --session-brick: #b23a2e;
-  --session-mustard: #e0b12e;
-  --session-teal: #0e7c7b;
-  --surface: #f2e8d1;
+  --positive: var(--field-teal);
+  --session-brick: var(--brick-beat);
+  --session-teal: var(--cut-teal);
+  --surface: var(--poster-cream);
   --surface-muted: #e8ddc5;
-  --surface-raised: #fff9e8;
+  --surface-raised: var(--paper-bright);
   --content: 1120px;
   --tap: 44px;
   font-family: "Session Sans", Arial, sans-serif;
@@ -63,13 +73,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --accent-field: #075f5e;
+    --accent-field: var(--field-teal);
     --accent-ink: #76cac7;
     --border: #756d5c;
     --border-strong: #d8ccb1;
     --canvas: #0b0b0b;
-    --focus: #e0b12e;
-    --ink: #f2e8d1;
+    --focus: var(--session-mustard);
+    --ink: var(--poster-cream);
     --ink-faint: #a99e88;
     --ink-muted: #c3b69a;
     --negative: #f29a90;

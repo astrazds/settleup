@@ -10,8 +10,8 @@ import {
 import type { ReactNode } from "react";
 
 import { RootErrorView } from "./components/error-view";
-import styles from "./styles/app.module.css";
 import globalStyles from "./styles/global.css?url";
+import styles from "./styles/root.module.css";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: globalStyles },

@@ -1,6 +1,6 @@
 import { Link, Outlet, useFetcher } from "react-router";
 
-import { DeleteConfirm } from "../components/dialog";
+import { DeleteConfirm } from "../components/delete-confirm";
 import {
   actionErrorMessage,
   initials,
@@ -94,6 +94,9 @@ export default function People() {
                       to={`${participant.id}/edit`}
                     >
                       <EditIcon />
+                      <span aria-hidden="true" className={styles.actionLabel}>
+                        Edit
+                      </span>
                     </Link>
                     <DeleteConfirm
                       description={`“${participant.name}” can only be removed if they are not referenced by an expense or payment.`}

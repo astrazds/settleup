@@ -1,6 +1,6 @@
 import { Link, Outlet, useFetcher } from "react-router";
 
-import { DeleteConfirm } from "../components/dialog";
+import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
 import {
   actionErrorMessage,
@@ -14,6 +14,11 @@ import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/settle";
+
+const paymentDateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+});
 
 export async function clientAction({ params, request }: Route.ClientActionArgs) {
   const formData = await request.formData();
@@ -33,10 +38,7 @@ function paymentDate(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? ""
-    : new Intl.DateTimeFormat(undefined, {
-        day: "numeric",
-        month: "short",
-      }).format(date);
+    : paymentDateFormatter.format(date);
 }
 
 export default function Settle() {
@@ -179,6 +181,7 @@ export default function Settle() {
               {snapshot.payments.map((payment) => {
                 const from = participantName(snapshot, payment.from);
                 const to = participantName(snapshot, payment.to);
+                const dateLabel = paymentDate(payment.createdAt);
                 return (
                   <li className={styles.listItem} key={payment.id}>
                     <div
@@ -195,9 +198,7 @@ export default function Settle() {
                       </div>
                       <p className={styles.listMeta}>
                         Recorded
-                        {paymentDate(payment.createdAt)
-                          ? ` · ${paymentDate(payment.createdAt)}`
-                          : ""}
+                        {dateLabel ? ` · ${dateLabel}` : ""}
                       </p>
                     </div>
                     <span className={styles.listAmount}>
@@ -211,6 +212,9 @@ export default function Settle() {
                         to={`${payment.id}/edit`}
                       >
                         <EditIcon />
+                        <span aria-hidden="true" className={styles.actionLabel}>
+                          Edit
+                        </span>
                       </Link>
                       <DeleteConfirm
                         description={`This removes the recorded payment from ${from} to ${to} and recalculates balances.`}

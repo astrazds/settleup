@@ -187,11 +187,16 @@ export default function EventLayout() {
               </time>
             </span>
             <span
+              aria-atomic="true"
+              aria-live="polite"
               className={styles.eventMetaItem}
+              role="status"
               title={
-                stream.status === "connected"
-                  ? "Live updates connected"
-                  : "Live updates reconnecting"
+                stream.isOffline
+                  ? "Live updates offline"
+                  : stream.status === "connected"
+                    ? "Live updates connected"
+                    : "Live updates reconnecting"
               }
             >
               <span
@@ -253,10 +258,7 @@ export default function EventLayout() {
 
       <div className={styles.eventDocument}>
         {stream.status !== "connected" ? (
-          <aside
-            aria-live="polite"
-            className={styles.connectionNotice}
-          >
+          <aside className={styles.connectionNotice}>
             <span>
               {stream.isOffline
                 ? "You’re offline. Existing details stay visible, but changes need a connection."

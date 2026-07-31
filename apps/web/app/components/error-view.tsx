@@ -2,7 +2,7 @@ import { Link, useRouteError } from "react-router";
 
 import { Brand } from "./brand";
 import { ApiError } from "../lib/api";
-import styles from "../styles/app.module.css";
+import styles from "../styles/root.module.css";
 
 interface ErrorDetails {
   canRetry: boolean;

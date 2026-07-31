@@ -32,7 +32,7 @@
 }
 
 .event {
-  color: #f2e8d1;
+  color: var(--poster-cream);
 }
 
 @media (forced-colors: active) {
@@ -42,7 +42,7 @@
 }
 
 .landing {
-  color: #f2e8d1;
+  color: var(--poster-cream);
 }
 
 .landing .mark {

@@ -42,6 +42,10 @@ Open `http://127.0.0.1:5173`. The web development server proxies relative
 
 Run either surface separately with `npm run dev:web` or `npm run dev:api`.
 
+The verification commands rebuild the generated contracts package. If they are
+run while `npm run dev:all` is active and a watcher reports a temporarily
+missing contracts output, restart `npm run dev:all` after verification.
+
 ## Frontend
 
 The frontend is a static React Router SPA. Its landing page creates a private
@@ -63,6 +67,14 @@ on desktop, a compact stacked folio and sticky section index on mobile, and
 ruled operational documents for Expenses, Settle, and People. The interface is
 complete at 320px and includes dark, reduced-motion, and forced-colors states.
 
+Add and edit tasks are URL-addressable route sheets. Closing a sheet returns to
+its immediate Expenses, Settle, or People section and restores focus to the
+control that opened it when that control is still present. A directly opened
+sheet falls back to the event workspace main region. The destructive
+confirmation’s AlertDialog implementation stays outside the initial list-route
+graph, preloads when the trigger receives pointer or keyboard intent, and mounts
+only when requested.
+
 Expense forms preview the exact per-person minor-unit split, including remainder
 cents, and saved expenses keep that server-authored breakdown available.
 The API rejects a mutation before writing if the event's combined expense and
@@ -78,10 +90,18 @@ Browser preferences are limited to the current tab session and store only a
 participant ID keyed by the public event ID. Event tokens and snapshots are
 not persisted.
 
-Playwright baselines cover the landing page and the complete event workspace on
-mobile and desktop, including empty and populated Expenses, the expense sheet,
-Settle, People, and dark mode. The same browser suite checks semantic
-accessibility, forced colors, and horizontal overflow.
+Chromium baselines cover the landing page, root error state, and complete event
+workspace on mobile and desktop, including empty and populated Expenses, the
+expense sheet, Settle, People, and dark mode. The same semantic flows run in
+mobile and desktop Chromium, desktop Firefox, and mobile WebKit. The suite also
+checks Axe accessibility, keyboard focus and trapping, forced colors, 44px
+targets, stable live-state announcements, horizontal overflow, portable 200%
+zoom, 200% text, and short landscape viewports.
+
+Authored palette literals live in the global token layer; forced-colors
+adaptations use system colors. Root, loading, and error styles are kept separate
+from event-workspace styles so the landing and error routes do not load the
+event stylesheet.
 
 ## Shared contracts
 
@@ -188,7 +208,7 @@ npm run lint         # Lint the frontend
 npm run typecheck    # Type-check contracts, API, and frontend
 npm test             # Run contract, API, and frontend unit tests
 npm run test:e2e     # Run real-browser end-to-end tests
-npm run clean        # Remove generated server and web output
+npm run clean        # Remove generated contracts, server, and web output
 npm run build:server # Build contracts and compile the API
 npm run build:web    # Build the static SPA
 npm run build:all    # Build contracts, API, and SPA

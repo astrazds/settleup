@@ -8,11 +8,11 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
+  workers: 2,
   use: {
     baseURL: "http://127.0.0.1:4173",
     colorScheme: "light",
     locale: "en-AU",
-    permissions: ["clipboard-read", "clipboard-write"],
     screenshot: "only-on-failure",
     timezoneId: "Australia/Melbourne",
     trace: "retain-on-failure",
@@ -20,15 +20,33 @@ export default defineConfig({
   projects: [
     {
       name: "mobile-chromium",
+      metadata: { visualSnapshots: true },
       use: {
         ...devices["Pixel 7"],
+        permissions: ["clipboard-read", "clipboard-write"],
         viewport: { height: 800, width: 320 },
       },
     },
     {
       name: "desktop-chromium",
+      metadata: { visualSnapshots: true },
       use: {
         ...devices["Desktop Chrome"],
+        permissions: ["clipboard-read", "clipboard-write"],
+      },
+    },
+    {
+      name: "desktop-firefox",
+      metadata: { visualSnapshots: false },
+      use: {
+        ...devices["Desktop Firefox"],
+      },
+    },
+    {
+      name: "mobile-webkit",
+      metadata: { visualSnapshots: false },
+      use: {
+        ...devices["iPhone 13"],
       },
     },
   ],

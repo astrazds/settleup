@@ -1,0 +1,7 @@
+/*
+ * Playwright's full-page stitching can temporarily materialize the fixed
+ * skip link even when the live viewport assertion proves it is offscreen.
+ */
+a[href="#main-content"] {
+  visibility: hidden !important;
+}

@@ -1,8 +1,8 @@
 import { redirect, useActionData } from "react-router";
 
-import { RouteDialog } from "../components/dialog";
 import { actionErrorMessage, useEventContext } from "../components/event-context";
 import { PaymentForm } from "../components/payment-form";
+import { RouteDialog } from "../components/route-dialog";
 import { updatePayment } from "../lib/api";
 import {
   readFormCurrency,
@@ -46,7 +46,7 @@ export default function EditPayment({ params }: Route.ComponentProps) {
 
   return (
     <RouteDialog
-      closeTo="../.."
+      closeTo=".."
       description="Balances update as soon as you save."
       title="Edit payment"
     >

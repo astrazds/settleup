@@ -1,8 +1,8 @@
 import { redirect, useActionData } from "react-router";
 
-import { RouteDialog } from "../components/dialog";
 import { actionErrorMessage } from "../components/event-context";
 import { PersonForm } from "../components/person-form";
+import { RouteDialog } from "../components/route-dialog";
 import { addParticipant } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import type { Route } from "./+types/person-new";
