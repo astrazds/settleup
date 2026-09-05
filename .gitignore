@@ -12,8 +12,10 @@ apps/web/test-results/
 .agents/
 .claude/
 .codex/
+.grok/
 .impeccable/
 .playwright-cli/
+.scratch/
 
 # Runtime data
 data/*.sqlite

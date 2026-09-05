@@ -1,9 +1,28 @@
 {
   "name": "settleup-server",
   "version": "0.1.0",
+  "description": "No-login shared expenses for short-lived private-by-link events",
   "private": true,
   "type": "module",
+  "license": "MIT",
   "packageManager": "npm@12.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astrazds/settleup.git"
+  },
+  "homepage": "https://github.com/astrazds/settleup#readme",
+  "bugs": {
+    "url": "https://github.com/astrazds/settleup/issues"
+  },
+  "keywords": [
+    "expense-splitting",
+    "hono",
+    "mobile-first",
+    "privacy",
+    "react",
+    "sqlite",
+    "typescript"
+  ],
   "workspaces": [
     "apps/web",
     "packages/contracts"
