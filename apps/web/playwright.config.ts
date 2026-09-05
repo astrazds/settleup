@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const databasePath = ":memory:";
+const visualSnapshots = !process.env.CI;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -20,7 +21,7 @@ export default defineConfig({
   projects: [
     {
       name: "mobile-chromium",
-      metadata: { visualSnapshots: true },
+      metadata: { visualSnapshots },
       use: {
         ...devices["Pixel 7"],
         permissions: ["clipboard-read", "clipboard-write"],
@@ -29,7 +30,7 @@ export default defineConfig({
     },
     {
       name: "desktop-chromium",
-      metadata: { visualSnapshots: true },
+      metadata: { visualSnapshots },
       use: {
         ...devices["Desktop Chrome"],
         permissions: ["clipboard-read", "clipboard-write"],

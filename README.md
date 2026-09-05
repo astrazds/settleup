@@ -173,10 +173,11 @@ npm run build:all    # Build contracts, API, and SPA
 ```
 
 CI on `main` is the [CI workflow](https://github.com/astrazds/settleup/actions/workflows/ci.yml).
-It runs lint, typecheck, unit tests, and `build:all`, then the Playwright
-suite. The verification commands rebuild the generated contracts package. If
-they run while `npm run dev:all` is active and a watcher reports a temporarily
-missing contracts output, restart `npm run dev:all` after verification.
+It runs typecheck, unit tests, and `build:all`, then the Playwright suite
+without pixel snapshots. Visual baselines stay a local Chromium gate. The
+verification commands rebuild the generated contracts package. If they run
+while `npm run dev:all` is active and a watcher reports a temporarily missing
+contracts output, restart `npm run dev:all` after verification.
 
 Contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) before
 opening a pull request. SettleUp is licensed under [MIT](LICENSE).
