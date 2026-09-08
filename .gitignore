@@ -11,11 +11,44 @@ apps/web/test-results/
 # Local automation and agent artifacts
 .agents/
 .claude/
+.cline/
 .codex/
+.continue/
+.cursor/
+.gemini/
 .grok/
 .impeccable/
+.opencode/
 .playwright-cli/
+.roo/
 .scratch/
+.windsurf/
+
+# AI agent instructions and configuration (at any depth)
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+CLAUDE.local.md
+GEMINI.md
+.codewiki.yaml
+.cursorrules
+.cursorignore
+.cursorindexingignore
+.clinerules
+.roorules
+.roorules-*
+.windsurfrules
+.aider.conf.yml
+.aiderignore
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache*/
+
+# GitHub Copilot instructions and agent configuration
+.github/copilot-instructions.md
+.github/instructions/
+.github/agents/
+.github/prompts/
 
 # Runtime data
 data/*.sqlite
