@@ -13,11 +13,11 @@ import type { CurrencyCode } from "@settleup/contracts";
 import { Form, redirect, useActionData, useNavigation } from "react-router";
 
 import { Brand } from "../components/brand";
-import { createEvent } from "../lib/api";
+import { actionErrorMessage, createEvent } from "../lib/api";
 import { defaultCurrencyForLocales } from "../lib/currency";
 import { readFormCurrency, readFormString } from "../lib/form-data";
 import { setParticipantPreference } from "../lib/participant-preference";
-import { actionErrorMessage } from "../components/event-context";
+
 import styles from "../styles/home.module.css";
 import type { Route } from "./+types/home";
 

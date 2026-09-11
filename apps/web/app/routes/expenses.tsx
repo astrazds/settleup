@@ -2,15 +2,12 @@ import { Link, Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
-import {
-  actionErrorMessage,
-  participantName,
-  useEventContext,
-} from "../components/event-context";
+import { useEventContext } from "../components/event-context";
 import { EditIcon, PlusIcon, ReceiptIcon } from "../components/icons";
-import { deleteExpense } from "../lib/api";
+import { actionErrorMessage, deleteExpense } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
+import { participantName } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/expenses";
 
@@ -41,8 +38,7 @@ function expenseDate(value: string): string {
 }
 
 export default function Expenses() {
-  const context = useEventContext();
-  const { snapshot, streamStatus } = context;
+  const { snapshot, streamStatus } = useEventContext();
   const fetcher = useFetcher<typeof clientAction>();
   const totalMinor = snapshot.expenses.reduce(
     (total, expense) => total + BigInt(expense.amountMinor),
@@ -207,7 +203,7 @@ export default function Expenses() {
           />
         )}
       </div>
-      <Outlet context={context} />
+      <Outlet />
     </>
   );
 }

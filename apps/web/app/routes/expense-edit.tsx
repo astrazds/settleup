@@ -1,16 +1,10 @@
 import { redirect, useActionData } from "react-router";
 
-import { actionErrorMessage, useEventContext } from "../components/event-context";
+import { useEventContext } from "../components/event-context";
 import { ExpenseForm } from "../components/expense-form";
 import { RouteDialog } from "../components/route-dialog";
-import { updateExpense } from "../lib/api";
-import {
-  readFormCurrency,
-  readFormString,
-  readFormStrings,
-  readFormVersion,
-} from "../lib/form-data";
-import { parseAmountMinor } from "../lib/money";
+import { actionErrorMessage, updateExpense } from "../lib/api";
+import { readExpenseSubmission } from "../lib/form-data";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/expense-edit";
 
@@ -19,24 +13,12 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
   const token = params.token ?? "";
 
   try {
+    const { command, expectedVersion } = readExpenseSubmission(formData);
     await updateExpense(
       token,
       params.expenseId ?? "",
-      {
-        description: readFormString(formData, "description"),
-        amountMinor: parseAmountMinor(
-          readFormString(formData, "amount"),
-          readFormCurrency(formData),
-        ),
-        payerId: readFormString(formData, "payerId"),
-        includedParticipantIds: readFormStrings(
-          formData,
-          "includedParticipantIds",
-        ),
-      },
-      {
-        expectedVersion: readFormVersion(formData),
-      },
+      command,
+      { expectedVersion },
     );
     return redirect(`/e/${encodeURIComponent(token)}/expenses`);
   } catch (error) {

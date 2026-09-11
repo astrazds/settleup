@@ -1,15 +1,10 @@
 import { redirect, useActionData } from "react-router";
 
-import { actionErrorMessage, useEventContext } from "../components/event-context";
+import { useEventContext } from "../components/event-context";
 import { PaymentForm } from "../components/payment-form";
 import { RouteDialog } from "../components/route-dialog";
-import { createPayment } from "../lib/api";
-import {
-  readFormCurrency,
-  readFormString,
-  readFormVersion,
-} from "../lib/form-data";
-import { parseAmountMinor } from "../lib/money";
+import { actionErrorMessage, createPayment } from "../lib/api";
+import { readPaymentSubmission } from "../lib/form-data";
 import type { Route } from "./+types/payment-new";
 
 export async function clientAction({ params, request }: Route.ClientActionArgs) {
@@ -17,19 +12,11 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
   const token = params.token ?? "";
 
   try {
+    const { command, expectedVersion } = readPaymentSubmission(formData);
     await createPayment(
       token,
-      {
-        from: readFormString(formData, "from"),
-        to: readFormString(formData, "to"),
-        amountMinor: parseAmountMinor(
-          readFormString(formData, "amount"),
-          readFormCurrency(formData),
-        ),
-      },
-      {
-        expectedVersion: readFormVersion(formData),
-      },
+      command,
+      { expectedVersion },
     );
     return redirect(`/e/${encodeURIComponent(token)}/settle`);
   } catch (error) {

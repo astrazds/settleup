@@ -1,3 +1,18 @@
+import {
+  currencyCodeSchema,
+  type CurrencyCode,
+  type ExpenseCommand,
+  type ParticipantCommand,
+  type PaymentCommand,
+} from "@settleup/contracts";
+
+import { parseAmountMinor } from "./money";
+
+export interface EventSubmission<Command> {
+  command: Command;
+  expectedVersion: number;
+}
+
 export function readFormString(
   formData: FormData,
   key: string,
@@ -41,7 +56,44 @@ export function readFormVersion(
 
   return version;
 }
-import {
-  currencyCodeSchema,
-  type CurrencyCode,
-} from "@settleup/contracts";
+
+export function readExpenseSubmission(formData: FormData): EventSubmission<ExpenseCommand> {
+  return {
+    command: {
+      description: readFormString(formData, "description"),
+      amountMinor: parseAmountMinor(
+        readFormString(formData, "amount"),
+        readFormCurrency(formData),
+      ),
+      payerId: readFormString(formData, "payerId"),
+      includedParticipantIds: readFormStrings(
+        formData,
+        "includedParticipantIds",
+      ),
+    },
+    expectedVersion: readFormVersion(formData),
+  };
+}
+
+export function readPaymentSubmission(formData: FormData): EventSubmission<PaymentCommand> {
+  return {
+    command: {
+      from: readFormString(formData, "from"),
+      to: readFormString(formData, "to"),
+      amountMinor: parseAmountMinor(
+        readFormString(formData, "amount"),
+        readFormCurrency(formData),
+      ),
+    },
+    expectedVersion: readFormVersion(formData),
+  };
+}
+
+export function readParticipantSubmission(formData: FormData): EventSubmission<ParticipantCommand> {
+  return {
+    command: {
+      name: readFormString(formData, "name"),
+    },
+    expectedVersion: readFormVersion(formData),
+  };
+}

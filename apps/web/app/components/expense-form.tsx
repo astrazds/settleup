@@ -15,6 +15,7 @@ import {
   parseAmountMinor,
   splitAmountMinorEqually,
 } from "../lib/money";
+import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface ExpenseFormProps {
@@ -28,11 +29,7 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
   const navigation = useNavigation();
   const isBusy = navigation.state !== "idle";
   const currentRevision = expenseRevision(expense);
-  const [acceptedRevision, setAcceptedRevision] = useState(currentRevision);
-  const [acceptedVersion, setAcceptedVersion] = useState(
-    snapshot.event.version,
-  );
-  const [formKey, setFormKey] = useState(0);
+  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
   const currentAmount = expense
     ? amountMinorToDecimal(expense.amountMinor, snapshot.event.currency)
     : "";
@@ -41,9 +38,6 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
     : snapshot.participants.map((participant) => participant.id);
   const [amountInput, setAmountInput] = useState(currentAmount);
   const [includedIds, setIncludedIds] = useState(currentIncludedIds);
-  const hasConflict =
-    currentRevision !== acceptedRevision ||
-    snapshot.event.version !== acceptedVersion;
   const included = new Set(includedIds);
   const selectedParticipants = snapshot.participants.filter((participant) =>
     included.has(participant.id),
@@ -65,12 +59,12 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
       : snapshot.participants[0]?.id);
 
   return (
-    <Form className={styles.form} key={formKey} method="post">
+    <Form className={styles.form} key={draft.formKey} method="post">
       <input name="currency" type="hidden" value={snapshot.event.currency} />
       <input
         name="eventVersion"
         type="hidden"
-        value={acceptedVersion}
+        value={draft.version}
       />
 
       <div className={styles.field}>
@@ -216,14 +210,12 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
         </p>
       ) : null}
 
-      {hasConflict ? (
+      {draft.hasConflict ? (
         <EditConflict
           onReload={() => {
-            setAcceptedRevision(currentRevision);
-            setAcceptedVersion(snapshot.event.version);
+            draft.acceptLatest();
             setAmountInput(currentAmount);
             setIncludedIds(currentIncludedIds);
-            setFormKey((value) => value + 1);
           }}
         />
       ) : null}
@@ -233,7 +225,7 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
           className={`${styles.button} ${styles.buttonPrimary}`}
           disabled={
             isBusy ||
-            hasConflict ||
+            draft.hasConflict ||
             includedIds.length === 0 ||
             Boolean(preview.error)
           }

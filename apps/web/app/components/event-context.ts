@@ -1,36 +1,20 @@
 import type { EventSnapshot } from "@settleup/contracts";
-import { useOutletContext } from "react-router";
+import { createContext, useContext } from "react";
 
-export interface EventOutletContext {
+import type { EventStreamStatus } from "../lib/use-event-stream";
+
+export interface EventContextValue {
   snapshot: EventSnapshot;
-  streamStatus: "connecting" | "connected" | "reconnecting" | "offline";
-  token: string;
+  streamStatus: EventStreamStatus;
 }
 
-export function useEventContext(): EventOutletContext {
-  return useOutletContext<EventOutletContext>();
-}
+const EventContext = createContext<EventContextValue | null>(null);
+export const EventProvider = EventContext.Provider;
 
-export function participantName(snapshot: EventSnapshot, participantId: string): string {
-  return (
-    snapshot.participants.find((participant) => participant.id === participantId)?.name ??
-    "Unknown person"
-  );
-}
-
-export function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-export function actionErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+export function useEventContext(): EventContextValue {
+  const context = useContext(EventContext);
+  if (!context) {
+    throw new Error("Event components must be inside EventProvider.");
   }
-
-  return "Something went wrong. Your event was not changed.";
+  return context;
 }
