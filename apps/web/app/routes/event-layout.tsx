@@ -29,7 +29,7 @@ import {
 } from "react-router";
 
 import { Brand } from "../components/brand";
-import type { EventOutletContext } from "../components/event-context";
+import { EventProvider, type EventContextValue } from "../components/event-context";
 import {
   CalendarIcon,
   ShareIcon,
@@ -93,11 +93,10 @@ export default function EventLayout() {
     version: snapshot.event.version,
     revalidate,
   });
-  const context = useMemo<EventOutletContext>(
+  const context = useMemo<EventContextValue>(
     () => ({
       snapshot,
       streamStatus: stream.status,
-      token: snapshot.event.token,
     }),
     [snapshot, stream.status],
   );
@@ -280,7 +279,9 @@ export default function EventLayout() {
           id="main-content"
           tabIndex={-1}
         >
-          <Outlet context={context} />
+          <EventProvider value={context}>
+            <Outlet />
+          </EventProvider>
         </main>
       </div>
 

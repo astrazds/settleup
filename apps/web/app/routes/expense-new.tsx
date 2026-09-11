@@ -1,16 +1,10 @@
 import { redirect, useActionData } from "react-router";
 
-import { actionErrorMessage } from "../components/event-context";
+
 import { ExpenseForm } from "../components/expense-form";
 import { RouteDialog } from "../components/route-dialog";
-import { createExpense } from "../lib/api";
-import {
-  readFormCurrency,
-  readFormString,
-  readFormStrings,
-  readFormVersion,
-} from "../lib/form-data";
-import { parseAmountMinor } from "../lib/money";
+import { actionErrorMessage, createExpense } from "../lib/api";
+import { readExpenseSubmission } from "../lib/form-data";
 import type { Route } from "./+types/expense-new";
 
 export async function clientAction({ params, request }: Route.ClientActionArgs) {
@@ -18,23 +12,11 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
   const token = params.token ?? "";
 
   try {
+    const { command, expectedVersion } = readExpenseSubmission(formData);
     await createExpense(
       token,
-      {
-        description: readFormString(formData, "description"),
-        amountMinor: parseAmountMinor(
-          readFormString(formData, "amount"),
-          readFormCurrency(formData),
-        ),
-        payerId: readFormString(formData, "payerId"),
-        includedParticipantIds: readFormStrings(
-          formData,
-          "includedParticipantIds",
-        ),
-      },
-      {
-        expectedVersion: readFormVersion(formData),
-      },
+      command,
+      { expectedVersion },
     );
     return redirect(`/e/${encodeURIComponent(token)}/expenses`);
   } catch (error) {

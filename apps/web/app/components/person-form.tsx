@@ -1,9 +1,9 @@
 import type { Participant } from "@settleup/contracts";
-import { useState } from "react";
 import { Form, useNavigation } from "react-router";
 
 import { EditConflict } from "./edit-conflict";
 import { useEventContext } from "./event-context";
+import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface PersonFormProps {
@@ -21,21 +21,14 @@ export function PersonForm({
   const navigation = useNavigation();
   const isBusy = navigation.state !== "idle";
   const currentRevision = participant?.name ?? "new";
-  const [acceptedRevision, setAcceptedRevision] = useState(currentRevision);
-  const [acceptedVersion, setAcceptedVersion] = useState(
-    snapshot.event.version,
-  );
-  const [formKey, setFormKey] = useState(0);
-  const hasConflict =
-    currentRevision !== acceptedRevision ||
-    snapshot.event.version !== acceptedVersion;
+  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
 
   return (
-    <Form className={styles.form} key={formKey} method="post">
+    <Form className={styles.form} key={draft.formKey} method="post">
       <input
         name="eventVersion"
         type="hidden"
-        value={acceptedVersion}
+        value={draft.version}
       />
       <div className={styles.field}>
         <label className={styles.label} htmlFor="name">
@@ -60,20 +53,14 @@ export function PersonForm({
         </p>
       ) : null}
 
-      {hasConflict ? (
-        <EditConflict
-          onReload={() => {
-            setAcceptedRevision(currentRevision);
-            setAcceptedVersion(snapshot.event.version);
-            setFormKey((value) => value + 1);
-          }}
-        />
+      {draft.hasConflict ? (
+        <EditConflict onReload={draft.acceptLatest} />
       ) : null}
 
       <div className={styles.dialogActions}>
         <button
           className={`${styles.button} ${styles.buttonPrimary}`}
-          disabled={isBusy || hasConflict}
+          disabled={isBusy || draft.hasConflict}
           type="submit"
         >
           {isBusy ? "Saving…" : submitLabel}

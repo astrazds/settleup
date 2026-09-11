@@ -1,34 +1,11 @@
 import {
-  currencyCodes,
   type Balance,
-  type CurrencyCode,
   type Expense,
   type ExpenseShare,
   type Participant,
   type SettlementPayment,
   type SettlementSuggestion,
 } from "@settleup/contracts";
-
-export { currencyCodes };
-export type {
-  Balance,
-  CurrencyCode,
-  EventSnapshot,
-  EventSummary,
-  Expense,
-  ExpenseShare,
-  Participant,
-  SettlementPayment,
-  SettlementSuggestion,
-} from "@settleup/contracts";
-
-export function assertCurrencyCode(value: string): CurrencyCode {
-  if (currencyCodes.includes(value as CurrencyCode)) {
-    return value as CurrencyCode;
-  }
-
-  throw new Error(`Unsupported currency: ${value}`);
-}
 
 export function deriveEqualShares(amountMinor: number, participantIds: string[]): ExpenseShare[] {
   if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {

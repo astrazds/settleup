@@ -19,14 +19,18 @@ to review.
 6. Run the complete local check:
 
    ```sh
-   npm run typecheck
-   npm test
-   npm run build:all
+   mise install
+   mise run install
+   mise run check
    ```
 
-   Frontend lint is `npm run lint`. Real-browser coverage is
-   `npm run test:e2e` and needs Playwright browsers
-   (`npx playwright install --with-deps`).
+   `mise.toml` pins project tools and defines each gate separately. Real-browser
+   coverage needs `mise run browsers:install` and Playwright's platform
+   libraries. On a supported Linux distribution, use
+   `mise run browsers:install -- --with-deps`.
+
+For code navigation and state ownership, start with the
+[architecture map](docs/architecture.md).
 
 ## Pull requests
 

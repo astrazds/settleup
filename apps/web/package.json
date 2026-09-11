@@ -14,7 +14,7 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint": "eslint .",
+    "lint": "react-router typegen && eslint .",
     "clean": "node --eval \"import { rmSync } from 'node:fs'; for (const path of ['.react-router', 'build', 'playwright-report', 'test-results']) rmSync(path, { force: true, recursive: true })\""
   },
   "dependencies": {

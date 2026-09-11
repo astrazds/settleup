@@ -3,82 +3,40 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import type {
   CreateEventCommand,
   CreateEventResponse,
-  CurrencyCode,
   EventSnapshot,
-  Expense,
   ExpenseCommand,
   ExpenseShare,
-  Participant,
   ParticipantCommand,
   PaymentCommand,
-  SettlementPayment,
 } from "@settleup/contracts";
 
+import { currencyCodeSchema } from "@settleup/contracts";
+import { deriveEqualShares } from "./ledger.js";
 import {
-  calculateBalances,
-  deriveEqualShares,
-  getSettlementSuggestion,
-} from "../shared/domain.js";
+  assertStoredAmountSafe,
+  loadEventSnapshot,
+  maximumExactEventAmountMinor,
+  readEventAmountTotal,
+  type AmountExclusion,
+  type EventRecord,
+} from "./event-snapshot.js";
 import {
   badRequest,
   expired,
   notFound,
   preconditionFailed,
 } from "./errors.js";
-import type { SqliteDatabase } from "./database.js";
+import { readIntegerField, readStringField, type SqliteDatabase } from "./database.js";
 
 const tokenAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
 const tokenLength = 14;
 const eventLifetimeMs = 3 * 24 * 60 * 60 * 1000;
 const cleanupLifetimeMs = 5 * 24 * 60 * 60 * 1000;
-const maximumExactEventAmountMinor = BigInt(Number.MAX_SAFE_INTEGER);
-
-interface EventRow {
-  id: string;
-  title: string;
-  currency: CurrencyCode;
-  createdAt: string;
-  expiresAt: string;
-  cleanupAfter: string;
-  version: number;
-}
-
-interface ParticipantRow {
-  id: string;
-  name: string;
-  sortOrder: number;
-}
-
-interface ExpenseRow {
-  id: string;
-  description: string;
-  amountMinor: number;
-  payerId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface ShareRow {
-  expenseId: string;
-  participantId: string;
-  amountMinor: number;
-}
-
-interface PaymentRow {
-  id: string;
-  from: string;
-  to: string;
-  amountMinor: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 type NowProvider = () => Date;
 
-export interface EventVersionPrecondition {
-  matchesAny: boolean;
-  versions: readonly number[];
-}
+export type EventVersionPrecondition =
+  | { kind: "any-current" }
+  | { kind: "strong-tags"; versions: readonly number[] };
 
 export class EventService {
   constructor(
@@ -134,9 +92,8 @@ export class EventService {
   }
 
   getSnapshotByToken(token: string): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
-    return this.loadSnapshot(event, token);
+    const event = this.requireActiveEvent(token);
+    return loadEventSnapshot(this.db, event, token);
   }
 
   addParticipant(
@@ -144,13 +101,11 @@ export class EventService {
     command: ParticipantCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     const createdAt = this.now().toISOString();
     const nextSortOrder = this.getNextParticipantSortOrder(event.id);
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.db
         .prepare(
           `
@@ -166,11 +121,7 @@ export class EventService {
           createdAt,
           createdAt,
         );
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   renameParticipant(
@@ -179,21 +130,15 @@ export class EventService {
     command: ParticipantCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requireParticipant(event.id, participantId);
     const updatedAt = this.now().toISOString();
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.db
         .prepare("UPDATE participants SET name = ?, updated_at = ? WHERE id = ? AND event_id = ?")
         .run(command.name, updatedAt, participantId, event.id);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   deleteParticipant(
@@ -201,8 +146,7 @@ export class EventService {
     participantId: string,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requireParticipant(event.id, participantId);
 
     if (this.getParticipantCount(event.id) <= 1) {
@@ -213,14 +157,9 @@ export class EventService {
       throw badRequest("Only unreferenced participants can be deleted.");
     }
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.db.prepare("DELETE FROM participants WHERE id = ? AND event_id = ?").run(participantId, event.id);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   createExpense(
@@ -228,15 +167,13 @@ export class EventService {
     command: ExpenseCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     const expenseId = randomUUID();
     const now = this.now().toISOString();
     this.validateExpenseParticipants(event.id, command);
     const shares = deriveEqualShares(command.amountMinor, command.includedParticipantIds);
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.assertSafeEventAmountTotal(event.id, command.amountMinor);
       this.db
         .prepare(
@@ -248,11 +185,7 @@ export class EventService {
         .run(expenseId, event.id, command.description, command.amountMinor, command.payerId, now, now);
 
       this.insertShares(expenseId, shares);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   updateExpense(
@@ -261,19 +194,17 @@ export class EventService {
     command: ExpenseCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requireExpense(event.id, expenseId);
     this.validateExpenseParticipants(event.id, command);
     const shares = deriveEqualShares(command.amountMinor, command.includedParticipantIds);
     const updatedAt = this.now().toISOString();
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.assertSafeEventAmountTotal(
         event.id,
         command.amountMinor,
-        expenseId,
+        { kind: "expense", id: expenseId },
       );
       this.db
         .prepare(
@@ -286,11 +217,7 @@ export class EventService {
         .run(command.description, command.amountMinor, command.payerId, updatedAt, expenseId, event.id);
       this.db.prepare("DELETE FROM expense_shares WHERE expense_id = ?").run(expenseId);
       this.insertShares(expenseId, shares);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   deleteExpense(
@@ -298,18 +225,12 @@ export class EventService {
     expenseId: string,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requireExpense(event.id, expenseId);
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.db.prepare("DELETE FROM expenses WHERE id = ? AND event_id = ?").run(expenseId, event.id);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   createPayment(
@@ -317,14 +238,12 @@ export class EventService {
     command: PaymentCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     const paymentId = randomUUID();
     const now = this.now().toISOString();
     this.validatePaymentParticipants(event.id, command);
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.assertSafeEventAmountTotal(event.id, command.amountMinor);
       this.db
         .prepare(
@@ -335,11 +254,7 @@ export class EventService {
         `,
         )
         .run(paymentId, event.id, command.from, command.to, command.amountMinor, now, now);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   updatePayment(
@@ -348,19 +263,16 @@ export class EventService {
     command: PaymentCommand,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requirePayment(event.id, paymentId);
     this.validatePaymentParticipants(event.id, command);
     const updatedAt = this.now().toISOString();
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.assertSafeEventAmountTotal(
         event.id,
         command.amountMinor,
-        undefined,
-        paymentId,
+        { kind: "payment", id: paymentId },
       );
       this.db
         .prepare(
@@ -371,11 +283,7 @@ export class EventService {
         `,
         )
         .run(command.from, command.to, command.amountMinor, updatedAt, paymentId, event.id);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   deletePayment(
@@ -383,18 +291,12 @@ export class EventService {
     paymentId: string,
     versionPrecondition?: EventVersionPrecondition,
   ): EventSnapshot {
-    const event = this.getEventByToken(token);
-    this.assertNotExpired(event);
+    const event = this.requireActiveEvent(token);
     this.requirePayment(event.id, paymentId);
 
-    const write = this.db.transaction(() => {
-      this.assertVersionPrecondition(event.id, versionPrecondition);
+    return this.commitMutation(token, event.id, versionPrecondition, () => {
       this.db.prepare("DELETE FROM settlement_payments WHERE id = ? AND event_id = ?").run(paymentId, event.id);
-      this.bumpVersion(event.id);
     });
-
-    write();
-    return this.getSnapshotByToken(token);
   }
 
   cleanupExpiredData(): number {
@@ -404,11 +306,7 @@ export class EventService {
     return Number(result.changes);
   }
 
-  getEventIdForToken(token: string): string {
-    return this.getEventByToken(token).id;
-  }
-
-  private getEventByToken(token: string): EventRow {
+  private requireActiveEvent(token: string): EventRecord {
     const row = this.db
       .prepare(
         `
@@ -430,114 +328,26 @@ export class EventService {
       throw notFound("Event not found.");
     }
 
-    return parseEventRow(row);
-  }
-
-  private assertNotExpired(event: EventRow): void {
+    const event = parseEventRecord(row);
     if (Date.parse(event.expiresAt) <= this.now().getTime()) {
       throw expired("This event link has expired.");
     }
+    return event;
   }
 
-  private loadSnapshot(event: EventRow, token: string): EventSnapshot {
-    const participants = this.loadParticipants(event.id);
-    const expenses = this.loadExpenses(event.id);
-    const payments = this.loadPayments(event.id);
-    assertLoadedEventAmountTotalSafe(expenses, payments);
-    const balances = calculateBalances(participants, expenses, payments);
-
-    return {
-      event: {
-        id: event.id,
-        title: event.title,
-        currency: event.currency,
-        createdAt: event.createdAt,
-        expiresAt: event.expiresAt,
-        cleanupAfter: event.cleanupAfter,
-        version: event.version,
-        token,
-      },
-      participants,
-      expenses,
-      payments,
-      balances,
-      settlementSuggestion: getSettlementSuggestion(balances),
-    };
-  }
-
-  private loadParticipants(eventId: string): Participant[] {
-    return this.db
-      .prepare(
-        `
-        SELECT id, name, sort_order AS sortOrder
-        FROM participants
-        WHERE event_id = ?
-        ORDER BY sort_order ASC
-      `,
-      )
-      .all(eventId)
-      .map(parseParticipantRow);
-  }
-
-  private loadExpenses(eventId: string): Expense[] {
-    const expenseRows = this.db
-      .prepare(
-        `
-        SELECT
-          id,
-          description,
-          amount_minor AS amountMinor,
-          payer_participant_id AS payerId,
-          created_at AS createdAt,
-          updated_at AS updatedAt
-        FROM expenses
-        WHERE event_id = ?
-        ORDER BY created_at DESC
-      `,
-      )
-      .all(eventId)
-      .map(parseExpenseRow);
-
-    const shareRows = this.db
-      .prepare(
-        `
-        SELECT
-          expense_id AS expenseId,
-          participant_id AS participantId,
-          amount_minor AS amountMinor
-        FROM expense_shares
-        WHERE expense_id IN (${expenseRows.map(() => "?").join(",") || "NULL"})
-      `,
-      )
-      .all(...expenseRows.map((expense) => expense.id))
-      .map(parseShareRow);
-
-    return expenseRows.map((expense) => ({
-      ...expense,
-      shares: shareRows
-        .filter((share) => share.expenseId === expense.id)
-        .map(({ participantId, amountMinor }) => ({ participantId, amountMinor })),
-    }));
-  }
-
-  private loadPayments(eventId: string): SettlementPayment[] {
-    return this.db
-      .prepare(
-        `
-        SELECT
-          id,
-          from_participant_id AS "from",
-          to_participant_id AS "to",
-          amount_minor AS amountMinor,
-          created_at AS createdAt,
-          updated_at AS updatedAt
-        FROM settlement_payments
-        WHERE event_id = ?
-        ORDER BY created_at DESC
-      `,
-      )
-      .all(eventId)
-      .map(parsePaymentRow);
+  private commitMutation(
+    token: string,
+    eventId: string,
+    precondition: EventVersionPrecondition | undefined,
+    write: () => void,
+  ): EventSnapshot {
+    this.db.transaction(() => {
+      this.assertVersionPrecondition(eventId, precondition);
+      assertStoredAmountSafe(readEventAmountTotal(this.db, eventId));
+      write();
+      this.db.prepare("UPDATE events SET version = version + 1 WHERE id = ?").run(eventId);
+    })();
+    return this.getSnapshotByToken(token);
   }
 
   private getNextParticipantSortOrder(eventId: string): number {
@@ -653,10 +463,6 @@ export class EventService {
     }
   }
 
-  private bumpVersion(eventId: string): void {
-    this.db.prepare("UPDATE events SET version = version + 1 WHERE id = ?").run(eventId);
-  }
-
   private assertVersionPrecondition(
     eventId: string,
     precondition: EventVersionPrecondition | undefined,
@@ -668,7 +474,7 @@ export class EventService {
       );
 
       if (
-        !precondition.matchesAny &&
+        precondition.kind === "strong-tags" &&
         !precondition.versions.includes(currentVersion)
       ) {
         throw preconditionFailed(
@@ -676,22 +482,19 @@ export class EventService {
         );
       }
     }
-
-    this.assertStoredEventAmountTotalSafe(eventId);
   }
 
   private assertSafeEventAmountTotal(
     eventId: string,
     nextAmountMinor: number,
-    excludedExpenseId?: string,
-    excludedPaymentId?: string,
+    exclusion?: AmountExclusion,
   ): void {
     const totalMinor =
       BigInt(nextAmountMinor) +
-      this.readStoredEventAmountTotalMinor(
+      readEventAmountTotal(
+        this.db,
         eventId,
-        excludedExpenseId,
-        excludedPaymentId,
+        exclusion,
       );
 
     if (totalMinor > maximumExactEventAmountMinor) {
@@ -699,74 +502,6 @@ export class EventService {
         "The combined event amount is too large to calculate exactly.",
       );
     }
-  }
-
-  private assertStoredEventAmountTotalSafe(eventId: string): void {
-    if (
-      this.readStoredEventAmountTotalMinor(eventId) >
-      maximumExactEventAmountMinor
-    ) {
-      throw new Error(
-        "Stored event amounts exceed the exact safe-integer range.",
-      );
-    }
-  }
-
-  private readStoredEventAmountTotalMinor(
-    eventId: string,
-    excludedExpenseId?: string,
-    excludedPaymentId?: string,
-  ): bigint {
-    let totalMinor = 0n;
-    const expenseRows = this.db
-      .prepare(
-        `
-        SELECT amount_minor AS amountMinor
-        FROM expenses
-        WHERE event_id = ? AND (? IS NULL OR id <> ?)
-      `,
-      )
-      .all(
-        eventId,
-        excludedExpenseId ?? null,
-        excludedExpenseId ?? null,
-      );
-    const paymentRows = this.db
-      .prepare(
-        `
-        SELECT amount_minor AS amountMinor
-        FROM settlement_payments
-        WHERE event_id = ? AND (? IS NULL OR id <> ?)
-      `,
-      )
-      .all(
-        eventId,
-        excludedPaymentId ?? null,
-        excludedPaymentId ?? null,
-      );
-
-    for (const row of [...expenseRows, ...paymentRows]) {
-      totalMinor += BigInt(readIntegerField(row, "amountMinor"));
-    }
-
-    return totalMinor;
-  }
-}
-
-function assertLoadedEventAmountTotalSafe(
-  expenses: Expense[],
-  payments: SettlementPayment[],
-): void {
-  let totalMinor = 0n;
-
-  for (const item of [...expenses, ...payments]) {
-    totalMinor += BigInt(item.amountMinor);
-  }
-
-  if (totalMinor > maximumExactEventAmountMinor) {
-    throw new Error(
-      "Stored event amounts exceed the exact safe-integer range.",
-    );
   }
 }
 
@@ -785,77 +520,20 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readStringField(row: unknown, key: string): string {
-  if (!isRecord(row) || typeof row[key] !== "string") {
-    throw new Error(`Database row is missing string field ${key}.`);
-  }
-
-  return row[key];
-}
-
-function readIntegerField(row: unknown, key: string): number {
-  if (!isRecord(row) || typeof row[key] !== "number" || !Number.isSafeInteger(row[key])) {
-    throw new Error(`Database row is missing integer field ${key}.`);
-  }
-
-  return row[key];
-}
-
-function parseEventRow(row: unknown): EventRow {
+function parseEventRecord(row: unknown): EventRecord {
   const currency = readStringField(row, "currency");
-  if (!["AUD", "USD", "EUR", "GBP", "NZD"].includes(currency)) {
+  const parsedCurrency = currencyCodeSchema.safeParse(currency);
+  if (!parsedCurrency.success) {
     throw new Error(`Database row has unsupported currency ${currency}.`);
   }
 
   return {
     id: readStringField(row, "id"),
     title: readStringField(row, "title"),
-    currency: currency as CurrencyCode,
+    currency: parsedCurrency.data,
     createdAt: readStringField(row, "createdAt"),
     expiresAt: readStringField(row, "expiresAt"),
     cleanupAfter: readStringField(row, "cleanupAfter"),
     version: readIntegerField(row, "version"),
-  };
-}
-
-function parseParticipantRow(row: unknown): ParticipantRow {
-  return {
-    id: readStringField(row, "id"),
-    name: readStringField(row, "name"),
-    sortOrder: readIntegerField(row, "sortOrder"),
-  };
-}
-
-function parseExpenseRow(row: unknown): ExpenseRow {
-  return {
-    id: readStringField(row, "id"),
-    description: readStringField(row, "description"),
-    amountMinor: readIntegerField(row, "amountMinor"),
-    payerId: readStringField(row, "payerId"),
-    createdAt: readStringField(row, "createdAt"),
-    updatedAt: readStringField(row, "updatedAt"),
-  };
-}
-
-function parseShareRow(row: unknown): ShareRow {
-  return {
-    expenseId: readStringField(row, "expenseId"),
-    participantId: readStringField(row, "participantId"),
-    amountMinor: readIntegerField(row, "amountMinor"),
-  };
-}
-
-function parsePaymentRow(row: unknown): PaymentRow {
-  return {
-    id: readStringField(row, "id"),
-    from: readStringField(row, "from"),
-    to: readStringField(row, "to"),
-    amountMinor: readIntegerField(row, "amountMinor"),
-    createdAt: readStringField(row, "createdAt"),
-    updatedAt: readStringField(row, "updatedAt"),
   };
 }

@@ -5,3 +5,8 @@
 a[href="#main-content"] {
   visibility: hidden !important;
 }
+
+header time {
+  overflow: hidden;
+  white-space: nowrap;
+}

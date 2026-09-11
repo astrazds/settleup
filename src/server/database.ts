@@ -111,3 +111,23 @@ export function migrate(db: SqliteDatabase): void {
 
   migrateToVersionOne();
 }
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function readStringField(row: unknown, key: string): string {
+  if (!isRecord(row) || typeof row[key] !== "string") {
+    throw new Error(`Database row is missing string field ${key}.`);
+  }
+
+  return row[key];
+}
+
+export function readIntegerField(row: unknown, key: string): number {
+  if (!isRecord(row) || typeof row[key] !== "number" || !Number.isSafeInteger(row[key])) {
+    throw new Error(`Database row is missing integer field ${key}.`);
+  }
+
+  return row[key];
+}

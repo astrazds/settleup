@@ -1,15 +1,12 @@
 import { Link, Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
-import {
-  actionErrorMessage,
-  initials,
-  useEventContext,
-} from "../components/event-context";
+import { useEventContext } from "../components/event-context";
 import { EditIcon, PlusIcon } from "../components/icons";
-import { deleteParticipant } from "../lib/api";
+import { actionErrorMessage, deleteParticipant } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
+import { initials } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/people";
 
@@ -28,8 +25,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
 }
 
 export default function People() {
-  const context = useEventContext();
-  const { snapshot } = context;
+  const { snapshot } = useEventContext();
   const fetcher = useFetcher<typeof clientAction>();
 
   return (
@@ -131,7 +127,7 @@ export default function People() {
           </p>
         </section>
       </div>
-      <Outlet context={context} />
+      <Outlet />
     </>
   );
 }

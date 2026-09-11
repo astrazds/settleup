@@ -5,7 +5,7 @@ import {
   eventSnapshotSchema,
 } from "@settleup/contracts";
 
-import type { EventSnapshot } from "../shared/domain.js";
+import type { EventSnapshot } from "@settleup/contracts";
 import { createApp } from "./app.js";
 import { openDatabase } from "./database.js";
 import { EventService } from "./event-service.js";

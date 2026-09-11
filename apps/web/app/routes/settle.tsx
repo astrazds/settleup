@@ -2,16 +2,12 @@ import { Link, Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
-import {
-  actionErrorMessage,
-  initials,
-  participantName,
-  useEventContext,
-} from "../components/event-context";
+import { useEventContext } from "../components/event-context";
 import { CheckIcon, EditIcon, PlusIcon, ReceiptIcon, SettleIcon } from "../components/icons";
-import { deletePayment } from "../lib/api";
+import { actionErrorMessage, deletePayment } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
+import { initials, participantName } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/settle";
 
@@ -42,8 +38,7 @@ function paymentDate(value: string): string {
 }
 
 export default function Settle() {
-  const context = useEventContext();
-  const { snapshot } = context;
+  const { snapshot } = useEventContext();
   const fetcher = useFetcher<typeof clientAction>();
   const suggestion = snapshot.settlementSuggestion;
   const hasExpenses = snapshot.expenses.length > 0;
@@ -240,7 +235,7 @@ export default function Settle() {
           </section>
         ) : null}
       </div>
-      <Outlet context={context} />
+      <Outlet />
     </>
   );
 }

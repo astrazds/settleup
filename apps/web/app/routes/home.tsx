@@ -13,11 +13,11 @@ import type { CurrencyCode } from "@settleup/contracts";
 import { Form, redirect, useActionData, useNavigation } from "react-router";
 
 import { Brand } from "../components/brand";
-import { createEvent } from "../lib/api";
+import { actionErrorMessage, createEvent } from "../lib/api";
 import { defaultCurrencyForLocales } from "../lib/currency";
 import { readFormCurrency, readFormString } from "../lib/form-data";
 import { setParticipantPreference } from "../lib/participant-preference";
-import { actionErrorMessage } from "../components/event-context";
+
 import styles from "../styles/home.module.css";
 import type { Route } from "./+types/home";
 
@@ -168,7 +168,11 @@ export default function Home() {
             </Form>
 
             <p className={styles.trustNote}>
-              <span aria-hidden="true">↗</span>
+              <span aria-hidden="true">
+                <svg fill="none" height="10" viewBox="0 0 16 16" width="10">
+                  <path d="M4 12 12 4M4 4h8v8" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              </span>
               Anyone with the complete link can view and update the event.
             </p>
           </section>

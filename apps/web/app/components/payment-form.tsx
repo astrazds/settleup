@@ -12,6 +12,7 @@ import {
   getParticipantPreference,
   setParticipantPreference,
 } from "../lib/participant-preference";
+import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface PaymentFormProps {
@@ -49,22 +50,15 @@ export function PaymentForm({
   const [to, setTo] = useState(initialTo);
   const isBusy = navigation.state !== "idle";
   const currentRevision = paymentRevision(payment);
-  const [acceptedRevision, setAcceptedRevision] = useState(currentRevision);
-  const [acceptedVersion, setAcceptedVersion] = useState(
-    snapshot.event.version,
-  );
-  const [formKey, setFormKey] = useState(0);
-  const hasConflict =
-    currentRevision !== acceptedRevision ||
-    snapshot.event.version !== acceptedVersion;
+  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
 
   return (
-    <Form className={styles.form} key={formKey} method="post">
+    <Form className={styles.form} key={draft.formKey} method="post">
       <input name="currency" type="hidden" value={snapshot.event.currency} />
       <input
         name="eventVersion"
         type="hidden"
-        value={acceptedVersion}
+        value={draft.version}
       />
 
       <div className={styles.fieldRow}>
@@ -160,14 +154,12 @@ export function PaymentForm({
         </p>
       ) : null}
 
-      {hasConflict ? (
+      {draft.hasConflict ? (
         <EditConflict
           onReload={() => {
-            setAcceptedRevision(currentRevision);
-            setAcceptedVersion(snapshot.event.version);
+            draft.acceptLatest();
             setFrom(payment?.from ?? initialFrom);
             setTo(payment?.to ?? initialTo);
-            setFormKey((value) => value + 1);
           }}
         />
       ) : null}
@@ -182,7 +174,7 @@ export function PaymentForm({
         <button
           className={`${styles.button} ${styles.buttonPrimary}`}
           disabled={
-            isBusy || hasConflict || snapshot.participants.length < 2
+            isBusy || draft.hasConflict || snapshot.participants.length < 2
           }
           type="submit"
         >

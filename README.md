@@ -40,20 +40,21 @@ keeps one short-lived workspace behind a private link:
 
 ## Install
 
-SettleUp currently ships as source. Use Node.js 22.22.x, or Node.js 24 and
-newer, with npm 12.
+SettleUp ships as source. [mise](https://mise.jdx.dev/) installs the exact
+Node.js and npm versions declared in `mise.toml`.
 
 ```sh
 git clone https://github.com/astrazds/settleup.git
 cd settleup
-npm install
-npm run dev:all
+mise install
+mise run install
+mise run dev
 ```
 
 Open `http://127.0.0.1:5173`. The web development server proxies relative
 `/api` requests and event streams to the API on port `8787`.
 
-Run either surface separately with `npm run dev:web` or `npm run dev:api`.
+Run either surface separately with `mise run dev:web` or `mise run dev:api`.
 
 ## Use
 
@@ -114,7 +115,8 @@ See [PRIVACY.md](PRIVACY.md) for the complete data boundary.
 
 Product behavior lives in [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md). The
 visual system is [`apps/web/DESIGN.md`](apps/web/DESIGN.md). The API never
-serves frontend assets or client routes.
+serves frontend assets or client routes. See the [architecture map](docs/architecture.md)
+for rule ownership, mutation order, browser state, and focused verification.
 
 ## HTTP API
 
@@ -123,20 +125,21 @@ All event operations are scoped by the private event token.
 | Method | Path | Request body |
 | --- | --- | --- |
 | `POST` | `/api/events` | `{ title, currency, firstParticipantName }` |
-| `GET` | `/api/events/:token` | — |
-| `GET` | `/api/events/:token/stream` | — |
+| `GET` | `/api/events/:token` | - |
+| `GET` | `/api/events/:token/stream` | - |
 | `POST` | `/api/events/:token/participants` | `{ name }` |
 | `PATCH` | `/api/events/:token/participants/:participantId` | `{ name }` |
-| `DELETE` | `/api/events/:token/participants/:participantId` | — |
+| `DELETE` | `/api/events/:token/participants/:participantId` | - |
 | `POST` | `/api/events/:token/expenses` | `{ description, amountMinor, payerId, includedParticipantIds }` |
 | `PATCH` | `/api/events/:token/expenses/:expenseId` | `{ description, amountMinor, payerId, includedParticipantIds }` |
-| `DELETE` | `/api/events/:token/expenses/:expenseId` | — |
+| `DELETE` | `/api/events/:token/expenses/:expenseId` | - |
 | `POST` | `/api/events/:token/payments` | `{ from, to, amountMinor }` |
 | `PATCH` | `/api/events/:token/payments/:paymentId` | `{ from, to, amountMinor }` |
-| `DELETE` | `/api/events/:token/payments/:paymentId` | — |
+| `DELETE` | `/api/events/:token/payments/:paymentId` | - |
 
-Event creation returns `201` with `{ token, snapshot }`. Other successful
-mutations return `200` with the complete updated snapshot. Validation errors
+Event creation returns `201` with `{ token, snapshot }`. Participant, expense,
+and payment creation return `201` with the complete updated snapshot. Updates
+and deletions return `200` with that snapshot. Validation errors
 return `{ error }` with `400`, missing resources `404`, stale
 `If-Match` preconditions `412`, and expired links `410`.
 
@@ -156,7 +159,7 @@ creation.
 | `PORT` | `8787` | HTTP listening port |
 | `SETTLEUP_DB` | `data/settleup.sqlite` | SQLite path; `:memory:` is also supported |
 
-`npm run build:all` produces `dist` for the API and `apps/web/build/client`
+`mise run build` produces `dist` for the API and `apps/web/build/client`
 for the static host. Expose both through one public origin: route `/api/*` to
 the API, and all other paths to the SPA `index.html`. Private JSON and event
 streams must not be cached. The edge must allow long-lived, unbuffered SSE.
@@ -164,20 +167,27 @@ streams must not be cached. The edge must allow long-lived, unbuffered SSE.
 ## Development
 
 ```sh
-npm run dev:all      # API and web development servers
-npm run lint         # Lint the frontend
-npm run typecheck    # Type-check contracts, API, and frontend
-npm test             # Contract, API, and frontend unit tests
-npm run test:e2e     # Real-browser end-to-end tests
-npm run build:all    # Build contracts, API, and SPA
+mise run dev         # API and web development servers
+mise run lint        # Lint the frontend
+mise run typecheck   # Type-check contracts, API, and frontend
+mise run test        # Contract, API, and frontend unit tests
+mise run test:e2e    # Real-browser end-to-end tests
+mise run build       # Build contracts, API, and SPA
+mise run check       # Run every gate in order
 ```
 
 CI on `main` is the [CI workflow](https://github.com/astrazds/settleup/actions/workflows/ci.yml).
-It runs typecheck, unit tests, and `build:all`, then the Playwright suite
+It uses `mise.toml` and runs lint, typecheck, unit tests, build, and the Playwright suite
 without pixel snapshots. Visual baselines stay a local Chromium gate. The
 verification commands rebuild the generated contracts package. If they run
-while `npm run dev:all` is active and a watcher reports a temporarily missing
-contracts output, restart `npm run dev:all` after verification.
+while `mise run dev` is active and a watcher reports a temporarily missing
+contracts output, restart `mise run dev` after verification.
+
+Run `mise run browsers:install` before the first browser test. mise keeps these
+browsers in the ignored `.scratch/playwright` directory. Playwright also
+requires its platform libraries. On a supported Linux distribution,
+`mise run browsers:install -- --with-deps` installs those libraries. Pass test
+filters directly, for example `mise run test:e2e -- --project=mobile-chromium`.
 
 Contributions are welcome; read [CONTRIBUTING.md](CONTRIBUTING.md) before
 opening a pull request. SettleUp is licensed under [MIT](LICENSE).

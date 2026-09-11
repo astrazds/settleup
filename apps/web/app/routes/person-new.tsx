@@ -1,10 +1,10 @@
 import { redirect, useActionData } from "react-router";
 
-import { actionErrorMessage } from "../components/event-context";
+
 import { PersonForm } from "../components/person-form";
 import { RouteDialog } from "../components/route-dialog";
-import { addParticipant } from "../lib/api";
-import { readFormString, readFormVersion } from "../lib/form-data";
+import { actionErrorMessage, addParticipant } from "../lib/api";
+import { readParticipantSubmission } from "../lib/form-data";
 import type { Route } from "./+types/person-new";
 
 export async function clientAction({ params, request }: Route.ClientActionArgs) {
@@ -12,14 +12,11 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
   const token = params.token ?? "";
 
   try {
+    const { command, expectedVersion } = readParticipantSubmission(formData);
     await addParticipant(
       token,
-      {
-        name: readFormString(formData, "name"),
-      },
-      {
-        expectedVersion: readFormVersion(formData),
-      },
+      command,
+      { expectedVersion },
     );
     return redirect(`/e/${encodeURIComponent(token)}/people`);
   } catch (error) {
