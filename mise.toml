@@ -1,0 +1,74 @@
+[tools]
+"npm:npm" = "12.0.1"
+node = "26.8.2"
+
+[env]
+PLAYWRIGHT_BROWSERS_PATH = "{{config_root}}/.scratch/playwright"
+
+[tasks.install]
+description = "Install the locked workspace dependencies"
+run = "npm ci"
+
+[tasks.dev]
+description = "Run the API and web development servers"
+run = "npm run dev:all"
+
+[tasks."dev:web"]
+description = "Run the web development server"
+run = "npm run dev:web"
+
+[tasks."dev:api"]
+description = "Run the API development server"
+run = "npm run dev:api"
+
+[tasks.lint]
+description = "Lint the frontend"
+run = "npm run lint"
+
+[tasks.typecheck]
+description = "Type-check contracts, API, and frontend"
+run = "npm run typecheck"
+
+[tasks.test]
+description = "Run contract, API, and frontend unit tests"
+run = "npm test"
+
+[tasks."test:server"]
+description = "Run API tests, with optional Vitest filters"
+depends = ["build:contracts"]
+run = "npm run test:server --"
+
+[tasks."test:web"]
+description = "Run frontend unit tests, with optional Vitest filters"
+depends = ["build:contracts"]
+run = "npm run test --workspace @settleup/web --"
+
+[tasks."test:contracts"]
+description = "Run wire-contract tests, with optional Vitest filters"
+run = "npm run test --workspace @settleup/contracts --"
+
+[tasks.build]
+description = "Build the API and static frontend"
+run = "npm run build:all"
+
+[tasks."build:contracts"]
+description = "Build the shared wire contracts"
+run = "npm run build:contracts"
+
+[tasks."test:e2e"]
+description = "Run the real-browser suite"
+run = "npm exec --workspace @settleup/web -- playwright test"
+
+[tasks."browsers:install"]
+description = "Install the browsers required by the locked Playwright version"
+run = "npm exec --workspace @settleup/web -- playwright install chromium firefox webkit"
+
+[tasks.check]
+description = "Run every repository gate in order"
+run = [
+  "mise run lint",
+  "mise run typecheck",
+  "mise run test",
+  "mise run build",
+  "mise run test:e2e",
+]
