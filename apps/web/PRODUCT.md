@@ -45,8 +45,9 @@ finance product or a money-transfer service.
 - Expense capture happens in a mobile-first web interface during the event.
   The interface may already be open on several phones or browser tabs.
 - The server snapshot is authoritative. Live change notifications cause the
-  client to refetch it, and an open form pauses a stale save until the latest
-  version is reviewed.
+  client to refetch it. An open form retains its draft and pauses saving when
+  the event changes. **Load latest** replaces the draft with current values
+  before the person continues. New forms reset to their current defaults.
 - Previously loaded details can remain visible when a device goes offline, but
   changes require a connection. The event is not kept as an offline or
   persistent browser ledger.
@@ -70,10 +71,14 @@ finance product or a money-transfer service.
   transactional mutation. The browser does not author ledger balances.
 - Settlement presents one next suggested payment at a time. Payments happen
   outside SettleUp; the app only records them and recomputes what remains.
-- The event token is the access credential. It must not be persisted or logged,
-  and participant names are visible to everyone holding the link.
+- The event token is the access credential. The app stores its hash on the
+  server and does not write the token to browser storage. The token remains in
+  private URLs and must not appear in logs. Participant names are visible to
+  everyone holding the link.
 - Event links are accessible for three days. Event data becomes inaccessible
-  at expiry and is deleted at the five-day cleanup deadline.
+  through the API at expiry. At five days, it becomes eligible for deletion by
+  the next startup or hourly cleanup run. Already loaded pages and copies made
+  outside the app are not erased by expiry.
 - The static frontend uses relative `/api` requests. The independently
   deployable backend does not serve frontend assets or client routes.
 - The current interface is English-only.
@@ -83,8 +88,8 @@ finance product or a money-transfer service.
 
 ## Brand Commitments
 
-The product is named **SettleUp**. Its primary promise is **“Everyone pays.
-Every cent lands.”** Supporting copy should reinforce the same verified truths:
+The product is named **SettleUp**. Its primary promise is **"Everyone pays.
+Every cent lands."** Supporting copy should reinforce the same verified truths:
 private-by-link access, no accounts, cent-exact equal splits, one clear
 settlement step, and payments made outside the app.
 
@@ -94,7 +99,7 @@ sides resolving into one aligned settlement. Use it with the Barlow SettleUp
 wordmark; do not replace it with exchange arrows, currency symbols, wallets,
 banking imagery, or a generic rounded fintech tile.
 
-The visual world is **“The Shared Session”**: direct, social, exact, and
+The visual world is **"The Shared Session"**. It is direct, social, exact, and
 short-lived. The landing page may use its poster-like color fields and
 condensed type at full volume. Event routes must translate the same identity
 into a calmer working register where names, money, status, and actions remain
@@ -102,7 +107,8 @@ immediately legible.
 
 Brand language must never imply authenticated privacy, money transfer,
 ownership roles, permanent history, or verified social proof. The complete
-event link remains the access credential, and SettleUp records—not moves—money.
+event link remains the access credential. SettleUp records payments made
+outside the app.
 
 ## Evidence on Hand
 
@@ -118,11 +124,15 @@ event link remains the access credential, and SettleUp records—not moves—mon
   states in `apps/web/tests/e2e/states.spec.ts-snapshots/`.
 - End-to-end coverage exercises event creation, participant and expense
   management, exact split disclosure, settlement, deletion, concurrent
-  updates, stable connection-state announcements, route-sheet dismissal and
-  focus return, short-viewport confirmation usability, horizontal-overflow
+  updates, retained drafts and **Load latest** across participant, expense,
+  and payment forms, stable connection-state announcements, route-sheet
+  dismissal and focus return, short-viewport confirmation usability, horizontal-overflow
   prevention, responsive zoom and text stress, and light, dark, and
   forced-colors accessibility checks in mobile and desktop Chromium, desktop
   Firefox, and mobile WebKit.
+- Pixel comparisons run locally in mobile and desktop Chromium. CI runs the
+  semantic browser checks without pixel comparisons. Reproduction commands and
+  visual review rules live in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 - There are no verified testimonials, customer logos, usage metrics, case
   studies, press quotes, pricing claims, or third-party proof assets in the
   repository. Future work must not fabricate them.
@@ -154,3 +164,7 @@ that control.
 
 No additional product-specific accessibility needs, localization requirements,
 or launch-geography commitments have been confirmed.
+
+Module ownership and the mutation lifecycle are documented in the
+[architecture map](../../docs/architecture.md). The
+[privacy document](../../PRIVACY.md) describes storage and retention boundaries.

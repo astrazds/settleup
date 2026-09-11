@@ -17,7 +17,7 @@ people who hold the event link.
 
 ## What the server stores
 
-Each event is stored until its cleanup deadline. The server keeps:
+The server stores each event until a cleanup run removes it. The stored data is:
 
 | Data | Purpose |
 | --- | --- |
@@ -32,25 +32,42 @@ names and amounts are visible to everyone who has the complete link.
 ## Retention
 
 Private event links work for three days after creation. Expired links return
-`410 Gone`. Event rows remain until the cleanup deadline five days after
-creation, then the event and related participant, expense, share, and payment
-rows are deleted.
+`410 Gone` while the expired event still exists. Five days after creation, the
+event becomes eligible for deletion. Cleanup runs when the API starts and
+every hour while it is running. The next cleanup removes eligible events and
+their participant, expense, share, and payment rows. Deleted links return
+`404 Not Found`.
+
+This lifecycle covers the application's live database. Hosting logs, database
+backups, and copies made by link holders have their own retention policies.
 
 ## Browser storage
 
-The web app does not persist event tokens or snapshots. The current tab may
-remember a participant ID keyed by the public event ID so the same person can
-stay selected while they work. That preference is not a login.
+The web app does not write event tokens or snapshots to browser storage. It
+stores an optional participant ID in `sessionStorage`, keyed by the public
+event ID. That preference remembers the current person in the tab and is not a
+login. Open forms and fetched snapshots remain in memory while the page is
+open. The app does not queue offline changes.
+
+The private token remains in the page URL. Browser history, copied links, and
+messages used to share the event can retain that URL outside the app's storage.
 
 ## Network
 
 The static frontend talks to the API over relative `/api` requests and an
 event-stream for live invalidation. There are no analytics pixels, remote
 fonts loaded from third-party hosts, or advertising tags. Self-hosted fonts
-ship with the app.
+ship with the app. API responses use `Cache-Control: no-store`, and pages set a
+`no-referrer` policy. Live change messages contain an event version, not names
+or ledger rows; the browser then fetches the complete snapshot over the API.
+
+Hosting providers and reverse proxies can see request URLs, including private
+tokens. Operators should exclude these URLs from access logs and keep shared
+caches away from private API responses.
 
 ## Contact
 
-For privacy or support questions, use the repository issue tracker:
-
-https://github.com/astrazds/settleup/issues
+For general privacy or support questions, use the
+[repository issue tracker](https://github.com/astrazds/settleup/issues). Do not
+include private event links, names, or ledger data in a public issue. Report
+vulnerabilities through [SECURITY.md](SECURITY.md).
