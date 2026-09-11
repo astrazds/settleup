@@ -87,12 +87,20 @@ components:
     width: "38px"
 ---
 
-# Design System: SettleUp
+# SettleUp design system
 
-This file is the current visual contract for the frontend, not a redesign
-history. `PRODUCT.md` owns product truth and exclusions; CSS tokens, semantic
-components, and tested browser snapshots are the implementation source of
-truth when this prose needs verification.
+This file describes the current frontend. [PRODUCT.md](PRODUCT.md) owns product
+behavior and exclusions. Verify visual claims against these implementation
+owners:
+
+| Concern | Source |
+| --- | --- |
+| Palette, themes, self-hosted fonts, global focus | [`app/styles/global.css`](app/styles/global.css) |
+| Landing layout and controls | [`app/styles/home.module.css`](app/styles/home.module.css) |
+| Event layout, forms, and dialogs | [`app/styles/app.module.css`](app/styles/app.module.css) |
+| Brand lockup and icon geometry | [`app/styles/brand.module.css`](app/styles/brand.module.css), [`app/components/icons.tsx`](app/components/icons.tsx) |
+| Error and root layout | [`app/styles/root.module.css`](app/styles/root.module.css) |
+| Browser states and reference images | [`tests/e2e/states.spec.ts`](tests/e2e/states.spec.ts), [`tests/e2e/states.spec.ts-snapshots/`](tests/e2e/states.spec.ts-snapshots/) |
 
 ## Overview
 
@@ -187,7 +195,7 @@ readable.
 - **Headline** (400, `clamp(3.2rem, 5vw, 5rem)`, 0.86): major story chapters.
 - **Title** (400, `clamp(2rem, 3vw, 2.7rem)`, 0.95): forms and singular next
   steps.
-- **Body** (400, `1rem`, 1.45): primary copy, normally limited to 54–70
+- **Body** (400, `1rem`, 1.45): primary copy, normally limited to 54 to 70
   characters.
 - **Label** (700, `0.74rem`, `0.115em`, uppercase): field labels, metadata, and
   short directional notes.
@@ -205,8 +213,8 @@ Utility copy never competes with it.
 The landing page is a full-width sequence of color plates divided by one-pixel
 rules. Its first viewport is an asymmetric split frame: a flexible promise
 panel beside a creation panel with a `390px` minimum desktop width. An exact
-split rail then crosses the page as the proof point. Content padding scales from
-`18px` on mobile to `64–76px` on large screens.
+split rail then crosses the page as the proof point. Content padding starts at
+`18px` on mobile. Large screens use `64px` to `76px`.
 
 At `1120px`, nonessential masthead copy and the split cue collapse. At `860px`,
 the hero becomes one column and the split rail reflows to four columns. At
@@ -216,11 +224,11 @@ complete at `320px`.
 
 ### Operational Split Spine
 
-Event routes use a compact side-car register rather than the landing page’s
-persuasive split frame. At `820px` and above, a `224–272px` ink spine stays in
+Event routes use a compact side-car register rather than the landing page's
+persuasive split frame. At `820px` and above, a `224px` to `272px` ink spine stays in
 view while the active route occupies a flexible cream document up to `1180px`.
 The spine holds only event identity, sharing, expiry/live state, and the three
-peer sections. Its `01–03` labels behave as a document index, never as a
+peer sections. Its labels `01` through `03` behave as a document index, never as a
 required sequence.
 
 Below `820px`, the spine becomes a short stacked folio: ink masthead, mustard
@@ -289,7 +297,13 @@ soft floating panels.
 - **Style:** Ink Black bar with the Settle Cut stamp, cream wordmark, and compact
   uppercase trust notes.
 - **Responsive:** secondary trust notes progressively disappear; product
-  identity and “No accounts” remain.
+  identity and "No accounts" remain.
+
+### Landing trust note
+
+The landing form's trust note uses a decorative `10px` SVG arrow inside its
+`22px` square marker. Keep this geometry in the SVG rather than relying on a
+font glyph that the self-hosted font may not contain.
 
 ### Brand Mark
 
@@ -299,7 +313,7 @@ soft floating panels.
   Mustard remainder block.
 - **Meaning:** two sides resolve into one aligned settlement; the remainder
   block recalls the deterministic extra cent without implying money transfer.
-- **Sizing:** use the complete mark at `29–32px`; the same silhouette remains
+- **Sizing:** use the complete mark at `29px` to `32px`; the same silhouette remains
   legible as a `16px` favicon.
 - **Lockup:** pair with the Barlow `SettleUp` wordmark and preserve the `44px`
   brand-link target.
@@ -356,7 +370,7 @@ soft floating panels.
 
 ### Empty Expenses
 
-- **Action:** the empty document contains one “Add the first expense” action.
+- **Action:** the empty document contains one "Add the first expense" action.
   The page-header action appears only after at least one expense exists, so the
   first-use state never presents duplicate commitments.
 
@@ -365,9 +379,13 @@ soft floating panels.
 - **Style:** square paper sheet with a mustard top rule, hard title divider,
   and no blur, ambient shadow, pill handle, or rounded bottom-sheet chrome.
 - **Behavior:** Radix focus trapping remains authoritative. Dismissal resolves
-  to the sheet’s immediate Expenses, Settle, or People parent rather than the
+  to the sheet's immediate Expenses, Settle, or People parent rather than the
   event index. A launcher-opened sheet returns focus to that launcher; a direct
   deep link falls back to the event workspace main region.
+- **Concurrent edits:** a live update preserves the visible draft, displays the
+  conflict notice, and disables submission. **Load latest** resets fields to
+  current values and accepts the current event version. Keep this choice
+  explicit rather than replacing fields as new snapshots arrive.
 - **Mobile:** the submit commitment remains visible in a fixed ruled footer
   while the form body scrolls behind it.
 - **Loading boundary:** route sheets and destructive confirmations remain
@@ -399,10 +417,15 @@ soft floating panels.
 - **Reduced motion:** remove the hard-cut entrance and route transitions while
   preserving the final composition and focus movement.
 - **Visual verification:** Chromium snapshots cover landing, root-error, and
-  event-route states at mobile and desktop sizes. The same semantic flows,
-  overflow checks, Axe checks, responsive stress cases, dark mode, and
+  event-route states at mobile and desktop sizes in local runs. CI skips pixel
+  comparisons. The same semantic flows, overflow checks, Axe checks,
+  responsive stress cases, dark mode, and
   forced-colors behavior run in mobile and desktop Chromium, desktop Firefox,
   and mobile WebKit.
+
+Use [CONTRIBUTING.md](../../CONTRIBUTING.md#review-visual-changes) for screenshot
+commands, capture masks, and scoped tolerances. Inspect the images when a
+baseline changes; a passing semantic test does not establish visual parity.
 
 ## Do's and Don'ts
 
