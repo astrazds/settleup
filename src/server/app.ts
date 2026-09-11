@@ -1,5 +1,6 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import {
+  type EventSnapshot,
   createEventCommandSchema,
   expenseCommandSchema,
   participantCommandSchema,
@@ -8,10 +9,8 @@ import {
 
 import { ChangeBroker } from "./change-broker.js";
 import { AppError } from "./errors.js";
-import {
-  EventService,
-  type EventVersionPrecondition,
-} from "./event-service.js";
+import { EventService } from "./event-service.js";
+import { readVersionPrecondition } from "./if-match.js";
 import { parseRequestBody } from "./validation.js";
 
 interface AppOptions {
@@ -74,9 +73,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(participantCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot, 201);
+    return mutationResponse(context, snapshot, 201);
   });
 
   app.patch("/api/events/:token/participants/:participantId", async (context) => {
@@ -87,9 +84,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(participantCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
 
   app.delete("/api/events/:token/participants/:participantId", (context) => {
@@ -98,9 +93,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       context.req.param("participantId"),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
 
   app.post("/api/events/:token/expenses", async (context) => {
@@ -110,9 +103,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(expenseCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot, 201);
+    return mutationResponse(context, snapshot, 201);
   });
 
   app.patch("/api/events/:token/expenses/:expenseId", async (context) => {
@@ -123,9 +114,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(expenseCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
 
   app.delete("/api/events/:token/expenses/:expenseId", (context) => {
@@ -134,9 +123,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       context.req.param("expenseId"),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
 
   app.post("/api/events/:token/payments", async (context) => {
@@ -146,9 +133,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(paymentCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot, 201);
+    return mutationResponse(context, snapshot, 201);
   });
 
   app.patch("/api/events/:token/payments/:paymentId", async (context) => {
@@ -159,9 +144,7 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       parseRequestBody(paymentCommandSchema, await readJson(context.req)),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
 
   app.delete("/api/events/:token/payments/:paymentId", (context) => {
@@ -170,10 +153,14 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
       context.req.param("paymentId"),
       readVersionPrecondition(context.req.header("If-Match")),
     );
-    publishSnapshot(broker, snapshot.event.id, snapshot.event.version);
-    setEventVersionHeader(context, snapshot.event.version);
-    return context.json(snapshot);
+    return mutationResponse(context, snapshot);
   });
+
+  function mutationResponse(context: Context, snapshot: EventSnapshot, status: 200 | 201 = 200) {
+    broker.publish({ eventId: snapshot.event.id, version: snapshot.event.version });
+    setEventVersionHeader(context, snapshot.event.version);
+    return context.json(snapshot, status);
+  }
 
   return app;
 }
@@ -184,104 +171,6 @@ async function readJson(request: { json: () => Promise<unknown> }): Promise<unkn
   } catch {
     throw new AppError("Request body must be valid JSON.", 400);
   }
-}
-
-function publishSnapshot(broker: ChangeBroker, eventId: string, version: number): void {
-  broker.publish({ eventId, version });
-}
-
-function readVersionPrecondition(
-  value: string | undefined,
-): EventVersionPrecondition | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (value.trim() === "*") {
-    return { matchesAny: true, versions: [] };
-  }
-
-  const versions: number[] = [];
-  let index = 0;
-  let sawTag = false;
-
-  while (index < value.length) {
-    while (
-      index < value.length &&
-      (value[index] === " " ||
-        value[index] === "\t" ||
-        value[index] === ",")
-    ) {
-      index += 1;
-    }
-
-    if (index >= value.length) {
-      break;
-    }
-
-    const weak = value.startsWith("W/", index);
-    if (weak) {
-      index += 2;
-    }
-
-    if (value[index] !== '"') {
-      throw invalidIfMatch();
-    }
-    index += 1;
-
-    let opaqueTag = "";
-    while (index < value.length && value[index] !== '"') {
-      const codePoint = value.charCodeAt(index);
-      const isEntityTagCharacter =
-        codePoint === 0x21 ||
-        (codePoint >= 0x23 && codePoint <= 0x7e) ||
-        (codePoint >= 0x80 && codePoint <= 0xff);
-      if (!isEntityTagCharacter) {
-        throw invalidIfMatch();
-      }
-      opaqueTag += value[index];
-      index += 1;
-    }
-
-    if (value[index] !== '"') {
-      throw invalidIfMatch();
-    }
-    index += 1;
-    sawTag = true;
-
-    while (
-      index < value.length &&
-      (value[index] === " " || value[index] === "\t")
-    ) {
-      index += 1;
-    }
-    if (index < value.length && value[index] !== ",") {
-      throw invalidIfMatch();
-    }
-
-    if (!weak) {
-      const versionMatch = /^v([1-9]\d*)$/.exec(opaqueTag);
-      const version = versionMatch?.[1]
-        ? Number(versionMatch[1])
-        : Number.NaN;
-      if (Number.isSafeInteger(version) && version > 0) {
-        versions.push(version);
-      }
-    }
-  }
-
-  if (!sawTag) {
-    throw invalidIfMatch();
-  }
-
-  return { matchesAny: false, versions };
-}
-
-function invalidIfMatch(): AppError {
-  return new AppError(
-    'If-Match must contain valid entity tags such as "v3", or *.',
-    400,
-  );
 }
 
 function setEventVersionHeader(
