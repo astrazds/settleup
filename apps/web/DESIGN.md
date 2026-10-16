@@ -212,7 +212,9 @@ Utility copy never competes with it.
 
 The landing page is a full-width sequence of color plates divided by one-pixel
 rules. Its first viewport is an asymmetric split frame: a flexible promise
-panel beside a creation panel with a `390px` minimum desktop width. An exact
+panel beside a creation panel. Above `1120px` the creation column minimum is
+`390px`. While the hero is still two columns at `1120px` and below, the minimum
+is `360px`. An exact
 split rail then crosses the page as the proof point. Content padding starts at
 `18px` on mobile. Large screens use `64px` to `76px`.
 
