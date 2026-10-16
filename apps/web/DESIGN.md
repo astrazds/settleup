@@ -345,7 +345,7 @@ font glyph that the self-hosted font may not contain.
 - **Content:** Settle Cut lockup, Share, title, currency, expiry/live state,
   and Expenses/Settle/People only. No owner, role, archive, or invitation
   controls.
-- **Live state:** Connected, reconnecting, and offline changes reuse one stable
+- **Live state:** Up to date, Reconnecting, and Offline reuse one stable
   atomic status node. The longer reconnect notice remains non-live so the same
   transition is not announced twice.
 - **Responsive:** persistent on desktop; stacked above a sticky peer-section
