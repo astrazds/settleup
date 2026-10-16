@@ -7,9 +7,9 @@ commitments/errors; League Gothic titles, Barlow copy, square controls, hard
 one-pixel rules, and no ambient shadow.
 STORY: Confirm the event and live state, choose Expenses, Settle, or People,
 make one exact change, and understand any reconnect or edit conflict.
-FIRST VIEWPORT: Desktop gives 240px to the register and the rest to the active
-ledger; mobile stacks masthead, folio, status, and a sticky three-cell index
-before the route heading and action.
+FIRST VIEWPORT: Desktop keeps the register beside the active ledger. Mobile
+stacks the masthead, folio, status, and a sticky three-cell index before the
+route heading and action.
 FORM: Side-car Register, position 3 of 6; approved Split Spine staging; seed
 c6026cc7.
 */
