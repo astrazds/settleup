@@ -277,7 +277,8 @@ soft floating panels.
 - **Focus:** landing uses a `4px` Cut Teal outline; operational actions use the
   shared `3px` focus token, which becomes Session Mustard in dark mode.
 - **Active:** a `2px` downward press.
-- **Disabled:** retains its structure at `0.65` opacity with a wait cursor.
+- **Disabled:** the landing button keeps its structure at `0.65` opacity with a
+  wait cursor. Operational buttons use `0.58` opacity and a not-allowed cursor.
 
 ### Inputs and Selects
 
