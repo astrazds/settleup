@@ -197,8 +197,10 @@ readable.
   steps.
 - **Body** (400, `1rem`, 1.45): primary copy, normally limited to 54 to 70
   characters.
-- **Label** (700, `0.74rem`, `0.115em`, uppercase): field labels, metadata, and
-  short directional notes.
+- **Label** (700, `0.74rem`, `0.115em`, uppercase): kickers, section intros,
+  and short directional notes. Landing field labels are `0.77rem` with
+  `0.055em` tracking. Event field labels are `0.75rem` with `0.075em` tracking
+  and a `1.2` line height.
 - **Money** (League Gothic or Barlow with tabular figures): exact values with
   stable alignment and no texture.
 
