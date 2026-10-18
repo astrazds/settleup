@@ -1,0 +1,29 @@
+name: Bug
+description: Report a defect in the app or the API.
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste an event link or token. The link is a bearer credential. Report a vulnerability through a [private security advisory](https://github.com/astrazds/settleup/security/advisories/new).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what the app or the API did.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Leave out event links, tokens, and names you do not want public.
+    validations:
+      required: true
