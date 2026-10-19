@@ -62,7 +62,7 @@
     "@settleup/contracts": "0.1.0",
     "@hono/node-server": "^2.0.4",
     "better-sqlite3": "^12.10.0",
-    "hono": "^4.12.24"
+    "hono": "^4.13.13"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
