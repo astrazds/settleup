@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomInt, randomUUID } from "node:crypto";
 
 import type {
   CreateEventCommand,
@@ -506,11 +506,10 @@ export class EventService {
 }
 
 function generateToken(): string {
-  const bytes = randomBytes(tokenLength);
   let token = "";
 
-  for (const byte of bytes) {
-    token += tokenAlphabet.charAt(byte % tokenAlphabet.length);
+  while (token.length < tokenLength) {
+    token += tokenAlphabet.charAt(randomInt(tokenAlphabet.length));
   }
 
   return token;
