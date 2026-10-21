@@ -4,6 +4,10 @@ import { openDatabase } from "./database.js";
 import { AppError } from "./errors.js";
 import { EventService } from "./event-service.js";
 
+const shareTokenAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+const shareTokenPattern = new RegExp(`^[${shareTokenAlphabet}]{14}$`);
+const chiSquareDf30Upper1e9 = 101.697;
+
 describe("EventService", () => {
   it("creates event-scoped expenses, balances, suggestions, and settlement payments", () => {
     const service = new EventService(openDatabase(":memory:"));
@@ -234,6 +238,53 @@ describe("EventService", () => {
     now = new Date("2026-06-06T00:00:01.000Z");
     expect(service.cleanupExpiredData()).toBe(1);
     expect(() => service.getSnapshotByToken(created.token)).toThrow(AppError);
+  });
+
+  it("issues a 14 character share token from the unambiguous alphabet", () => {
+    const service = new EventService(openDatabase(":memory:"));
+    const created = service.createEvent({
+      title: "Dinner",
+      currency: "AUD",
+      firstParticipantName: "Andrejs",
+    });
+
+    expect(created.token).toMatch(shareTokenPattern);
+    expect(service.getSnapshotByToken(created.token).event.id).toBe(created.snapshot.event.id);
+  });
+
+  it("draws share token characters uniformly", () => {
+    const service = new EventService(openDatabase(":memory:"));
+    const tokenCount = 8000;
+    const counts = new Map([...shareTokenAlphabet].map((character) => [character, 0]));
+    let rejectedToken = "";
+
+    for (let index = 0; index < tokenCount && rejectedToken === ""; index += 1) {
+      const { token } = service.createEvent({
+        title: "Dinner",
+        currency: "AUD",
+        firstParticipantName: "Andrejs",
+      });
+
+      if (!shareTokenPattern.test(token)) {
+        rejectedToken = token;
+        break;
+      }
+
+      for (const character of token) {
+        counts.set(character, (counts.get(character) ?? 0) + 1);
+      }
+    }
+
+    const draws = tokenCount * 14;
+    const expected = draws / shareTokenAlphabet.length;
+    let chiSquare = 0;
+    for (const count of counts.values()) {
+      const delta = count - expected;
+      chiSquare += (delta * delta) / expected;
+    }
+
+    expect(rejectedToken).toBe("");
+    expect(chiSquare).toBeLessThan(chiSquareDf30Upper1e9);
   });
 });
 
