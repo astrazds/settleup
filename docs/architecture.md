@@ -3,7 +3,8 @@
 SettleUp has two independently deployable runtimes and one wire-contract
 package. The Hono API owns the SQLite ledger. The static React Router SPA
 renders full server snapshots. `@settleup/contracts` defines their JSON
-schemas and types; neither runtime imports the other's source.
+schemas, types, and the equal-share function; neither runtime imports the
+other's source.
 
 ## Find the owner
 
@@ -14,7 +15,8 @@ schemas and types; neither runtime imports the other's source.
 | `If-Match` grammar | [`src/server/if-match.ts`](../src/server/if-match.ts) |
 | Command rules, transactions, access expiry, cleanup | [`src/server/event-service.ts`](../src/server/event-service.ts) |
 | Snapshot reads, row hydration, stored amount totals | [`src/server/event-snapshot.ts`](../src/server/event-snapshot.ts) |
-| Equal shares, balances, next settlement | [`src/server/ledger.ts`](../src/server/ledger.ts) |
+| Equal shares | [`packages/contracts/src/shares.ts`](../packages/contracts/src/shares.ts) |
+| Balances, next settlement | [`src/server/ledger.ts`](../src/server/ledger.ts) |
 | SQLite connection, schema, scalar row decoding | [`src/server/database.ts`](../src/server/database.ts) |
 | API process, environment, startup and hourly cleanup | [`src/server/server.ts`](../src/server/server.ts) |
 | SSE subscriptions and publication | [`src/server/change-broker.ts`](../src/server/change-broker.ts) |

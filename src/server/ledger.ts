@@ -1,33 +1,10 @@
 import {
   type Balance,
   type Expense,
-  type ExpenseShare,
   type Participant,
   type SettlementPayment,
   type SettlementSuggestion,
 } from "@settleup/contracts";
-
-export function deriveEqualShares(amountMinor: number, participantIds: string[]): ExpenseShare[] {
-  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
-    throw new Error("Amount must be a positive integer minor-unit value.");
-  }
-
-  if (participantIds.length === 0) {
-    throw new Error("At least one participant must be included.");
-  }
-
-  const baseShare = Math.floor(amountMinor / participantIds.length);
-  let remainder = amountMinor % participantIds.length;
-
-  return participantIds.map((participantId) => {
-    const extra = remainder > 0 ? 1 : 0;
-    remainder -= extra;
-    return {
-      participantId,
-      amountMinor: baseShare + extra,
-    };
-  });
-}
 
 export function calculateBalances(
   participants: Participant[],

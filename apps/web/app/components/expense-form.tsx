@@ -1,10 +1,11 @@
-import type { Expense } from "@settleup/contracts";
+import type { Expense, ExpenseShare } from "@settleup/contracts";
 import { useState } from "react";
 import { Form, useNavigation } from "react-router";
 
 import { CheckIcon } from "./icons";
 import { EditConflict } from "./edit-conflict";
 import { useEventContext } from "./event-context";
+import { previewStoredShares } from "../lib/form-data";
 import {
   getParticipantPreference,
   setParticipantPreference,
@@ -13,7 +14,6 @@ import {
   amountMinorToDecimal,
   formatMoney,
   parseAmountMinor,
-  splitAmountMinorEqually,
 } from "../lib/money";
 import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
@@ -39,13 +39,11 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
   const [amountInput, setAmountInput] = useState(currentAmount);
   const [includedIds, setIncludedIds] = useState(currentIncludedIds);
   const included = new Set(includedIds);
-  const selectedParticipants = snapshot.participants.filter((participant) =>
-    included.has(participant.id),
-  );
   const preview = expenseSharePreview(
     amountInput,
     snapshot.event.currency,
-    selectedParticipants.length,
+    snapshot.participants,
+    includedIds,
   );
   const preferredPayer = getParticipantPreference(
     snapshot.event,
@@ -179,18 +177,21 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
         ) : null}
       </fieldset>
 
-      {preview.amounts.length > 0 ? (
+      {preview.shares.length > 0 ? (
         <section aria-label="Exact split preview" className={styles.sharePreview}>
           <h3 className={styles.sharePreviewTitle}>Exact split</h3>
           <ul className={styles.sharePreviewList}>
-            {selectedParticipants.map((participant, index) => (
-              <li key={participant.id}>
-                <span>{participant.name}</span>
+            {preview.shares.map((share) => (
+              <li key={share.participantId}>
+                <span>
+                  {
+                    snapshot.participants.find(
+                      (participant) => participant.id === share.participantId,
+                    )?.name
+                  }
+                </span>
                 <strong>
-                  {formatMoney(
-                    preview.amounts[index] ?? 0,
-                    snapshot.event.currency,
-                  )}
+                  {formatMoney(share.amountMinor, snapshot.event.currency)}
                 </strong>
               </li>
             ))}
@@ -241,21 +242,31 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
 function expenseSharePreview(
   input: string,
   currency: Parameters<typeof parseAmountMinor>[1],
-  participantCount: number,
-): { amounts: number[]; error?: string; hasRemainder: boolean } {
-  if (!input.trim() || participantCount === 0) {
-    return { amounts: [], hasRemainder: false };
+  participantsInDocumentOrder: readonly { id: string }[],
+  includedIds: readonly string[],
+): {
+  shares: ExpenseShare[];
+  error?: string;
+  hasRemainder: boolean;
+} {
+  if (!input.trim() || includedIds.length === 0) {
+    return { shares: [], hasRemainder: false };
   }
 
   try {
     const amountMinor = parseAmountMinor(input, currency);
+    const shares = previewStoredShares(
+      amountMinor,
+      participantsInDocumentOrder,
+      includedIds,
+    );
     return {
-      amounts: splitAmountMinorEqually(amountMinor, participantCount),
-      hasRemainder: amountMinor % participantCount !== 0,
+      shares,
+      hasRemainder: shares.length > 0 && amountMinor % shares.length !== 0,
     };
   } catch (error) {
     return {
-      amounts: [],
+      shares: [],
       error: error instanceof Error ? error.message : "Enter a valid amount.",
       hasRemainder: false,
     };

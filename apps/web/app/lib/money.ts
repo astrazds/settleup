@@ -132,24 +132,6 @@ export function formatMoney(
     .join("");
 }
 
-export function splitAmountMinorEqually(
-  amountMinor: number,
-  participantCount: number,
-): number[] {
-  assertSafeMinorUnits(amountMinor);
-  if (amountMinor <= 0 || !Number.isInteger(participantCount) || participantCount <= 0) {
-    return [];
-  }
-
-  const baseShare = Math.floor(amountMinor / participantCount);
-  const remainder = amountMinor % participantCount;
-
-  return Array.from(
-    { length: participantCount },
-    (_, index) => baseShare + (index < remainder ? 1 : 0),
-  );
-}
-
 function groupInteger(
   integerDigits: string,
   locales?: string | string[],

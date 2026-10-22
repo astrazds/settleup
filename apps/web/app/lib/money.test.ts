@@ -4,7 +4,6 @@ import {
   currencyFractionDigits,
   formatMoney,
   parseAmountMinor,
-  splitAmountMinorEqually,
 } from "./money";
 
 describe("money helpers", () => {
@@ -66,9 +65,4 @@ describe("money helpers", () => {
     );
   });
 
-  it("previews the server's deterministic equal-cent split", () => {
-    expect(splitAmountMinorEqually(1_000, 3)).toEqual([334, 333, 333]);
-    expect(splitAmountMinorEqually(1, 2)).toEqual([1, 0]);
-    expect(splitAmountMinorEqually(100, 0)).toEqual([]);
-  });
 });

@@ -165,3 +165,5 @@ export const changedEventDataSchema = z.object({
   version: positiveIntegerSchema,
 });
 export type ChangedEventData = z.infer<typeof changedEventDataSchema>;
+
+export { deriveEqualShares } from "./shares.js";
