@@ -1,0 +1,7 @@
+feature record-expense
+entry Add the first expense
+title Verify weekend
+amount 20.01 AUD
+preview $10.01 and $10.00
+stored-shares 1001 and 1000
+git 496e73b27617e041e157fed7bf84b2c1ba4ac164

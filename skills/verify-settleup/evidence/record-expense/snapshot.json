@@ -1,0 +1,64 @@
+{
+  "event": {
+    "id": "75466687-4821-46ef-80e2-c90a1d062e17",
+    "title": "Verify weekend",
+    "currency": "AUD",
+    "createdAt": "2026-10-22T22:51:43.453Z",
+    "expiresAt": "2026-10-25T22:51:43.453Z",
+    "cleanupAfter": "2026-10-27T22:51:43.453Z",
+    "version": 3,
+    "token": "[redacted]"
+  },
+  "participants": [
+    {
+      "id": "5b11faba-46e9-458a-8eec-bc5187f9fdf7",
+      "name": "Mia",
+      "sortOrder": 0
+    },
+    {
+      "id": "6f72257f-ce2c-40fb-bc1a-a90dd1409c5d",
+      "name": "Noah",
+      "sortOrder": 1
+    }
+  ],
+  "expenses": [
+    {
+      "id": "48597f9d-59db-4ca6-9940-9dc33a757bb4",
+      "description": "Dinner",
+      "amountMinor": 2001,
+      "payerId": "5b11faba-46e9-458a-8eec-bc5187f9fdf7",
+      "createdAt": "2026-10-22T22:51:44.433Z",
+      "updatedAt": "2026-10-22T22:51:44.433Z",
+      "shares": [
+        {
+          "participantId": "5b11faba-46e9-458a-8eec-bc5187f9fdf7",
+          "amountMinor": 1001
+        },
+        {
+          "participantId": "6f72257f-ce2c-40fb-bc1a-a90dd1409c5d",
+          "amountMinor": 1000
+        }
+      ]
+    }
+  ],
+  "payments": [],
+  "balances": [
+    {
+      "participantId": "5b11faba-46e9-458a-8eec-bc5187f9fdf7",
+      "paidMinor": 2001,
+      "owedMinor": 1001,
+      "netMinor": 1000
+    },
+    {
+      "participantId": "6f72257f-ce2c-40fb-bc1a-a90dd1409c5d",
+      "paidMinor": 0,
+      "owedMinor": 1000,
+      "netMinor": -1000
+    }
+  ],
+  "settlementSuggestion": {
+    "from": "6f72257f-ce2c-40fb-bc1a-a90dd1409c5d",
+    "to": "5b11faba-46e9-458a-8eec-bc5187f9fdf7",
+    "amountMinor": 1000
+  }
+}
