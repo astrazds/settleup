@@ -18,73 +18,41 @@ colors:
 typography:
   display:
     fontFamily: '"Session Display", Impact, sans-serif'
-    fontSize: "clamp(4.8rem, 8vw, 6rem)"
     fontWeight: 400
-    lineHeight: 0.82
-    letterSpacing: "-0.02em"
   headline:
     fontFamily: '"Session Display", Impact, sans-serif'
-    fontSize: "clamp(3.2rem, 5vw, 5rem)"
     fontWeight: 400
-    lineHeight: 0.86
-    letterSpacing: "-0.01em"
   title:
     fontFamily: '"Session Display", Impact, sans-serif'
-    fontSize: "clamp(2rem, 3vw, 2.7rem)"
     fontWeight: 400
-    lineHeight: 0.95
-    letterSpacing: "-0.01em"
   body:
     fontFamily: '"Session Sans", Arial, sans-serif'
-    fontSize: "1rem"
     fontWeight: 400
-    lineHeight: 1.45
-    letterSpacing: "normal"
   label:
     fontFamily: '"Session Sans", Arial, sans-serif'
-    fontSize: "0.74rem"
     fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "0.115em"
 rounded:
   square: "0"
-  control: "2px"
-spacing:
-  tight: "4px"
-  xs: "8px"
-  sm: "12px"
-  md: "16px"
-  lg: "24px"
-  xl: "40px"
 components:
   button-primary:
     backgroundColor: "{colors.brick-beat}"
     textColor: "{colors.poster-cream}"
     typography: "{typography.label}"
     rounded: "{rounded.square}"
-    padding: "11px 22px"
-    height: "56px"
   button-primary-hover:
     backgroundColor: "{colors.session-mustard}"
     textColor: "{colors.ink-black}"
     typography: "{typography.label}"
     rounded: "{rounded.square}"
-    padding: "11px 22px"
-    height: "56px"
   input:
     backgroundColor: "{colors.paper-bright}"
     textColor: "{colors.ink-black}"
     typography: "{typography.body}"
-    rounded: "{rounded.control}"
-    padding: "10px 12px"
-    height: "48px"
   chapter-marker:
     backgroundColor: "{colors.ink-black}"
     textColor: "{colors.session-mustard}"
     typography: "{typography.title}"
     rounded: "{rounded.square}"
-    height: "38px"
-    width: "38px"
 ---
 
 # SettleUp design system
@@ -190,17 +158,11 @@ readable.
 
 ### Hierarchy
 
-- **Display** (400, `clamp(4.8rem, 8vw, 6rem)`, 0.82): one landing promise,
-  uppercase, with deliberate line breaks.
-- **Headline** (400, `clamp(3.2rem, 5vw, 5rem)`, 0.86): major story chapters.
-- **Title** (400, `clamp(2rem, 3vw, 2.7rem)`, 0.95): forms and singular next
-  steps.
-- **Body** (400, `1rem`, 1.45): primary copy, normally limited to 54 to 70
-  characters.
-- **Label** (700, `0.74rem`, `0.115em`, uppercase): kickers, section intros,
-  and short directional notes. Landing field labels are `0.77rem` with
-  `0.055em` tracking. Event field labels are `0.75rem` with `0.075em` tracking
-  and a `1.2` line height.
+- **Display** (400, uppercase): one landing promise, with deliberate line breaks.
+- **Headline** (400): major story chapters.
+- **Title** (400): forms and singular next steps.
+- **Body** (400): primary copy.
+- **Label** (700, uppercase): kickers, section intros, and short directional notes.
 - **Money** (League Gothic or Barlow with tabular figures): exact values with
   stable alignment and no texture.
 
@@ -212,34 +174,28 @@ Utility copy never competes with it.
 
 ## Layout
 
-The landing page is a full-width sequence of color plates divided by one-pixel
+The landing page is a full-width sequence of color plates divided by hairline
 rules. Its first viewport is an asymmetric split frame: a flexible promise
-panel beside a creation panel. Above `1120px` the creation column minimum is
-`390px`. While the hero is still two columns at `1120px` and below, the minimum
-is `360px`. An exact
-split rail then crosses the page as the proof point. Content padding starts at
-`18px` on mobile. Large screens use `64px` to `76px`.
+panel beside a creation panel. An exact split rail then crosses the page as
+the proof point.
 
-At `1120px`, nonessential masthead copy and the split cue collapse. At `860px`,
-the hero becomes one column and the split rail reflows to four columns. At
-`620px`, it becomes a two-column ledger, the story steps stack, and the title
-scale relaxes. Every control remains at least `44px` high and the composition is
-complete at `320px`.
+Narrower widths collapse nonessential masthead copy and the split cue, then
+stack the hero into one column and reflow the split rail. Every control keeps
+a touch-sized target and the composition stays complete on a narrow phone.
 
 ### Operational Split Spine
 
 Event routes use a compact side-car register rather than the landing page's
-persuasive split frame. At `820px` and above, a `224px` to `272px` ink spine stays in
-view while the active route occupies a flexible cream document up to `1180px`.
-The spine holds only event identity, sharing, expiry/live state, and the three
-peer sections. Its labels `01` through `03` behave as a document index, never as a
-required sequence.
+persuasive split frame. On wide screens, an ink spine stays in view while the
+active route occupies a flexible cream document. The spine holds only event
+identity, sharing, expiry/live state, and the three peer sections. Its labels
+`01` through `03` behave as a document index, never as a required sequence.
 
-Below `820px`, the spine becomes a short stacked folio: ink masthead, mustard
-event identity, lifecycle strip, then a sticky three-cell section index. The
-active document begins immediately afterward. Expenses use a four-cell data
-ribbon that becomes `2 × 2`; ledger rows move secondary actions onto a second
-line before they ever force horizontal scrolling.
+On narrow screens, the spine becomes a short stacked folio: ink masthead,
+mustard event identity, lifecycle strip, then a sticky three-cell section
+index. The active document begins immediately afterward. Expenses use a
+four-cell data ribbon that becomes two by two; ledger rows move secondary
+actions onto a second line before they ever force horizontal scrolling.
 
 The spine keeps the physical five-ink palette in both themes. In dark mode the
 working paper inverts to near-black with cream type and rules, while mustard,
@@ -262,7 +218,7 @@ borders, and offset geometry before adding elevation.
 ## Shapes
 
 Forms are rectangular and cut like poster plates: square corners by default,
-`2px` rounding on native inputs, and a pointed clipped edge on the primary
+a slight radius on native inputs, and a pointed clipped edge on the primary
 action. The brand stamp clips its top-left and bottom-right corners to carry the
 same cut-paper silhouette at icon scale. Chapter markers are square. Circles
 remain reserved for people and status; the system avoids finance-app pills and
@@ -272,28 +228,23 @@ soft floating panels.
 
 ### Primary Button
 
-- **Landing shape:** square (`0`) with a `20px` pointed right edge and `56px`
-  minimum height, compacting to `52px` below `620px`.
-- **Operational shape:** square (`0`) with a `12px` pointed right edge at the
-  `44px` touch floor.
+- **Landing shape:** square, with a pointed right edge and a tall minimum height that compacts on narrow screens.
+- **Operational shape:** square, with a shorter pointed right edge at the touch-target floor.
 - **Default:** Brick Beat field and Poster Cream uppercase label.
 - **Hover:** Session Mustard with Ink Black text.
-- **Focus:** landing uses a `4px` Cut Teal outline; operational actions use the
-  shared `3px` focus token, which becomes Session Mustard in dark mode.
-- **Active:** a `2px` downward press.
-- **Disabled:** the landing button keeps its structure at `0.65` opacity with a
-  wait cursor. Operational buttons use `0.58` opacity and a not-allowed cursor.
+- **Focus:** landing uses a Cut Teal outline; operational actions use the shared focus token, which becomes Session Mustard in dark mode.
+- **Active:** a small downward press.
+- **Disabled:** the landing button keeps its structure and uses a wait cursor. Operational buttons use a not-allowed cursor.
 
 ### Inputs and Selects
 
-- **Shape:** `1px` Ink Black border and `2px` radius. Operational controls and
-  default landing controls are `48px` high; the landing form compacts to `46px`
-  below `620px`, remaining above the `44px` interaction floor.
+- **Shape:** Ink Black border and a slight radius. Operational controls and
+  default landing controls share one height; the landing form compacts slightly
+  on narrow screens and stays at the touch-target floor.
 - **Fill:** Paper Bright, warming to near-white on hover.
 - **Focus:** landing inputs use a crisp cream separation ring inside a Cut Teal
-  outer ring. Operational inputs use the shared `3px` theme focus outline with
-  a `2px` offset, becoming Session Mustard in dark mode. Neither uses ambient
-  glow.
+  outer ring. Operational inputs use the shared theme focus outline with an
+  offset, becoming Session Mustard in dark mode. Neither uses ambient glow.
 - **Error:** Brick Beat rectangular message with Poster Cream copy and a live
   region.
 
@@ -306,21 +257,21 @@ soft floating panels.
 
 ### Landing trust note
 
-The landing form's trust note uses a decorative `10px` SVG arrow inside its
-`22px` square marker. Keep this geometry in the SVG rather than relying on a
-font glyph that the self-hosted font may not contain.
+The landing form's trust note uses a decorative SVG arrow inside its square
+marker. Keep this geometry in the SVG rather than relying on a font glyph that
+the self-hosted font may not contain.
 
 ### Brand Mark
 
-- **Geometry:** a stroke-free `32 × 32` poster plate with opposing clipped
+- **Geometry:** a stroke-free square poster plate with opposing clipped
   corners. Two cream ledger bands lock into an S-shaped channel.
 - **Color:** Cut Teal field, Poster Cream bands, and one nonessential Session
   Mustard remainder block.
 - **Meaning:** two sides resolve into one aligned settlement; the remainder
   block recalls the deterministic extra cent without implying money transfer.
-- **Sizing:** use the complete mark at `29px` to `32px`; the same silhouette remains
-  legible as a `16px` favicon.
-- **Lockup:** pair with the Barlow `SettleUp` wordmark and preserve the `44px`
+- **Sizing:** use the complete mark in the lockup; the same silhouette remains
+  legible as a favicon.
+- **Lockup:** pair with the Barlow `SettleUp` wordmark and preserve a touch-sized
   brand-link target.
 - **Accessibility:** the SVG is decorative inside the labelled home link.
   Forced-colors mode remaps the three inks to system colors.
@@ -334,8 +285,7 @@ font glyph that the self-hosted font may not contain.
 
 ### Chapter Marker
 
-- **Style:** `38px` Ink Black square with a Session Mustard League Gothic
-  numeral.
+- **Style:** Ink Black square with a Session Mustard League Gothic numeral.
 - **Use:** makes a short, real sequence explicit; never implies saved history.
 
 ### Event Register
@@ -349,7 +299,7 @@ font glyph that the self-hosted font may not contain.
   atomic status node. The longer reconnect notice remains non-live so the same
   transition is not announced twice.
 - **Responsive:** persistent on desktop; stacked above a sticky peer-section
-  index below `820px`.
+  index on narrow screens.
 
 ### Operational Data Ribbon
 
@@ -365,7 +315,7 @@ font glyph that the self-hosted font may not contain.
 - **Style:** one square outer rule and continuous row dividers. Descriptions
   and names wrap; money owns a stable tabular column; edit/delete controls stay
   explicit.
-- **Actions:** below `820px`, Edit and Delete labels stay visible beside their
+- **Actions:** on narrow screens, Edit and Delete labels stay visible beside their
   icons. Desktop keeps compact icon actions with complete accessible names and
   title text.
 - **Disclosure:** exact expense shares remain native `details`/`summary`
@@ -408,7 +358,7 @@ font glyph that the self-hosted font may not contain.
 
 ## Accessibility and State Adaptation
 
-- **Responsive floor:** compositions must remain complete at `320px` without
+- **Responsive floor:** compositions must remain complete on a narrow phone without
   horizontal scrolling. Labels and primary actions stay visible; secondary
   ledger metadata wraps or moves to another row. Portable `200%` zoom,
   `200%` text, and short landscape viewports keep their primary controls and
@@ -440,7 +390,7 @@ baseline changes; a passing semantic test does not establish visual parity.
 - **Do** demonstrate exact splitting with real arithmetic and clearly identify
   it as illustrative.
 - **Do** keep form controls, financial figures, and utility copy sharp.
-- **Do** preserve semantic controls, native select behavior, `44px` touch
+- **Do** preserve semantic controls, native select behavior, touch-sized
   targets, visible focus, reduced motion, and WCAG 2.2 AA contrast.
 - **Do** use the complete Settle Cut mark and Barlow wordmark as one consistent
   lockup across persuasive and operational surfaces.

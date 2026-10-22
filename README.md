@@ -143,9 +143,8 @@ All event operations are scoped by the private event token.
 Event creation returns `201` with `{ token, snapshot }`. Participant, expense,
 and payment creation return `201` with the complete updated snapshot. Updates
 and deletions return `200` with that snapshot. Validation errors
-return `{ error }` with `400`. A missing event, expense, or payment returns
-`404`. A participant id that is not on the event returns `400`. Stale
-`If-Match` preconditions return `412`. Expired links return `410`.
+return `{ error }` with `400`. Stale `If-Match` preconditions return `412`.
+Expired links return `410`.
 
 Snapshot responses include an ETag such as `"v3"`. Send that value in
 `If-Match` when changing an existing event to reject a stale write. The header
