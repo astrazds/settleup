@@ -1,0 +1,39 @@
+- complementary:
+  - status "Live updates connected": Up to date
+- dialog "Add expense":
+  - heading "Add expense" [level=2]
+  - paragraph: Choose who paid and who shared it.
+  - button "Close"
+  - text: What was it?
+  - textbox "What was it?":
+    - /placeholder: Dinner
+    - text: Dinner
+  - text: Amount
+  - textbox "Amount":
+    - /placeholder: "0.00"
+    - text: "20.01"
+  - text: Paid by
+  - combobox "Paid by":
+    - option "Mia" [selected]
+    - option "Noah"
+  - group "Split equally between":
+    - text: Split equally between
+    - paragraph: The server divides every cent exactly.
+    - list:
+      - listitem:
+        - checkbox "Mia" [checked]
+        - text: Mia
+      - listitem:
+        - checkbox "Noah" [checked]
+        - text: Noah
+  - region "Exact split preview":
+    - heading "Exact split" [level=3]
+    - list:
+      - listitem:
+        - text: Mia
+        - strong: $10.01
+      - listitem:
+        - text: Noah
+        - strong: $10.00
+    - paragraph: Leftover cents are assigned from top to bottom so the total stays exact.
+  - button "Add expense"
