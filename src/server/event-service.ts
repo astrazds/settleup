@@ -10,8 +10,7 @@ import type {
   PaymentCommand,
 } from "@settleup/contracts";
 
-import { currencyCodeSchema } from "@settleup/contracts";
-import { deriveEqualShares } from "./ledger.js";
+import { currencyCodeSchema, deriveEqualShares } from "@settleup/contracts";
 import {
   assertStoredAmountSafe,
   loadEventSnapshot,

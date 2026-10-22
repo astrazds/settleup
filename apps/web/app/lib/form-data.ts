@@ -1,7 +1,9 @@
 import {
   currencyCodeSchema,
+  deriveEqualShares,
   type CurrencyCode,
   type ExpenseCommand,
+  type ExpenseShare,
   type ParticipantCommand,
   type PaymentCommand,
 } from "@settleup/contracts";
@@ -26,6 +28,32 @@ export function readFormStrings(formData: FormData, key: string): string[] {
   return formData
     .getAll(key)
     .filter((value): value is string => typeof value === "string");
+}
+
+export function includedParticipantIdsInSubmitOrder(
+  participantsInDocumentOrder: readonly { id: string }[],
+  includedIds: readonly string[],
+): string[] {
+  const included = new Set(includedIds);
+  return participantsInDocumentOrder
+    .filter((participant) => included.has(participant.id))
+    .map((participant) => participant.id);
+}
+
+export function previewStoredShares(
+  amountMinor: number,
+  participantsInDocumentOrder: readonly { id: string }[],
+  includedIds: readonly string[],
+): ExpenseShare[] {
+  const participantIds = includedParticipantIdsInSubmitOrder(
+    participantsInDocumentOrder,
+    includedIds,
+  );
+  if (participantIds.length === 0) {
+    return [];
+  }
+
+  return deriveEqualShares(amountMinor, participantIds);
 }
 
 export function readFormCurrency(
