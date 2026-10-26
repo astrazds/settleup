@@ -3,7 +3,8 @@
     "declaration": true,
     "declarationMap": true,
     "lib": [
-      "ES2023"
+      "ES2023",
+      "DOM"
     ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
