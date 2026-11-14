@@ -5,9 +5,8 @@
   gap: 11px;
   color: inherit;
   font-family: "Session Sans", Arial, sans-serif;
-  font-size: 1.04rem;
-  font-weight: 700;
-  letter-spacing: 0.015em;
+  font-size: 1.25rem;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -32,7 +31,7 @@
 }
 
 .event {
-  color: var(--poster-cream);
+  color: var(--ink);
 }
 
 @media (forced-colors: active) {
@@ -42,7 +41,7 @@
 }
 
 .landing {
-  color: var(--poster-cream);
+  color: var(--ink);
 }
 
 .landing .mark {

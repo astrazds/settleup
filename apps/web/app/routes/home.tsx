@@ -1,14 +1,3 @@
-/*
-THESIS: A shared-expense landing page should feel like the occasion starting,
-not a finance dashboard; the generic headline-plus-card arrangement is gone.
-OWN-WORLD: Ink, mustard, teal, brick, and cream form hard screen-printed fields
-with condensed poster type, crisp rules, numbered cuts, and sharp controls.
-STORY: Friends see private-link trust, cent-exact splitting, then start an event.
-FIRST VIEWPORT: A black title field faces a cream creation panel; one exact-split
-rail crosses both and connects the promise to the action.
-FORM: Session Cut challenger replaced grounded position 6; approved Split Frame
-staging; seed 66f1cfe8.
-*/
 import type { CurrencyCode } from "@settleup/contracts";
 import { Form, redirect, useActionData, useNavigation } from "react-router";
 
@@ -27,13 +16,6 @@ const currencies: Array<{ code: CurrencyCode; label: string }> = [
   { code: "EUR", label: "EUR — Euro" },
   { code: "GBP", label: "GBP — British pound" },
   { code: "NZD", label: "NZD — New Zealand dollar" },
-];
-
-const exampleShares = [
-  { name: "Alex", amount: "$46.01" },
-  { name: "Blair", amount: "$46.00" },
-  { name: "Casey", amount: "$46.00" },
-  { name: "Devon", amount: "$46.00" },
 ];
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
@@ -68,178 +50,75 @@ export default function Home() {
     <div className={styles.homePage}>
       <header className={styles.masthead}>
         <Brand variant="landing" />
-        <div aria-label="SettleUp essentials" className={styles.mastheadNotes}>
-          <span>Private by link</span>
-          <span>No accounts</span>
-          <span className={styles.sessionBadge}>Session 01</span>
-        </div>
       </header>
-
-      <main id="main-content">
-        <div className={styles.heroFrame}>
-          <section className={styles.promisePanel}>
-            <span aria-hidden="true" className={styles.mustardCut} />
-            <span aria-hidden="true" className={styles.tealCut} />
-            <div className={styles.promiseInner}>
-              <p className={styles.kicker}>Short-lived events · Clear next steps</p>
-              <h1 className={styles.heroTitle}>
-                <span>Everyone pays.</span>
-                {" "}
-                <span>Every cent lands.</span>
-              </h1>
-              <p className={styles.heroLead}>
-                Create a private event, add what everyone paid, and see exactly
-                who should pay whom. <strong>No accounts.</strong>
-              </p>
-            </div>
-          </section>
-
-          <section
-            aria-labelledby="create-event-heading"
-            className={styles.createPanel}
-          >
-            <div className={styles.createHeading}>
-              <p aria-hidden="true" className={styles.sessionNumber}>
-                <span>Session</span>
-                01
-              </p>
-              <div>
-                <h2 id="create-event-heading">Start a private event</h2>
-                <p>The whole group uses one private link.</p>
-              </div>
+      <main className={styles.main} id="main-content">
+        <h1 className={styles.heroTitle}>
+          Everyone pays.{" "}<br />Every cent lands.
+        </h1>
+        <p className={styles.heroLead}>Split shared costs. Settle up. No accounts.</p>
+        <section aria-label="Start a private event">
+          <Form className={styles.createForm} method="post">
+            <div className={styles.field}>
+              <label htmlFor="title">What are you splitting?</label>
+              <input
+                autoComplete="off"
+                id="title"
+                maxLength={120}
+                name="title"
+                placeholder="Weekend away"
+                required
+              />
             </div>
 
-            <Form className={styles.createForm} method="post">
-              <div className={styles.field}>
-                <label htmlFor="title">What are you splitting?</label>
-                <input
-                  autoComplete="off"
-                  id="title"
-                  maxLength={120}
-                  name="title"
-                  placeholder="Weekend away"
-                  required
-                />
-              </div>
+            <div className={styles.field}>
+              <label htmlFor="firstParticipantName">Your name</label>
+              <input
+                autoComplete="name"
+                id="firstParticipantName"
+                maxLength={80}
+                name="firstParticipantName"
+                placeholder="Andrejs"
+                required
+              />
+            </div>
 
-              <div className={styles.field}>
-                <label htmlFor="firstParticipantName">Your name</label>
-                <input
-                  autoComplete="name"
-                  id="firstParticipantName"
-                  maxLength={80}
-                  name="firstParticipantName"
-                  placeholder="Andrejs"
-                  required
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label htmlFor="currency">Currency</label>
-                <select
-                  defaultValue={defaultCurrency}
-                  id="currency"
-                  name="currency"
-                >
-                  {currencies.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {actionData?.error ? (
-                <p aria-live="polite" className={styles.formError} role="alert">
-                  {actionData.error}
-                </p>
-              ) : null}
-
-              <button
-                className={styles.createButton}
-                disabled={isBusy}
-                type="submit"
+            <div className={styles.field}>
+              <label htmlFor="currency">Currency</label>
+              <select
+                defaultValue={defaultCurrency}
+                id="currency"
+                name="currency"
               >
-                <span>{isBusy ? "Creating…" : "Create private event"}</span>
-                <span aria-hidden="true" className={styles.buttonArrow}>
-                  →
-                </span>
-              </button>
-            </Form>
+                {currencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <p className={styles.trustNote}>
-              <span aria-hidden="true">
-                <svg fill="none" height="10" viewBox="0 0 16 16" width="10">
-                  <path d="M4 12 12 4M4 4h8v8" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-              </span>
-              Anyone with the complete link can view and update the event.
-            </p>
-          </section>
-        </div>
+            {actionData?.error ? (
+              <p aria-live="polite" className={styles.formError} role="alert">
+                {actionData.error}
+              </p>
+            ) : null}
 
-        <section
-          aria-labelledby="example-split-heading"
-          className={styles.splitRail}
-        >
-          <div className={styles.splitIntro}>
-            <p>Illustrative equal split</p>
-            <h2 id="example-split-heading">
-              Dinner <span>AUD $184.01</span>
-            </h2>
-          </div>
-          <div aria-hidden="true" className={styles.splitCue}>
-            <span>Split exactly</span>
-            <strong>→</strong>
-          </div>
-          <ol className={styles.shareList}>
-            {exampleShares.map((share) => (
-              <li key={share.name}>
-                <strong>{share.amount}</strong>
-                <span>{share.name}</span>
-              </li>
-            ))}
-          </ol>
-          <p className={styles.exactStamp}>
-            <strong>Every cent assigned</strong>
-            Remainder cents go top to bottom in participant order.
+            <button
+              className={styles.createButton}
+              disabled={isBusy}
+              type="submit"
+            >
+              <span>{isBusy ? "Creating…" : "Create private event"}</span>
+            </button>
+          </Form>
+          <p className={styles.trustNote}>
+            Anyone with the complete link can view and edit.<br />
+            Your event is available for three days.
           </p>
         </section>
-
-        <section aria-labelledby="how-it-works-heading" className={styles.storyBand}>
-          <div className={styles.storyHeading}>
-            <p>One shared session</p>
-            <h2 id="how-it-works-heading">From first cost to final handoff.</h2>
-          </div>
-          <ol className={styles.storySteps}>
-            <li>
-              <span>01</span>
-              <div>
-                <h3>Create</h3>
-                <p>Open a private event and share its complete link.</p>
-              </div>
-            </li>
-            <li>
-              <span>02</span>
-              <div>
-                <h3>Record</h3>
-                <p>Add costs as they happen. Equal splits stay cent-exact.</p>
-              </div>
-            </li>
-            <li>
-              <span>03</span>
-              <div>
-                <h3>Settle</h3>
-                <p>Follow one clear suggestion and record the payment made elsewhere.</p>
-              </div>
-            </li>
-          </ol>
-        </section>
       </main>
-
       <footer className={styles.footer}>
-        <p>Available for three days · Deleted after the five-day cleanup deadline</p>
-        <p>SettleUp records payments. It never moves money.</p>
+        SettleUp records payments made elsewhere. It never moves money.
       </footer>
     </div>
   );

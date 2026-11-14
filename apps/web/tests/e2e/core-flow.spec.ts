@@ -131,18 +131,8 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   const deletePaymentButton = page.getByRole("button", {
     name: "Delete payment from Noah K to Mia",
   });
-  const mobileActionsAreVisible = (page.viewportSize()?.width ?? 0) <= 819;
-  const editPaymentLabel = editPaymentLink.getByText("Edit", { exact: true });
-  const deletePaymentLabel = deletePaymentButton.getByText("Delete", {
-    exact: true,
-  });
-  if (mobileActionsAreVisible) {
-    await expect(editPaymentLabel).toBeVisible();
-    await expect(deletePaymentLabel).toBeVisible();
-  } else {
-    await expect(editPaymentLabel).toBeHidden();
-    await expect(deletePaymentLabel).toBeHidden();
-  }
+  await expect(editPaymentLink.getByText("Edit", { exact: true })).toBeVisible();
+  await expect(deletePaymentButton.getByText("Delete", { exact: true })).toBeVisible();
 
   await editPaymentLink.click();
   await expect(page).toHaveURL(/\/settle\/[^/]+\/edit$/);

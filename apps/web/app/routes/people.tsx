@@ -5,8 +5,6 @@ import { useEventContext } from "../components/event-context";
 import { EditIcon, PlusIcon } from "../components/icons";
 import { actionErrorMessage, deleteParticipant } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
-import { formatMoney } from "../lib/money";
-import { initials } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/people";
 
@@ -33,10 +31,10 @@ export default function People() {
       <div className={styles.page}>
         <div className={styles.pageHeader}>
           <div className={styles.pageHeaderCopy}>
-            <h2 className={styles.pageTitle}>People</h2>
-            <p className={styles.pageIntro}>
-              Everyone who can pay or share an expense.
-            </p>
+            <h2 className={styles.pageTitle}>
+              {snapshot.participants.length}{" "}
+              {snapshot.participants.length === 1 ? "person" : "people"}
+            </h2>
           </div>
           <Link
             className={`${styles.button} ${styles.buttonPrimary}`}
@@ -54,33 +52,13 @@ export default function People() {
         ) : null}
 
         <section aria-labelledby="people-list-heading" className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h3 className={styles.sectionTitle} id="people-list-heading">
-              {snapshot.participants.length}{" "}
-              {snapshot.participants.length === 1 ? "person" : "people"}
-            </h3>
-          </div>
+          <h3 className={styles.visuallyHidden} id="people-list-heading">People</h3>
           <ul className={styles.list}>
             {snapshot.participants.map((participant) => {
-              const balance = snapshot.balances.find(
-                (item) => item.participantId === participant.id,
-              );
               return (
-                <li className={styles.listItem} key={participant.id}>
-                  <div aria-hidden="true" className={styles.avatar}>
-                    {initials(participant.name)}
-                  </div>
+                <li className={`${styles.listItem} ${styles.personRow}`} key={participant.id}>
                   <div className={styles.listMain}>
-                    <div className={styles.listTitleRow}>
-                      <p className={styles.listTitle}>{participant.name}</p>
-                    </div>
-                    <p className={styles.listMeta}>
-                      {!balance || balance.netMinor === 0
-                        ? "Settled"
-                        : balance.netMinor > 0
-                          ? `Gets back ${formatMoney(balance.netMinor, snapshot.event.currency)}`
-                          : `Owes ${formatMoney(Math.abs(balance.netMinor), snapshot.event.currency)}`}
-                    </p>
+                    <p className={styles.listTitle}>{participant.name}</p>
                   </div>
                   <div className={styles.itemActions}>
                     <Link
@@ -123,7 +101,7 @@ export default function People() {
             })}
           </ul>
           <p className={styles.hint}>
-            Names are shared with everyone who has the private event link.
+            Everyone with the link can view and edit.
           </p>
         </section>
       </div>

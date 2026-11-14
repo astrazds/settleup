@@ -1,54 +1,44 @@
 - link "Skip to main content":
   - /url: "#main-content"
-- complementary:
+- banner:
   - link "SettleUp home":
     - /url: /
     - text: SettleUp
-  - button "Share"
-  - paragraph: Private event
-  - heading "Verify weekend" [level=1]
-  - paragraph: AUD
-  - time: Available until 26 Oct 2026, 9:51 am
-  - status "Live updates connected": Up to date
-  - navigation "Event":
-    - link "Expenses":
-      - /url: /e/[redacted]/expenses
-      - text: Expenses Shared costs
-    - link "Settle":
-      - /url: /e/[redacted]/settle
-      - text: Settle What remains
-    - link "People":
-      - /url: /e/[redacted]/people
-      - text: People The group
+  - button "Share link"
+- heading "Verify weekend" [level=1]
+- text: AUD
+- time: Available until 17 Nov 2026, 9:00 pm
+- status "Live updates connected": Up to date
+- navigation "Event":
+  - link "Expenses":
+    - /url: /e/[redacted]/expenses
+  - link "Settle":
+    - /url: /e/[redacted]/settle
+  - link "People":
+    - /url: /e/[redacted]/people
 - main "Verify weekend event workspace":
   - heading "Expenses" [level=2]
-  - paragraph: Add each shared cost as it happens.
+  - paragraph:
+    - strong: $20.01
+    - text: total spent
   - link "Add expense":
     - /url: /e/[redacted]/expenses/new
-  - term: Total spent
-  - definition: $20.01
-  - term: Expenses
-  - definition: "1"
-  - term: Currency
-  - definition: AUD
-  - term: Live state
-  - definition: Up to date
   - region "Recent activity":
     - heading "Recent activity" [level=3]
     - list:
       - listitem:
         - paragraph: Dinner
-        - paragraph: Mia paid · split with 2 people · 23 Oct
+        - paragraph: Mia paid · split with 2 people · 14 Nov
         - group:
           - text: See exact split
           - list:
             - listitem:
-              - text: Mia
-              - strong: $10.01
-            - listitem:
               - text: Noah
               - strong: $10.00
+            - listitem:
+              - text: Mia
+              - strong: $10.01
         - text: $20.01
         - link "Edit Dinner":
-          - /url: /e/[redacted]/expenses/48597f9d-59db-4ca6-9940-9dc33a757bb4/edit
+          - /url: /e/[redacted]/expenses/fbef5e89-d0dd-4bbd-8706-fbbef783f878/edit
         - button "Delete Dinner"

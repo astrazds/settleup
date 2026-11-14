@@ -99,11 +99,12 @@ sides resolving into one aligned settlement. Use it with the Barlow SettleUp
 wordmark; do not replace it with exchange arrows, currency symbols, wallets,
 banking imagery, or a generic rounded fintech tile.
 
-The visual world is **"The Shared Session"**. It is direct, social, exact, and
-short-lived. The landing page may use its poster-like color fields and
-condensed type at full volume. Event routes must translate the same identity
-into a calmer working register where names, money, status, and actions remain
-immediately legible.
+The approved interface is **Compact original**. It preserves the Settle Cut
+mark, Barlow body text, condensed headings, warm paper, and teal actions.
+The landing page focuses on event creation. Event routes use one compact
+header and plain Expenses, Settle, and People tabs. Show event metadata once,
+keep balances in Settle, and disclose exact expense shares on demand.
+Names, money, status, and actions must remain immediately legible.
 
 Brand language must never imply authenticated privacy, money transfer,
 ownership roles, permanent history, or verified social proof. The complete

@@ -138,7 +138,6 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
         className={styles.field}
       >
         <legend className={styles.label}>Split equally between</legend>
-        <p className={styles.hint}>The server divides every cent exactly.</p>
         <ul className={styles.checkList}>
           {snapshot.participants.map((participant) => {
             const inputId = `included-${participant.id}`;
