@@ -61,6 +61,10 @@
   opacity: 1;
 }
 
+.field select {
+  white-space: normal;
+}
+
 .field input:hover,
 .field select:hover {
   background: var(--surface);
