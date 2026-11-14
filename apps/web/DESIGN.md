@@ -1,411 +1,168 @@
 ---
 name: SettleUp
-description: A quick, private-by-link way to split shared expenses and settle up.
+description: A compact, private-by-link workspace for shared expenses.
 colors:
-  session-mustard: "#e0b12e"
-  ink-black: "#0b0b0b"
-  cut-teal: "#0e7c7b"
-  field-teal: "#075f5e"
-  brick-beat: "#b23a2e"
-  poster-cream: "#f2e8d1"
-  paper-bright: "#fff9e8"
-  paper-hover: "#fffdf5"
-  muted-ink: "#655e50"
-  muted-on-ink: "#d7cab0"
-  spine-hover: "#25231e"
-  ink-on-mustard: "#3f370f"
-  dialog-scrim: "rgb(11 11 11 / 78%)"
+  cream: "#faf8f1"
+  ink: "#202521"
+  teal: "#086766"
+  teal-hover: "#075553"
+  event-paper: "#efe5c9"
+  input-paper: "#fffef9"
+  muted-ink: "#535b50"
+  soft-teal: "#e8eee5"
+  divider: "#d0d5cb"
+  control-border: "#a9afa3"
+  brick: "#922b23"
 typography:
   display:
-    fontFamily: '"Session Display", Impact, sans-serif'
-    fontWeight: 400
-  headline:
-    fontFamily: '"Session Display", Impact, sans-serif'
-    fontWeight: 400
-  title:
-    fontFamily: '"Session Display", Impact, sans-serif'
+    fontFamily: '"Session Display", sans-serif'
     fontWeight: 400
   body:
     fontFamily: '"Session Sans", Arial, sans-serif'
     fontWeight: 400
   label:
     fontFamily: '"Session Sans", Arial, sans-serif'
-    fontWeight: 700
+    fontWeight: 600
 rounded:
   square: "0"
 components:
   button-primary:
-    backgroundColor: "{colors.brick-beat}"
-    textColor: "{colors.poster-cream}"
+    backgroundColor: "{colors.teal}"
+    textColor: "#ffffff"
     typography: "{typography.label}"
     rounded: "{rounded.square}"
   button-primary-hover:
-    backgroundColor: "{colors.session-mustard}"
-    textColor: "{colors.ink-black}"
-    typography: "{typography.label}"
-    rounded: "{rounded.square}"
+    backgroundColor: "{colors.teal-hover}"
+    textColor: "#ffffff"
   input:
-    backgroundColor: "{colors.paper-bright}"
-    textColor: "{colors.ink-black}"
+    backgroundColor: "{colors.input-paper}"
+    textColor: "{colors.ink}"
     typography: "{typography.body}"
-  chapter-marker:
-    backgroundColor: "{colors.ink-black}"
-    textColor: "{colors.session-mustard}"
-    typography: "{typography.title}"
-    rounded: "{rounded.square}"
 ---
 
 # SettleUp design system
 
-This file describes the current frontend. [PRODUCT.md](PRODUCT.md) owns product
-behavior and exclusions. Verify visual claims against these implementation
-owners:
+The approved direction is **Compact original**. Cream paper, teal actions,
+Barlow copy, League Gothic titles, and the Settle Cut mark preserve the existing
+identity. Shorter headers, plain tabs, and simple rows give the shared costs
+more space. [PRODUCT.md](PRODUCT.md) owns behavior and exclusions.
+
+## Implementation owners
 
 | Concern | Source |
 | --- | --- |
-| Palette, themes, self-hosted fonts, global focus | [`app/styles/global.css`](app/styles/global.css) |
-| Landing layout and controls | [`app/styles/home.module.css`](app/styles/home.module.css) |
-| Event layout, forms, and dialogs | [`app/styles/app.module.css`](app/styles/app.module.css) |
-| Brand lockup and icon geometry | [`app/styles/brand.module.css`](app/styles/brand.module.css), [`app/components/icons.tsx`](app/components/icons.tsx) |
-| Error and root layout | [`app/styles/root.module.css`](app/styles/root.module.css) |
-| Browser states and reference images | [`tests/e2e/states.spec.ts`](tests/e2e/states.spec.ts), [`tests/e2e/states.spec.ts-snapshots/`](tests/e2e/states.spec.ts-snapshots/) |
+| Palette, themes, fonts, focus, browser controls | [global.css](app/styles/global.css) |
+| Create-event page | [home.tsx](app/routes/home.tsx), [home.module.css](app/styles/home.module.css) |
+| Event header, lists, forms, dialogs | [app.module.css](app/styles/app.module.css) |
+| Brand | [brand.module.css](app/styles/brand.module.css), [icons.tsx](app/components/icons.tsx) |
+| Loading and errors | [root.module.css](app/styles/root.module.css) |
+| Browser checks and reference images | [states.spec.ts](tests/e2e/states.spec.ts), [snapshots](tests/e2e/states.spec.ts-snapshots/) |
 
-## Overview
+## Palette and type
 
-**Creative North Star: "The Shared Session"**
+Semantic custom properties in `global.css` own the palette. Light pages use
+cream with dark green ink. A warm event banner groups the title, currency,
+expiry, live state, and navigation. Teal identifies actions, the active tab,
+and positive balances. Brick identifies errors and destructive commitments.
+Text also states every balance and connection state so hue carries no meaning
+alone.
 
-SettleUp treats each short-lived occasion as a vivid shared session: several
-people arrive with different costs, the product brings those lines into exact
-alignment, and the group leaves with one clear next move. The visual world draws
-from screen-printed gig posters and jazz-session title cards without borrowing
-character art or entertainment-brand imagery.
+League Gothic is self-hosted as `Session Display`. Use it for the landing
+promise, event title, dialog titles, and the suggested payment amount. Barlow
+is self-hosted as `Session Sans` at weights 400, 600, and 700. Body copy,
+controls, participant names, and list amounts use Barlow. Money uses tabular
+figures. Labels use sentence case.
 
-The landing surface uses this world at full volume. Flat color fields,
-deliberate type collisions, numbered chapter markers, and hard asymmetric cuts
-give it social energy that ordinary finance software avoids. Operational
-screens translate the same grammar into calmer strips, strong number alignment,
-decisive state blocks, and sparse color cuts so expression never obscures a
-task.
-
-**Key Characteristics:**
-
-- Mustard, brick, teal, cream, and ink-black used as large committed fields
-- Oversized condensed display type paired with a plain, highly legible sans
-- Numbered session markers and hard bars that make sequence instantly visible
-- A hard-edged Settle Cut stamp that resolves two ledger bands into one S-channel
-- Flat screen-print depth: overlapping fields and rules instead of soft shadows
-- Exact money shown in crisp tabular figures, never distressed or ornamental
-- One orchestrated hard-cut entrance with a complete reduced-motion state
-
-## Colors
-
-The palette behaves like a five-ink screen-print set. One color owns each major
-field; the others create cuts, contrast, or state.
-
-### Primary
-
-- **Session Mustard** (`#e0b12e`): leading expressive field, primary call to
-  action on ink, and large chapter plate.
-- **Ink Black** (`#0b0b0b`): grounding field, primary text, hard rules, and
-  control edges.
-
-### Secondary
-
-- **Cut Teal** (`#0e7c7b`): directional bars, connection, focus, and exact
-  figures on cream.
-- **Field Teal** (`#075f5e`): the darker accessible teal field used behind
-  cream navigation labels and other small reversed text.
-- **Brick Beat** (`#b23a2e`): sequence markers, the primary create action, and
-  urgent emphasis when its meaning is also stated in text.
-
-### Neutral
-
-- **Poster Cream** (`#f2e8d1`): readable paper field, form panel, and reversed
-  text on ink.
-- **Paper Bright** (`#fff9e8`): input fill on cream.
-- **Paper Hover** (`#fffdf5`): the small interactive lift for light inputs.
-- **Muted Ink** (`#655e50`): secondary copy on light paper only.
-- **Muted on Ink** (`#d7cab0`): secondary reversed copy on the dark landing
-  field.
-- **Spine Hover** (`#25231e`): the event-register hover field.
-- **Ink on Mustard** (`#3f370f`): accessible secondary copy on the settlement
-  field.
-- **Dialog Scrim** (`rgb(11 11 11 / 78%)`): the route-sheet and confirmation
-  backdrop.
-
-**The Field Before Accent Rule.** Color owns complete regions. Do not scatter
-mustard, teal, and brick across neutral cards as small decorative accents.
-
-**The Ledger Meaning Rule.** Product states stay understandable without hue.
-Brick and teal may reinforce a state only after text, structure, or an
-accessible label establishes its meaning.
-
-**The Token Ownership Rule.** Authored palette literals belong in the global
-token layer. Brand, landing, root, and event CSS consume semantic custom
-properties; forced-colors adaptations use platform system colors.
-
-## Typography
-
-**Display Font:** League Gothic, self-hosted as `Session Display` (with Impact
-and sans-serif fallbacks)
-
-**Body Font:** Barlow, self-hosted as `Session Sans` (with Arial and sans-serif
-fallbacks)
-
-**Character:** League Gothic supplies compressed title-card force. Barlow keeps
-instructions, form controls, names, and money familiar and exceptionally
-readable.
-
-### Hierarchy
-
-- **Display** (400, uppercase): one landing promise, with deliberate line breaks.
-- **Headline** (400): major story chapters.
-- **Title** (400): forms and singular next steps.
-- **Body** (400): primary copy.
-- **Label** (700, uppercase): kickers, section intros, and short directional notes.
-- **Money** (League Gothic or Barlow with tabular figures): exact values with
-  stable alignment and no texture.
-
-**The Sharp Figures Rule.** Grain and distressed edges never touch inputs,
-labels, errors, names, or money.
-
-**The One Collision Rule.** One expressive title collision may lead a surface.
-Utility copy never competes with it.
+The event title is 42px on desktop and 36px on phones. The landing promise is
+64px on desktop and 54px on phones. Avoid oversized route titles, numbered
+section markers, decorative text, clipped button edges, and background texture.
 
 ## Layout
 
-The landing page is a full-width sequence of color plates divided by hairline
-rules. Its first viewport is an asymmetric split frame: a flexible promise
-panel beside a creation panel. An exact split rail then crosses the page as
-the proof point.
+Event pages share a centered 960px container. The compact top bar holds the
+brand and **Share link**. The event banner follows with metadata and three peer
+tabs, **Expenses**, **Settle**, and **People**. An underline and text color
+identify the current tab. Navigation has no numbered index or descriptive
+subtitles.
 
-Narrower widths collapse nonessential masthead copy and the split cue, then
-stack the hero into one column and reflow the split rail. Every control keeps
-a touch-sized target and the composition stays complete on a narrow phone.
+The main document uses 32px padding on desktop and 20px on phones. At narrow
+widths metadata wraps, list actions move below content when necessary, and
+names wrap while amounts remain readable. The page keeps native document
+scrolling rather than a separate sidebar scroll area.
 
-### Operational Split Spine
+The landing page has a single 520px content column. It contains the short
+promise, create-event form, link-access and three-day availability statements,
+and a note that SettleUp records payments made elsewhere. The example expense,
+numbered story panels, and repeated trust notes have been removed.
 
-Event routes use a compact side-car register rather than the landing page's
-persuasive split frame. On wide screens, an ink spine stays in view while the
-active route occupies a flexible cream document. The spine holds only event
-identity, sharing, expiry/live state, and the three peer sections. Its labels
-`01` through `03` behave as a document index, never as a required sequence.
+## Expenses
 
-On narrow screens, the spine becomes a short stacked folio: ink masthead,
-mustard event identity, lifecycle strip, then a sticky three-cell section
-index. The active document begins immediately afterward. Expenses use a
-four-cell data ribbon that becomes two by two; ledger rows move secondary
-actions onto a second line before they ever force horizontal scrolling.
+One inline **total spent** value sits beside **Add expense**. Currency and live
+state appear once in the event banner. Expense count is not repeated in a
+summary panel. The Expenses route heading and Recent activity section heading
+remain available to assistive technology without duplicating the active tab.
 
-The spine keeps the physical five-ink palette in both themes. In dark mode the
-working paper inverts to near-black with cream type and rules, while mustard,
-teal, and brick retain their established meanings.
+Simple ruled rows show description, payer, included-person count, date, and
+amount. **See exact split** expands the actual participant shares with native
+`details` and `summary`. Edit and Delete remain visible with complete accessible
+names at every width. Receipt plates and outer list boxes are removed.
 
-**The Hard-Cut Rhythm Rule.** A major change in topic earns a field cut, rule,
-or numbered plate. Empty whitespace alone does not carry the hierarchy.
+The empty state has one **Add the first expense** action. The header action
+appears after the first expense exists.
 
-## Elevation & Depth
+## Settle and people
 
-The system is flat by design. Depth comes from one field crossing another,
-clipped diagonal bars, hard rules, and a subtle generated print-grain layer on
-large backgrounds. Routine surfaces use no ambient or diffuse shadow. Focus
-rings may lift through a crisp offset outline because they communicate active
-interaction.
+The next suggested payment appears on one muted teal surface. Its heading
+contains both participant names and the exact amount. A short instruction
+states that payment happens outside SettleUp. The primary action opens the
+existing payment form.
 
-**The Printed-Flat Rule.** Surfaces are flat at rest. Use field contrast,
-borders, and offset geometry before adding elevation.
+Balances use simple rows with **Gets**, **Owes**, or **Settled** labels. Recorded
+payments retain their Add another, Edit, and Delete actions. The zero-balance
+state explicitly says everyone is settled.
 
-## Shapes
+People shows the participant count, **Add person**, names, and existing edit
+and removal controls. Balances live in Settle rather than appearing again in
+People. Participant initials and decorative row icons are removed.
 
-Forms are rectangular and cut like poster plates: square corners by default,
-a slight radius on native inputs, and a pointed clipped edge on the primary
-action. The brand stamp clips its top-left and bottom-right corners to carry the
-same cut-paper silhouette at icon scale. Chapter markers are square. Circles
-remain reserved for people and status; the system avoids finance-app pills and
-soft floating panels.
+## Forms and dialogs
 
-## Components
+Inputs use square corners, a 1px border, and a 48px minimum height. Primary
+buttons use a solid teal rectangle with a white label. Destructive confirmation
+buttons use brick. Secondary actions use text or a plain outlined button.
+Controls retain a 44px minimum target and visible focus.
 
-### Primary Button
+Expense forms retain payer choice, included-person checkboxes, exact split
+preview, remainder explanation, validation, and version-conflict handling.
+Checkbox labels wrap into rows and keep an explicit checked indicator. Money
+is never rounded or abbreviated for display.
 
-- **Landing shape:** square, with a pointed right edge and a tall minimum height that compacts on narrow screens.
-- **Operational shape:** square, with a shorter pointed right edge at the touch-target floor.
-- **Default:** Brick Beat field and Poster Cream uppercase label.
-- **Hover:** Session Mustard with Ink Black text.
-- **Focus:** landing uses a Cut Teal outline; operational actions use the shared focus token, which becomes Session Mustard in dark mode.
-- **Active:** a small downward press.
-- **Disabled:** the landing button keeps its structure and uses a wait cursor. Operational buttons use a not-allowed cursor.
+Route forms remain Radix dialogs. On desktop they are centered sheets. On
+phones they attach to the bottom with a fixed submit footer while the form
+body scrolls. The brief sheet entrance is removed with reduced motion.
+Dismissal returns to the immediate parent route and restores the launcher
+focus, or falls back to the workspace main region for a deep link.
 
-### Inputs and Selects
+Destructive confirmations remain separate AlertDialogs. Their body scrolls
+inside safe-area-adjusted viewport bounds. Keep and Delete remain reachable
+with enlarged text and short landscape viewports.
 
-- **Shape:** Ink Black border and a slight radius. Operational controls and
-  default landing controls share one height; the landing form compacts slightly
-  on narrow screens and stays at the touch-target floor.
-- **Fill:** Paper Bright, warming to near-white on hover.
-- **Focus:** landing inputs use a crisp cream separation ring inside a Cut Teal
-  outer ring. Operational inputs use the shared theme focus outline with an
-  offset, becoming Session Mustard in dark mode. Neither uses ambient glow.
-- **Error:** Brick Beat rectangular message with Poster Cream copy and a live
-  region.
+## States and accessibility
 
-### Landing Masthead
+The server `EventSnapshot` and existing command and draft contracts remain
+authoritative. This visual change introduces no new application state model.
+Live changes preserve open drafts, pause saving, and expose **Load latest**.
+The status node remains atomic and polite. The longer offline or reconnect
+notice is not another live region. Sharing retains native, clipboard, and
+manual-copy fallbacks.
 
-- **Style:** Ink Black bar with the Settle Cut stamp, cream wordmark, and compact
-  uppercase trust notes.
-- **Responsive:** secondary trust notes progressively disappear; product
-  identity and "No accounts" remain.
+Dark mode applies to the landing form and all event pages. Semantic paper,
+ink, divider, banner, error, and positive-balance tokens adapt together.
+Forced colors use platform colors for active tabs, primary and destructive
+buttons, the brand mark, and checked controls. Keyboard focus, form labels,
+error announcements, reduced motion, 320px layouts, enlarged text, and short
+viewports remain part of the browser verification contract.
 
-### Landing trust note
-
-The landing form's trust note uses a decorative SVG arrow inside its square
-marker. Keep this geometry in the SVG rather than relying on a font glyph that
-the self-hosted font may not contain.
-
-### Brand Mark
-
-- **Geometry:** a stroke-free square poster plate with opposing clipped
-  corners. Two cream ledger bands lock into an S-shaped channel.
-- **Color:** Cut Teal field, Poster Cream bands, and one nonessential Session
-  Mustard remainder block.
-- **Meaning:** two sides resolve into one aligned settlement; the remainder
-  block recalls the deterministic extra cent without implying money transfer.
-- **Sizing:** use the complete mark in the lockup; the same silhouette remains
-  legible as a favicon.
-- **Lockup:** pair with the Barlow `SettleUp` wordmark and preserve a touch-sized
-  brand-link target.
-- **Accessibility:** the SVG is decorative inside the labelled home link.
-  Forced-colors mode remaps the three inks to system colors.
-
-### Exact Split Rail
-
-- **Style:** a ruled Poster Cream ledger that shows a total, four tabular share
-  figures, and the deterministic remainder rule.
-- **Responsive:** seven desktop tracks become four at tablet width and two at
-  mobile width without hiding the arithmetic.
-
-### Chapter Marker
-
-- **Style:** Ink Black square with a Session Mustard League Gothic numeral.
-- **Use:** makes a short, real sequence explicit; never implies saved history.
-
-### Event Register
-
-- **Style:** sticky ink spine, mustard event folio, cream lifecycle rows, and
-  one full-field Field Teal current section with a mustard inset marker.
-- **Content:** Settle Cut lockup, Share, title, currency, expiry/live state,
-  and Expenses/Settle/People only. No owner, role, archive, or invitation
-  controls.
-- **Live state:** Up to date, Reconnecting, and Offline reuse one stable
-  atomic status node. The longer reconnect notice remains non-live so the same
-  transition is not announced twice.
-- **Responsive:** persistent on desktop; stacked above a sticky peer-section
-  index on narrow screens.
-
-### Operational Data Ribbon
-
-- **Style:** one ruled register, never separate cards. Labels use Barlow;
-  values use sharp League Gothic tabular figures.
-- **Use:** exposes exact section-level facts such as total spent, expense
-  count, currency, and current connection state.
-- **Responsive:** four desktop cells become two rows of two without hiding or
-  abbreviating values.
-
-### Ledger Rows
-
-- **Style:** one square outer rule and continuous row dividers. Descriptions
-  and names wrap; money owns a stable tabular column; edit/delete controls stay
-  explicit.
-- **Actions:** on narrow screens, Edit and Delete labels stay visible beside their
-  icons. Desktop keeps compact icon actions with complete accessible names and
-  title text.
-- **Disclosure:** exact expense shares remain native `details`/`summary`
-  content, not a chevron to a nonexistent detail page.
-- **People:** circles are reserved for participant initials and live status;
-  expense/payment glyphs use square ink plates.
-
-### Empty Expenses
-
-- **Action:** the empty document contains one "Add the first expense" action.
-  The page-header action appears only after at least one expense exists, so the
-  first-use state never presents duplicate commitments.
-
-### Route Sheet
-
-- **Style:** square paper sheet with a mustard top rule, hard title divider,
-  and no blur, ambient shadow, pill handle, or rounded bottom-sheet chrome.
-- **Behavior:** Radix focus trapping remains authoritative. Dismissal resolves
-  to the sheet's immediate Expenses, Settle, or People parent rather than the
-  event index. A launcher-opened sheet returns focus to that launcher; a direct
-  deep link falls back to the event workspace main region.
-- **Concurrent edits:** a live update preserves the visible draft, displays the
-  conflict notice, and disables submission. **Load latest** resets fields to
-  current values and accepts the current event version. Keep this choice
-  explicit rather than replacing fields as new snapshots arrive.
-- **Mobile:** the submit commitment remains visible in a fixed ruled footer
-  while the form body scrolls behind it.
-- **Loading boundary:** route sheets and destructive confirmations remain
-  separate implementations. The lightweight delete trigger keeps AlertDialog
-  out of the initial list-route graph, preloads it on pointer or keyboard
-  intent, and mounts it only when confirmation is requested.
-
-### Destructive Confirmation
-
-- **Containment:** the square AlertDialog remains inside safe-area-adjusted
-  viewport bounds and scrolls internally when content or text scaling exceeds
-  the available height.
-- **Commitments:** Keep and Delete stay reachable at 200% text and in short
-  landscape viewports. Closing returns focus to the triggering delete control.
-
-## Accessibility and State Adaptation
-
-- **Responsive floor:** compositions must remain complete on a narrow phone without
-  horizontal scrolling. Labels and primary actions stay visible; secondary
-  ledger metadata wraps or moves to another row. Portable `200%` zoom,
-  `200%` text, and short landscape viewports keep their primary controls and
-  dialog commitments usable.
-- **Dark mode:** the operational paper inverts while the five-ink identity
-  remains recognizable. Contrast is rechecked rather than assumed from the
-  light palette.
-- **Forced colors:** brand inks, the event register, active navigation,
-  settlement fields, buttons, and checked controls map to system colors. State
-  and current location remain visible without relying on authored hue.
-- **Reduced motion:** remove the hard-cut entrance and route transitions while
-  preserving the final composition and focus movement.
-- **Visual verification:** Chromium snapshots cover landing, root-error, and
-  event-route states at mobile and desktop sizes in local runs. CI skips pixel
-  comparisons. The same semantic flows, overflow checks, Axe checks,
-  responsive stress cases, dark mode, and
-  forced-colors behavior run in mobile and desktop Chromium, desktop Firefox,
-  and mobile WebKit.
-
-Use [CONTRIBUTING.md](../../CONTRIBUTING.md#review-visual-changes) for screenshot
-commands, capture masks, and scoped tolerances. Inspect the images when a
-baseline changes; a passing semantic test does not establish visual parity.
-
-## Do's and Don'ts
-
-### Do:
-
-- **Do** let one saturated field dominate each major composition.
-- **Do** demonstrate exact splitting with real arithmetic and clearly identify
-  it as illustrative.
-- **Do** keep form controls, financial figures, and utility copy sharp.
-- **Do** preserve semantic controls, native select behavior, touch-sized
-  targets, visible focus, reduced motion, and WCAG 2.2 AA contrast.
-- **Do** use the complete Settle Cut mark and Barlow wordmark as one consistent
-  lockup across persuasive and operational surfaces.
-- **Do** translate the world more quietly on operational routes while keeping
-  its rules, numbering, and color-field logic recognizable.
-
-### Don't:
-
-- **Don't** use anime characters, instruments, or borrowed entertainment
-  imagery; the title-card grammar is the system, not the subject matter.
-- **Don't** distress core UI text, financial figures, or control edges.
-- **Don't** turn every section into a rounded, shadowed card.
-- **Don't** introduce gradients, glass, neon glow, confetti, or generic fintech
-  dashboard chrome.
-- **Don't** redraw the mark as exchange arrows, currency, a wallet, a chain
-  link, or a rounded fintech-app tile.
-- **Don't** use chapter numbers in a way that implies unsupported workflow steps
-  or persistent event history.
+Use [CONTRIBUTING.md](../../CONTRIBUTING.md#review-visual-changes) for browser
+checks and screenshot commands. Inspect changed reference images alongside
+behavior and accessibility results.

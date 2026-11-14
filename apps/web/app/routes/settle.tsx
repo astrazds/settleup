@@ -3,11 +3,11 @@ import { Link, Outlet, useFetcher } from "react-router";
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
 import { useEventContext } from "../components/event-context";
-import { CheckIcon, EditIcon, PlusIcon, ReceiptIcon, SettleIcon } from "../components/icons";
+import { CheckIcon, EditIcon, PlusIcon, ReceiptIcon } from "../components/icons";
 import { actionErrorMessage, deletePayment } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
-import { initials, participantName } from "../lib/participants";
+import { participantName } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/settle";
 
@@ -46,14 +46,7 @@ export default function Settle() {
   return (
     <>
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.pageHeaderCopy}>
-            <h2 className={styles.pageTitle}>Settle up</h2>
-            <p className={styles.pageIntro}>
-              One clear next step, based on every expense and recorded payment.
-            </p>
-          </div>
-        </div>
+        <h2 className={styles.visuallyHidden}>Settle up</h2>
 
         {!hasExpenses ? (
           <EmptyState
@@ -67,21 +60,21 @@ export default function Settle() {
               </Link>
             }
             icon={<ReceiptIcon />}
-            text="Balances and settlement suggestions will appear once the first shared cost is added."
+            text="Add a shared cost to see who owes what."
             title="Add expenses first"
           />
         ) : suggestion ? (
           <section aria-labelledby="next-payment-heading" className={styles.settlementCard}>
             <div>
-              <p className={styles.settlementLabel}>Next suggested payment</p>
               <h3 className={styles.settlementText} id="next-payment-heading">
                 {participantName(snapshot, suggestion.from)} pays{" "}
                 {participantName(snapshot, suggestion.to)}{" "}
-                {formatMoney(suggestion.amountMinor, snapshot.event.currency)}
+                <span className={styles.settlementAmount}>
+                  {formatMoney(suggestion.amountMinor, snapshot.event.currency)}
+                </span>
               </h3>
               <p className={styles.settlementNote}>
-                SettleUp suggests the simplest next step. Payment happens outside
-                this app.
+                Pay outside SettleUp, then record it here.
               </p>
             </div>
             <div>
@@ -98,7 +91,7 @@ export default function Settle() {
           <section aria-label="Everyone is settled" className={styles.settledCard}>
             <span
               aria-hidden="true"
-              className={`${styles.emptyIcon} ${styles.settledIcon} ${styles.positive}`}
+              className={`${styles.emptyIcon} ${styles.positive}`}
             >
               <CheckIcon />
             </span>
@@ -129,9 +122,6 @@ export default function Settle() {
                     className={styles.balanceRow}
                     key={balance.participantId}
                   >
-                    <span aria-hidden="true" className={styles.avatar}>
-                      {initials(name)}
-                    </span>
                     <span className={styles.balanceName}>{name}</span>
                     <span
                       aria-hidden="true"
@@ -144,9 +134,9 @@ export default function Settle() {
                       }`}
                     >
                       {isPositive
-                        ? `+${formatMoney(balance.netMinor, snapshot.event.currency)}`
+                        ? `Gets ${formatMoney(balance.netMinor, snapshot.event.currency)}`
                         : isNegative
-                          ? `−${formatMoney(Math.abs(balance.netMinor), snapshot.event.currency)}`
+                          ? `Owes ${formatMoney(Math.abs(balance.netMinor), snapshot.event.currency)}`
                           : "Settled"}
                     </span>
                   </li>
@@ -179,18 +169,10 @@ export default function Settle() {
                 const dateLabel = paymentDate(payment.createdAt);
                 return (
                   <li className={styles.listItem} key={payment.id}>
-                    <div
-                      aria-hidden="true"
-                      className={`${styles.avatar} ${styles.entryMark}`}
-                    >
-                      <SettleIcon height="18" width="18" />
-                    </div>
                     <div className={styles.listMain}>
-                      <div className={styles.listTitleRow}>
-                        <p className={styles.listTitle}>
-                          {from} → {to}
-                        </p>
-                      </div>
+                      <p className={styles.listTitle}>
+                        {from} pays {to}
+                      </p>
                       <p className={styles.listMeta}>
                         Recorded
                         {dateLabel ? ` · ${dateLabel}` : ""}

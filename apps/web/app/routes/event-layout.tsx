@@ -1,18 +1,3 @@
-/*
-THESIS: One live event register, not a stack of finance cards; a narrow split
-spine keeps identity and navigation fixed while the active route reads as a
-ruled working document.
-OWN-WORLD: Ink spine, mustard folio, cream paper, teal current field, and brick
-commitments/errors; League Gothic titles, Barlow copy, square controls, hard
-one-pixel rules, and no ambient shadow.
-STORY: Confirm the event and live state, choose Expenses, Settle, or People,
-make one exact change, and understand any reconnect or edit conflict.
-FIRST VIEWPORT: Desktop keeps the register beside the active ledger. Mobile
-stacks the masthead, folio, status, and a sticky three-cell index before the
-route heading and action.
-FORM: Side-car Register, position 3 of 6; approved Split Spine staging; seed
-c6026cc7.
-*/
 import {
   useCallback,
   useEffect,
@@ -30,10 +15,7 @@ import {
 
 import { Brand } from "../components/brand";
 import { EventProvider, type EventContextValue } from "../components/event-context";
-import {
-  CalendarIcon,
-  ShareIcon,
-} from "../components/icons";
+import { ShareIcon } from "../components/icons";
 import { getEvent } from "../lib/api";
 import { useEventStream } from "../lib/use-event-stream";
 import styles from "../styles/app.module.css";
@@ -156,39 +138,29 @@ export default function EventLayout() {
 
   return (
     <div className={styles.eventWorkspace}>
-      <aside className={styles.eventSpine}>
-        <header className={styles.eventHeader}>
-          <div className={styles.eventTopbar}>
-            <Brand variant="event" />
-            <button
-              className={`${styles.button} ${styles.buttonSecondary} ${styles.shareButton}`}
-              onClick={() => void shareEvent()}
-              type="button"
-            >
-              <ShareIcon />
-              <span>Share</span>
-            </button>
-          </div>
-
-          <div className={styles.eventIdentity}>
-            <div>
-              <p className={styles.eventKicker}>Private event</p>
-              <h1 className={styles.eventTitle}>{snapshot.event.title}</h1>
-            </div>
-            <p className={styles.eventCurrency}>{snapshot.event.currency}</p>
-          </div>
-
+      <header className={styles.eventTopbar}>
+        <Brand variant="event" />
+        <button
+          className={`${styles.button} ${styles.buttonSecondary}`}
+          onClick={() => void shareEvent()}
+          type="button"
+        >
+          <ShareIcon />
+          <span>Share link</span>
+        </button>
+      </header>
+      <section aria-labelledby="event-title" className={styles.eventBanner}>
+        <div className={styles.eventHeader}>
+          <h1 className={styles.eventTitle} id="event-title">{snapshot.event.title}</h1>
           <div className={styles.eventMeta}>
-            <span className={styles.eventMetaItem}>
-              <CalendarIcon height="16" width="16" />
-              <time dateTime={snapshot.event.expiresAt}>
-                {expiryLabel(snapshot.event.expiresAt)}
-              </time>
-            </span>
+            <span>{snapshot.event.currency}</span>
+            <time dateTime={snapshot.event.expiresAt}>
+              {expiryLabel(snapshot.event.expiresAt)}
+            </time>
             <span
               aria-atomic="true"
               aria-live="polite"
-              className={styles.eventMetaItem}
+              className={styles.eventStatus}
               role="status"
               title={
                 stream.isOffline
@@ -200,9 +172,7 @@ export default function EventLayout() {
             >
               <span
                 aria-hidden="true"
-                className={`${styles.statusDot} ${
-                  stream.isOffline ? styles.statusDotOffline : ""
-                }`}
+                className={`${styles.statusDot} ${stream.isOffline ? styles.statusDotOffline : ""}`}
               />
               {stream.isOffline
                 ? "Offline"
@@ -211,49 +181,13 @@ export default function EventLayout() {
                   : "Reconnecting"}
             </span>
           </div>
-        </header>
-
-        <nav aria-label="Event" className={styles.nav}>
-          <div className={styles.navInner}>
-            <NavLink
-              aria-label="Expenses"
-              className={navClassName}
-              end={false}
-              to="expenses"
-            >
-              <span aria-hidden="true" className={styles.navNumber}>01</span>
-              <span className={styles.navCopy}>
-                <span className={styles.navLabel}>Expenses</span>
-                <span className={styles.navDescription}>Shared costs</span>
-              </span>
-            </NavLink>
-            <NavLink
-              aria-label="Settle"
-              className={navClassName}
-              end={false}
-              to="settle"
-            >
-              <span aria-hidden="true" className={styles.navNumber}>02</span>
-              <span className={styles.navCopy}>
-                <span className={styles.navLabel}>Settle</span>
-                <span className={styles.navDescription}>What remains</span>
-              </span>
-            </NavLink>
-            <NavLink
-              aria-label="People"
-              className={navClassName}
-              end={false}
-              to="people"
-            >
-              <span aria-hidden="true" className={styles.navNumber}>03</span>
-              <span className={styles.navCopy}>
-                <span className={styles.navLabel}>People</span>
-                <span className={styles.navDescription}>The group</span>
-              </span>
-            </NavLink>
-          </div>
-        </nav>
-      </aside>
+          <nav aria-label="Event" className={styles.nav}>
+            <NavLink aria-label="Expenses" className={navClassName} to="expenses">Expenses</NavLink>
+            <NavLink aria-label="Settle" className={navClassName} to="settle">Settle</NavLink>
+            <NavLink aria-label="People" className={navClassName} to="people">People</NavLink>
+          </nav>
+        </div>
+      </section>
 
       <div className={styles.eventDocument}>
         {stream.status !== "connected" ? (

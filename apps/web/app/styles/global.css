@@ -34,27 +34,33 @@
 :root {
   color-scheme: light dark;
   --session-mustard: #e0b12e;
-  --ink-black: #0b0b0b;
+  --ink-black: #202521;
   --cut-teal: #0e7c7b;
-  --field-teal: #075f5e;
+  --field-teal: #086766;
   --brick-beat: #b23a2e;
-  --poster-cream: #f2e8d1;
-  --paper-bright: #fff9e8;
-  --paper-hover: #fffdf5;
+  --poster-cream: #faf8f1;
+  --paper-bright: #fffef9;
+  --paper-hover: #ffffff;
   --muted-ink: #655e50;
   --muted-on-ink: #d7cab0;
   --spine-hover: #25231e;
   --ink-on-mustard: #3f370f;
   --dialog-scrim: rgb(11 11 11 / 78%);
   --accent-field: var(--field-teal);
+  --accent-hover: #075553;
+  --button-ink: #ffffff;
+  --danger-field: #922b23;
+  --danger-hover: #762119;
+  --banner: #efe5c9;
+  --banner-border: #d1c8b0;
   --accent-ink: var(--field-teal);
-  --border: #8f846e;
-  --border-strong: var(--ink-black);
+  --border: #d0d5cb;
+  --border-strong: #a9afa3;
   --canvas: var(--poster-cream);
   --focus: var(--cut-teal);
   --ink: var(--ink-black);
-  --ink-faint: #756c5a;
-  --ink-muted: #5f5748;
+  --ink-faint: #62685f;
+  --ink-muted: #535b50;
   --negative: #922b23;
   --negative-ink: #6f1f19;
   --negative-soft: #f0c9c2;
@@ -62,22 +68,27 @@
   --session-brick: var(--brick-beat);
   --session-teal: var(--cut-teal);
   --surface: var(--poster-cream);
-  --surface-muted: #e8ddc5;
+  --surface-muted: #e8eee5;
   --surface-raised: var(--paper-bright);
-  --content: 1120px;
+  --content: 960px;
   --tap: 44px;
   font-family: "Session Sans", Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  accent-color: var(--accent-field);
+  caret-color: var(--accent-ink);
+  scrollbar-color: var(--border-strong) var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --accent-field: var(--field-teal);
+    --banner: #2c2a20;
+    --banner-border: #625e4e;
     --accent-ink: #76cac7;
-    --border: #756d5c;
-    --border-strong: #d8ccb1;
-    --canvas: #0b0b0b;
+    --border: #4d5148;
+    --border-strong: #8c9584;
+    --canvas: #181c18;
     --focus: var(--session-mustard);
     --ink: var(--poster-cream);
     --ink-faint: #a99e88;
@@ -86,9 +97,9 @@
     --negative-ink: #ffd9d4;
     --negative-soft: #521d18;
     --positive: #76cac7;
-    --surface: #15130f;
-    --surface-muted: #28241b;
-    --surface-raised: #201d16;
+    --surface: #181c18;
+    --surface-muted: #27352c;
+    --surface-raised: #222820;
   }
 }
 
@@ -124,15 +135,18 @@ button,
 input,
 select,
 textarea {
+  text-underline-offset: 4px;
   color: inherit;
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 a {
+  text-underline-offset: 4px;
   color: inherit;
 }
 

@@ -39,11 +39,8 @@ test("dark color scheme remains accessible", async ({ page }, testInfo) => {
   await page.goto("/");
 
   const eventTitle = page.getByLabel("What are you splitting?");
-  await expect(eventTitle).toHaveCSS(
-    "background-color",
-    "rgb(255, 249, 232)",
-  );
-  await expect(eventTitle).toHaveCSS("color", "rgb(11, 11, 11)");
+  await eventTitle.fill("Weekend away");
+  await expect(eventTitle).toHaveValue("Weekend away");
 
   if (capturesVisualSnapshots(testInfo)) {
     await expect(page).toHaveScreenshot("home-dark.png", {

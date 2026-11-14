@@ -1,5 +1,4 @@
-- complementary:
-  - status "Live updates connected": Up to date
+- status "Live updates connected": Up to date
 - dialog "Add expense":
   - heading "Add expense" [level=2]
   - paragraph: Choose who paid and who shared it.
@@ -18,7 +17,6 @@
     - option "Noah"
   - group "Split equally between":
     - text: Split equally between
-    - paragraph: The server divides every cent exactly.
     - list:
       - listitem:
         - checkbox "Mia" [checked]

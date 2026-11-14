@@ -14,12 +14,10 @@
   border: 1px solid var(--ink);
   border-radius: 0;
   color: var(--poster-cream);
-  background: var(--session-brick);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  background: var(--accent-field);
+  font-size: 0.875rem;
+  font-weight: 600;
   text-decoration: none;
-  text-transform: uppercase;
   transform: translateY(-160%);
 }
 
@@ -49,12 +47,10 @@
   border: 1px solid var(--border-strong);
   border-radius: 0;
   cursor: pointer;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.075em;
+  font-size: 1rem;
+  font-weight: 600;
   text-align: center;
   text-decoration: none;
-  text-transform: uppercase;
   transition:
     background-color 140ms ease,
     color 140ms ease,
@@ -71,22 +67,13 @@
 }
 
 .buttonPrimary {
-  padding-right: 28px;
-  border-color: var(--ink-black);
-  color: var(--poster-cream);
-  background: var(--session-brick);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 12px) 0,
-    100% 50%,
-    calc(100% - 12px) 100%,
-    0 100%
-  );
+  border-color: var(--accent-field);
+  color: var(--button-ink);
+  background: var(--accent-field);
 }
 
 .buttonPrimary:hover:not(:disabled) {
-  color: var(--ink-black);
-  background: var(--session-mustard);
+  background: var(--accent-hover);
 }
 
 .buttonSecondary {
@@ -148,22 +135,20 @@
   margin: 0 0 14px;
   padding: 5px 8px;
   color: var(--poster-cream);
-  background: var(--session-brick);
+  background: var(--accent-field);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 .errorTitle {
-  max-width: 14ch;
+  max-width: 24ch;
   margin: 0;
   font-family: "Session Display", Impact, sans-serif;
-  font-size: clamp(3.2rem, 9vw, 5.8rem);
+  font-size: clamp(2.75rem, 8vw, 4rem);
   font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 0.9;
-  text-transform: uppercase;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
