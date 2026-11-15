@@ -36,6 +36,5 @@ Preconditions:
 
 - The amount preview appears only after the amount parses. Assert **Exact split** after filling `20.01`, not before.
 - Both people are included by default. The extra cent is shown on the first person in the list, Mia, as `$10.01`.
-- The landing page also shows an illustrative dinner total. Scope the preview assertion to the dialog.
 - **Add expense** in the page header is absent until the first expense exists. The empty state entry is **Add the first expense**.
 - A preview without the saved snapshot does not prove the ledger stored the shares.

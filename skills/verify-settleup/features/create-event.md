@@ -29,5 +29,5 @@ Preconditions:
 ## Gotchas
 
 - The currency select defaults from the browser locale. Select `AUD` instead of trusting the default.
-- The illustrative dinner total on the landing page is not an event. Proof starts after the URL is an event expense page.
+- Proof starts after the URL is an event expense page.
 - A second create with the same title is a second event. Use a fresh database when the title must be unique.
