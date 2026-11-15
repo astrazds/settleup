@@ -60,7 +60,7 @@ The record-expense drive writes proof to `skills/verify-settleup/evidence/record
 - `snapshot.json` is the event snapshot returned by `GET /api/events/:token` after save, with the token redacted.
 - `run.txt` records the feature id, entry point, amount, and share check.
 
-Proof has to show the action and the resulting state. The preview screenshot is the action. The saved screenshot and the snapshot shares are the resulting state. The snapshot is the side effect: the stored share rows, not only the pixels. A landing-page illustration is not evidence for a saved expense.
+Proof has to show the action and the resulting state. The preview screenshot is the action. The saved screenshot and the snapshot shares are the resulting state. The snapshot is the side effect: the stored share rows, not only the pixels.
 
 ## Cleanup
 
