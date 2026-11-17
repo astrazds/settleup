@@ -89,20 +89,8 @@ to one API process, so deployment uses one API replica.
 
 ## Verify a change
 
-`mise.toml` pins tools and exposes the repository gates. Run `mise run check`
-for lint, typecheck, unit tests, both production builds, and real-browser tests
-in order. Sequential execution matters because several gates rebuild the
-contracts output. See [CONTRIBUTING.md](../CONTRIBUTING.md) for browser setup.
-Frontend lint and typecheck each run `react-router typegen` first. Generated
-route types under `apps/web/.react-router` and compiled contracts under
-`packages/contracts/dist` are build output, not source to edit or commit.
-
-Start API behavior checks with `src/server/app.test.ts` and
-`src/server/mutations.test.ts`. Browser workflows live in
-`apps/web/tests/e2e`; `draft-conflicts.spec.ts` covers retained drafts and explicit
-acceptance of live updates, and `states.spec.ts` checks visual states. CI runs
-the semantic browser suite in all four configured projects. Pixel snapshots
-run locally in mobile and desktop Chromium. See the contributor guide for
-focused commands and snapshot tolerances. Keep product behavior in
-[`PRODUCT.md`](../apps/web/PRODUCT.md) and the visual system in
-[`DESIGN.md`](../apps/web/DESIGN.md).
+[HTTP tests](../src/server/app.test.ts) cover the routes. [Mutation tests](../src/server/mutations.test.ts)
+cover preconditions, rollback, and event isolation. The [draft conflict suite](../apps/web/tests/e2e/draft-conflicts.spec.ts)
+exercises live updates. The [visual state suite](../apps/web/tests/e2e/states.spec.ts)
+covers responsive layouts. See the [contributor guide](../CONTRIBUTING.md#verify-the-change)
+for focused commands and the full gate.
