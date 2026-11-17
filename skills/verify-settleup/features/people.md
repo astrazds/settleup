@@ -24,7 +24,7 @@ Preconditions:
 - **Open People.** Choose **People**. Run `page.getByRole("link", { name: "People" }).click()`. The people section is visible and shows `Mia`.
 - **Add Noah.** Choose **Add person**, enter the name, and save. Run `page.getByRole("link", { name: "Add person" }).click()`, `page.getByLabel("Name").fill("Noah")`, and `page.getByRole("button", { name: "Add person" }).click()`. The text `Noah` is visible and the dialog is gone.
 - **Rename Noah.** Choose **Edit Noah**, change the name, and save. Run `page.getByRole("link", { name: "Edit Noah" }).click()`, `page.getByLabel("Name").fill("Noah K")`, and `page.getByRole("button", { name: "Save changes" }).click()`. The text `Noah K` is visible and `Noah` as an exact name is gone.
-- **Proof.** Capture the people list. Run `page.screenshot({ path: "skills/verify-settleup/evidence/people/renamed.png" })` and write the ARIA snapshot to `renamed.aria.txt`. Read `GET /api/events/<token>` and keep the participant names in `snapshot.json` with the token redacted.
+- **Proof.** Capture the people list. Run `page.screenshot({ path: proofDir + "/renamed.png" })` and write the ARIA snapshot to `renamed.aria.txt`. Read `GET /api/events/<token>` and keep the participant names in `snapshot.json` with the token redacted.
 
 ## Gotchas
 

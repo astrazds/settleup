@@ -26,7 +26,7 @@ Preconditions:
 - **Open Settle.** Choose **Settle**. Run `page.getByRole("link", { name: "Settle", exact: true }).click()`. The heading reads `Noah pays Mia $10.00`.
 - **Open the payment sheet.** Choose **Record payment**. Run `page.getByRole("link", { name: "Record payment" }).click()`. **From**, **To**, and **Amount** are filled. **Amount** reads `10.00`.
 - **Record the payment.** Choose **Record payment**. Run `page.getByRole("button", { name: "Record payment" }).click()`. The heading **Everyone is settled** is visible.
-- **Proof.** Capture the settled state. Run `page.screenshot({ path: "skills/verify-settleup/evidence/settle/settled.png" })` and write `page.locator("body").ariaSnapshot()` to `settled.aria.txt`. Read `GET /api/events/<token>` and keep the payment row in `snapshot.json` with the token redacted.
+- **Proof.** Capture the settled state. Run `page.screenshot({ path: proofDir + "/settled.png" })` and write `page.locator("body").ariaSnapshot()` to `settled.aria.txt`. Read `GET /api/events/<token>` and keep the payment row in `snapshot.json` with the token redacted.
 
 ## Gotchas
 

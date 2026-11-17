@@ -16,6 +16,7 @@ This directory is the maintained source for verifying SettleUp's user-facing beh
 - Treat every command as literal.
 - Browser actions go through Playwright against the launched UI.
 - The bundled drive is `node skills/verify-settleup/bin/verify-settleup.mjs drive record-expense`.
+- For a manual recipe, create a fresh directory under the checkout's `.scratch/verify-settleup/` and bind its absolute path to `proofDir` in your Playwright session. Save that recipe's screenshots, ARIA snapshots and redacted ledger proof together there.
 - Do not remove proof artifacts during cleanup.
 
 ## Proof and skip reporting
