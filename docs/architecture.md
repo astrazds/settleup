@@ -87,11 +87,13 @@ its controlled fields. Submission readers return the command together with
 that accepted version. Delete actions use the current loader version at
 confirmation time.
 
-The API validates event access when an SSE subscription opens. The broker sends
-`connected` with `{}` and `changed` with `{ version }`; it does not send ledger
-data or maintain a replay log. Refetching after connection covers changes
-between the initial loader request and subscription. Subscriptions are local
-to one API process, so deployment uses one API replica.
+The API validates the event token and expiry when an SSE subscription opens.
+The subscription uses the event ID without loading the ledger snapshot.
+The broker releases the subscription on request abort or response body cancellation.
+It sends `connected` with `{}` and `changed` with `{ version }`. The frames
+contain no ledger data, and the broker keeps no replay log. Refetching after
+connection covers changes between the initial loader request and subscription.
+Subscriptions are local to one API process, so deployment uses one API replica.
 
 ## Verify a change
 
