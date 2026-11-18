@@ -14,6 +14,9 @@ const screenshotStylePath = fileURLToPath(
 
 test("home is responsive and accessible", async ({ page }, testInfo) => {
   await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Create private event" }),
+  ).toBeVisible();
 
   if (capturesVisualSnapshots(testInfo)) {
     await expect(page).toHaveScreenshot("home.png", {

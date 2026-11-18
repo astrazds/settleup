@@ -1,9 +1,10 @@
-import { Link, Outlet, useFetcher } from "react-router";
+import { Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
 import { useEventContext } from "../components/event-context";
 import { CheckIcon, EditIcon, PlusIcon, ReceiptIcon } from "../components/icons";
+import { RouteDialogLink } from "../components/route-dialog-link";
 import { actionErrorMessage, deletePayment } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
@@ -41,23 +42,23 @@ export default function Settle() {
   const { snapshot } = useEventContext();
   const fetcher = useFetcher<typeof clientAction>();
   const suggestion = snapshot.settlementSuggestion;
-  const hasExpenses = snapshot.expenses.length > 0;
+  const hasActivity = snapshot.expenses.length > 0 || snapshot.payments.length > 0;
 
   return (
     <>
       <div className={styles.page}>
         <h2 className={styles.visuallyHidden}>Settle up</h2>
 
-        {!hasExpenses ? (
+        {!hasActivity ? (
           <EmptyState
             action={
-              <Link
+              <RouteDialogLink
                 className={`${styles.button} ${styles.buttonPrimary}`}
                 to="../expenses/new"
               >
                 <PlusIcon />
                 Add an expense
-              </Link>
+              </RouteDialogLink>
             }
             icon={<ReceiptIcon />}
             text="Add a shared cost to see who owes what."
@@ -78,13 +79,13 @@ export default function Settle() {
               </p>
             </div>
             <div>
-              <Link
+              <RouteDialogLink
                 className={`${styles.button} ${styles.buttonPrimary}`}
                 to="new"
               >
                 <CheckIcon />
                 Record payment
-              </Link>
+              </RouteDialogLink>
             </div>
           </section>
         ) : (
@@ -100,7 +101,7 @@ export default function Settle() {
           </section>
         )}
 
-        {hasExpenses ? (
+        {hasActivity ? (
           <section aria-labelledby="balances-heading" className={styles.section}>
             <h3 className={styles.sectionTitle} id="balances-heading">
               Current balances
@@ -158,9 +159,9 @@ export default function Settle() {
               <h3 className={styles.sectionTitle} id="payments-heading">
                 Recorded payments
               </h3>
-              <Link className={styles.textButton} to="new">
+              <RouteDialogLink className={styles.textButton} to="new">
                 Add another
-              </Link>
+              </RouteDialogLink>
             </div>
             <ul className={styles.list}>
               {snapshot.payments.map((payment) => {
@@ -182,7 +183,7 @@ export default function Settle() {
                       {formatMoney(payment.amountMinor, snapshot.event.currency)}
                     </span>
                     <div className={styles.itemActions}>
-                      <Link
+                      <RouteDialogLink
                         aria-label={`Edit payment from ${from} to ${to}`}
                         className={styles.iconButton}
                         title={`Edit payment from ${from} to ${to}`}
@@ -192,7 +193,7 @@ export default function Settle() {
                         <span aria-hidden="true" className={styles.actionLabel}>
                           Edit
                         </span>
-                      </Link>
+                      </RouteDialogLink>
                       <DeleteConfirm
                         description={`This removes the recorded payment from ${from} to ${to} and recalculates balances.`}
                         disabled={fetcher.state !== "idle"}

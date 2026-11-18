@@ -1,6 +1,9 @@
+import type { EventSnapshot } from "@settleup/contracts";
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -16,23 +19,42 @@ import {
 import { Brand } from "../components/brand";
 import { EventProvider, type EventContextValue } from "../components/event-context";
 import { ShareIcon } from "../components/icons";
-import { getEvent } from "../lib/api";
+import { ApiError, getEvent } from "../lib/api";
 import { useEventStream } from "../lib/use-event-stream";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/event-layout";
 
-export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  if (!params.token) {
+let activeSnapshot: EventSnapshot | undefined;
+
+export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
+  const { token } = params;
+  if (!token) {
     throw new Error("Event token is missing.");
   }
 
-  return getEvent(params.token);
+  const { signal } = request;
+  try {
+    const snapshot = await getEvent(token, { signal });
+    return { snapshot, refreshFailed: false };
+  } catch (error) {
+    signal.throwIfAborted();
+    const snapshot = activeSnapshot;
+    if (snapshot?.event.token === token && error instanceof ApiError) {
+      if (error.kind === "network" || (error.status !== null && error.status >= 500)) {
+        return { snapshot, refreshFailed: true };
+      }
+      if (error.kind === "not-found" || error.kind === "expired") {
+        activeSnapshot = undefined;
+      }
+    }
+    throw error;
+  }
 }
 
 export const meta = ({ loaderData }: Route.MetaArgs) => [
   {
     title: loaderData
-      ? `${loaderData.event.title} — SettleUp`
+      ? `${loaderData.snapshot.event.title} — SettleUp`
       : "Event — SettleUp",
   },
   { name: "robots", content: "noindex, nofollow, noarchive" },
@@ -56,7 +78,7 @@ function navClassName({ isActive }: { isActive: boolean }) {
 }
 
 export default function EventLayout() {
-  const snapshot = useLoaderData<typeof clientLoader>();
+  const { snapshot, refreshFailed } = useLoaderData<typeof clientLoader>();
   const location = useLocation();
   const revalidator = useRevalidator();
   const [shareMessage, setShareMessage] = useState("");
@@ -70,6 +92,30 @@ export default function EventLayout() {
   const revalidate = useCallback(() => {
     void revalidator.revalidate();
   }, [revalidator]);
+  const refreshRestoredPage = useEffectEvent((event: PageTransitionEvent) => {
+    if (event.persisted) {
+      revalidate();
+    }
+  });
+
+  useLayoutEffect(() => {
+    activeSnapshot = snapshot;
+    const clearSnapshot = () => {
+      if (activeSnapshot === snapshot) {
+        activeSnapshot = undefined;
+      }
+    };
+    const handlePageShow = (event: PageTransitionEvent) => refreshRestoredPage(event);
+
+    window.addEventListener("pagehide", clearSnapshot);
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      clearSnapshot();
+      window.removeEventListener("pagehide", clearSnapshot);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [snapshot]);
+
   const stream = useEventStream({
     token: snapshot.event.token,
     version: snapshot.event.version,
@@ -165,9 +211,11 @@ export default function EventLayout() {
               title={
                 stream.isOffline
                   ? "Live updates offline"
-                  : stream.status === "connected"
-                    ? "Live updates connected"
-                    : "Live updates reconnecting"
+                  : refreshFailed
+                    ? "Event refresh failed"
+                    : stream.status === "connected"
+                      ? "Live updates connected"
+                      : "Live updates reconnecting"
               }
             >
               <span
@@ -176,9 +224,11 @@ export default function EventLayout() {
               />
               {stream.isOffline
                 ? "Offline"
-                : stream.status === "connected"
-                  ? "Up to date"
-                  : "Reconnecting"}
+                : refreshFailed
+                  ? "Refresh failed"
+                  : stream.status === "connected"
+                    ? "Up to date"
+                    : "Reconnecting"}
             </span>
           </div>
           <nav aria-label="Event" className={styles.nav}>
@@ -190,12 +240,14 @@ export default function EventLayout() {
       </section>
 
       <div className={styles.eventDocument}>
-        {stream.status !== "connected" ? (
+        {stream.status !== "connected" || refreshFailed ? (
           <aside className={styles.connectionNotice}>
             <span>
               {stream.isOffline
                 ? "You’re offline. Existing details stay visible, but changes need a connection."
-                : "Live updates are reconnecting. Refresh if someone else just made a change."}
+                : refreshFailed
+                  ? "Couldn’t refresh this event. Showing the last loaded details."
+                  : "Live updates are reconnecting. Refresh if someone else just made a change."}
             </span>
             <button
               className={styles.textButton}

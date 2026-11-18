@@ -71,106 +71,36 @@ export function parseAmountMinor(input: string, currency: CurrencyCode): number 
 }
 
 export function amountMinorToDecimal(
-  amountMinor: number,
+  amountMinor: number | bigint,
   currency: CurrencyCode,
-): string {
-  assertSafeMinorUnits(amountMinor);
-
+): `${number}` {
+  const amount = typeof amountMinor === "bigint" ? amountMinor : BigInt(assertSafeMinorUnits(amountMinor));
   const fractionDigits = currencyFractionDigits(currency);
-  const sign = amountMinor < 0 ? "-" : "";
-  const digits = Math.abs(amountMinor).toString().padStart(fractionDigits + 1, "0");
-
-  if (fractionDigits === 0) {
-    return `${sign}${digits}`;
-  }
-
+  const sign = amount < 0n ? "-" : "";
+  const digits = (amount < 0n ? -amount : amount).toString().padStart(fractionDigits + 1, "0");
   const splitAt = digits.length - fractionDigits;
-  return `${sign}${digits.slice(0, splitAt)}.${digits.slice(splitAt)}`;
+  const decimal = fractionDigits === 0
+    ? digits
+    : `${digits.slice(0, splitAt)}.${digits.slice(splitAt)}`;
+  // Both parts come from an integer. Preserve its digits at the Intl boundary.
+  return `${sign}${decimal}` as `${number}`;
 }
+
+const defaultFormatters = new Map<CurrencyCode, Intl.NumberFormat>();
 
 export function formatMoney(
   amountMinor: bigint | number,
   currency: CurrencyCode,
   locales?: string | readonly string[],
 ): string {
-  const exactAmount =
-    typeof amountMinor === "bigint"
-      ? amountMinor
-      : BigInt(assertSafeMinorUnits(amountMinor));
-
-  const normalizedLocales =
-    typeof locales === "string" || locales === undefined ? locales : [...locales];
-  const fractionDigits = currencyFractionDigits(currency);
-  const negative = exactAmount < 0n;
-  const digits = (negative ? -exactAmount : exactAmount)
-    .toString()
-    .padStart(fractionDigits + 1, "0");
-  const splitAt = digits.length - fractionDigits;
-  const integerDigits = digits.slice(0, splitAt);
-  const fraction = digits.slice(splitAt);
-  const numericParts = new Intl.NumberFormat(normalizedLocales, {
-    currency,
-    currencyDisplay: "symbol",
-    maximumFractionDigits: fractionDigits,
-    minimumFractionDigits: fractionDigits,
-    style: "currency",
-  }).formatToParts(negative ? -1 : 1);
-
-  return numericParts
-    .map((part) => {
-      switch (part.type) {
-        case "integer":
-          return groupInteger(integerDigits, normalizedLocales);
-        case "fraction":
-          return fraction;
-        case "minusSign":
-          return negative ? part.value : "";
-        default:
-          return part.value;
-      }
-    })
-    .join("");
-}
-
-function groupInteger(
-  integerDigits: string,
-  locales?: string | string[],
-): string {
-  const formatter = new Intl.NumberFormat(locales, {
-    maximumFractionDigits: 0,
-    useGrouping: true,
-  });
-
-  if (integerDigits.length < 16) {
-    return formatter.format(Number(integerDigits));
+  let formatter = locales === undefined ? defaultFormatters.get(currency) : undefined;
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locales, { style: "currency", currency });
+    if (locales === undefined) {
+      defaultFormatters.set(currency, formatter);
+    }
   }
-
-  const sentinel = "123456789012345";
-  const sentinelParts = formatter.formatToParts(Number(sentinel));
-  const groupSizes = sentinelParts
-    .filter((part) => part.type === "integer")
-    .map((part) => part.value.length);
-  const separator =
-    sentinelParts.find((part) => part.type === "group")?.value ?? ",";
-
-  if (groupSizes.length < 2) {
-    return integerDigits;
-  }
-
-  const primarySize = groupSizes.at(-1) ?? 3;
-  const secondarySize = groupSizes.at(-2) ?? primarySize;
-  const groups: string[] = [];
-  let end = integerDigits.length;
-  let size = primarySize;
-
-  while (end > 0) {
-    const start = Math.max(0, end - size);
-    groups.unshift(integerDigits.slice(start, end));
-    end = start;
-    size = secondarySize;
-  }
-
-  return groups.join(separator);
+  return formatter.format(amountMinorToDecimal(amountMinor, currency));
 }
 
 function stripLeadingZeroes(value: string): string {

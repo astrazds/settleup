@@ -304,8 +304,18 @@ async function requestJson<TResponse, TBody = never>(
 }
 
 async function readJson(response: Response): Promise<unknown> {
+  let body: string;
   try {
-    return await response.json();
+    body = await response.text();
+  } catch (error) {
+    if (response.ok) {
+      throw new ApiError("network", NETWORK_ERROR_MESSAGE, { cause: error });
+    }
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(body) as unknown;
   } catch (error) {
     if (response.ok) {
       throw new ApiError("server", SERVER_ERROR_MESSAGE, {

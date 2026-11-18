@@ -1,13 +1,15 @@
-import { Link, Outlet, useFetcher } from "react-router";
+import type { CurrencyCode, Expense } from "@settleup/contracts";
+import { useMemo, useState } from "react";
+import { Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
 import { useEventContext } from "../components/event-context";
 import { EditIcon, PlusIcon, ReceiptIcon } from "../components/icons";
+import { RouteDialogLink } from "../components/route-dialog-link";
 import { actionErrorMessage, deleteExpense } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import { formatMoney } from "../lib/money";
-import { participantName } from "../lib/participants";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/expenses";
 
@@ -37,9 +39,36 @@ function expenseDate(value: string): string {
     : expenseDateFormatter.format(date);
 }
 
+function ExpenseSplit({ expense, currency, names }: {
+  expense: Expense;
+  currency: CurrencyCode;
+  names: ReadonlyMap<string, string>;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details className={styles.shareDetails} onToggle={(event) => setOpen(event.currentTarget.open)}>
+      <summary className={styles.shareSummary}>See exact split</summary>
+      {open && (
+        <ul className={styles.shareBreakdown}>
+          {expense.shares.map((share) => (
+            <li key={share.participantId}>
+              <span>{names.get(share.participantId) ?? "Unknown person"}</span>
+              <strong>{formatMoney(share.amountMinor, currency)}</strong>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
+  );
+}
+
 export default function Expenses() {
   const { snapshot } = useEventContext();
   const fetcher = useFetcher<typeof clientAction>();
+  const names = useMemo(
+    () => new Map(snapshot.participants.map((person) => [person.id, person.name])),
+    [snapshot.participants],
+  );
   const totalMinor = snapshot.expenses.reduce(
     (total, expense) => total + BigInt(expense.amountMinor),
     0n,
@@ -59,13 +88,13 @@ export default function Expenses() {
             ) : null}
           </div>
           {snapshot.expenses.length > 0 ? (
-            <Link
+            <RouteDialogLink
               className={`${styles.button} ${styles.buttonPrimary}`}
               to="new"
             >
               <PlusIcon />
               <span>Add expense</span>
-            </Link>
+            </RouteDialogLink>
           ) : null}
         </div>
 
@@ -83,7 +112,7 @@ export default function Expenses() {
               </h3>
               <ul className={styles.list}>
                 {snapshot.expenses.map((expense) => {
-                  const payer = participantName(snapshot, expense.payerId);
+                  const payer = names.get(expense.payerId) ?? "Unknown person";
                   const peopleCount = expense.shares.length;
                   const dateLabel = expenseDate(expense.createdAt);
                   return (
@@ -94,35 +123,13 @@ export default function Expenses() {
                           {payer} paid · split {peopleCount === 1 ? "with 1 person" : `with ${peopleCount} people`}
                           {dateLabel ? ` · ${dateLabel}` : ""}
                         </p>
-                        <details className={styles.shareDetails}>
-                          <summary className={styles.shareSummary}>
-                            See exact split
-                          </summary>
-                          <ul className={styles.shareBreakdown}>
-                            {expense.shares.map((share) => (
-                              <li key={share.participantId}>
-                                <span>
-                                  {participantName(
-                                    snapshot,
-                                    share.participantId,
-                                  )}
-                                </span>
-                                <strong>
-                                  {formatMoney(
-                                    share.amountMinor,
-                                    snapshot.event.currency,
-                                  )}
-                                </strong>
-                              </li>
-                            ))}
-                          </ul>
-                        </details>
+                        <ExpenseSplit expense={expense} currency={snapshot.event.currency} names={names} />
                       </div>
                       <span className={styles.listAmount}>
                         {formatMoney(expense.amountMinor, snapshot.event.currency)}
                       </span>
                       <div className={styles.itemActions}>
-                        <Link
+                        <RouteDialogLink
                           aria-label={`Edit ${expense.description}`}
                           className={styles.iconButton}
                           title={`Edit ${expense.description}`}
@@ -132,7 +139,7 @@ export default function Expenses() {
                           <span aria-hidden="true" className={styles.actionLabel}>
                             Edit
                           </span>
-                        </Link>
+                        </RouteDialogLink>
                         <DeleteConfirm
                           description={`This permanently removes “${expense.description}” and recalculates everyone's balances.`}
                           disabled={fetcher.state !== "idle"}
@@ -159,13 +166,13 @@ export default function Expenses() {
         ) : (
           <EmptyState
             action={
-              <Link
+              <RouteDialogLink
                 className={`${styles.button} ${styles.buttonPrimary}`}
                 to="new"
               >
                 <PlusIcon />
                 Add the first expense
-              </Link>
+              </RouteDialogLink>
             }
             icon={<ReceiptIcon />}
             text="Add a shared cost to see exact splits and balances."
