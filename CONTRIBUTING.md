@@ -70,6 +70,14 @@ rollback, snapshot recomputation, and event isolation. Browser tests cover
 workflows, draft conflicts, accessibility, and responsive states. Run the full
 gate after focused checks when changing application code.
 
+On Windows, run the desktop Chromium expense workflow from the repository
+root. This exercises the production frontend and an in-memory API without
+comparing Linux screenshot baselines.
+
+```sh
+mise run test:e2e -- core-flow.spec.ts --project=desktop-chromium
+```
+
 ## Drive a user journey
 
 Use the [verification skill](skills/verify-settleup/SKILL.md) on Linux. It

@@ -1,6 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const databasePath = ":memory:";
 const visualSnapshots = !process.env.CI;
 
 export default defineConfig({
@@ -55,9 +54,10 @@ export default defineConfig({
     command:
       `npm run build:web && ` +
       `concurrently --kill-others --names api,web ` +
-      `"SETTLEUP_DB=${databasePath} npm run dev:api:watch" ` +
+      `"npm run dev:api:watch" ` +
       `"npm run preview --workspace @settleup/web -- --port 4173"`,
     cwd: "../..",
+    env: { SETTLEUP_DB: ":memory:" },
     port: 4173,
     reuseExistingServer: false,
     timeout: 180_000,
