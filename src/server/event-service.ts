@@ -97,6 +97,10 @@ export class EventService {
     )();
   }
 
+  getActiveEventId(token: string): string {
+    return this.requireActiveEvent(token).id;
+  }
+
   addParticipant(
     token: string,
     command: ParticipantCommand,

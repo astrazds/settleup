@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   apiErrorResponseSchema,
   createEventResponseSchema,
@@ -276,6 +276,30 @@ describe("API app", () => {
 
     controller.abort();
     await response.body?.cancel();
+  });
+
+  it("authorizes event streams without loading the ledger snapshot", async () => {
+    let now = new Date("2026-01-01T00:00:00Z");
+    const service = new EventService(openDatabase(":memory:"), () => now);
+    const app = createApp({ service });
+    const { token } = service.createEvent({
+      currency: "AUD",
+      firstParticipantName: "Mia",
+      title: "Trip",
+    });
+    const readSnapshot = vi.spyOn(service, "getSnapshotByToken");
+
+    const active = await app.request(`/api/events/${token}/stream`);
+    await active.body?.cancel();
+    const missing = await app.request("/api/events/missing/stream");
+
+    now = new Date("2026-01-04T00:00:00Z");
+    const expired = await app.request(`/api/events/${token}/stream`);
+
+    expect(active.status).toBe(200);
+    expect(missing.status).toBe(404);
+    expect(expired.status).toBe(410);
+    expect(readSnapshot.mock.calls.length).toBe(0);
   });
 });
 

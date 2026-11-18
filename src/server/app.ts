@@ -55,8 +55,8 @@ export function createApp({ broker = new ChangeBroker(), service }: AppOptions):
   });
 
   app.get("/api/events/:token/stream", (context) => {
-    const snapshot = service.getSnapshotByToken(context.req.param("token"));
-    const stream = broker.subscribe(snapshot.event.id, context.req.raw.signal);
+    const eventId = service.getActiveEventId(context.req.param("token"));
+    const stream = broker.subscribe(eventId, context.req.raw.signal);
     return new Response(stream, {
       headers: {
         "Cache-Control": "no-store",

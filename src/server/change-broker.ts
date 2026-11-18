@@ -4,27 +4,43 @@ export interface EventChange {
 }
 
 export class ChangeBroker {
-  private readonly subscribers = new Map<string, Set<ReadableStreamDefaultController<Uint8Array>>>();
+  private readonly subscribers = new Map<string, Set<(payload: Uint8Array) => void>>();
   private readonly encoder = new TextEncoder();
 
   subscribe(eventId: string, signal: AbortSignal): ReadableStream<Uint8Array> {
+    let unsubscribe: (() => boolean) | undefined;
+
     return new ReadableStream<Uint8Array>({
       start: (controller) => {
-        const eventSubscribers = this.subscribers.get(eventId) ?? new Set();
-        eventSubscribers.add(controller);
-        this.subscribers.set(eventId, eventSubscribers);
-        controller.enqueue(this.encoder.encode("event: connected\ndata: {}\n\n"));
+        if (signal.aborted) {
+          controller.close();
+          return;
+        }
 
-        signal.addEventListener(
-          "abort",
-          () => {
-            eventSubscribers.delete(controller);
-            if (eventSubscribers.size === 0) {
-              this.subscribers.delete(eventId);
-            }
-          },
-          { once: true },
-        );
+        const eventSubscribers = this.subscribers.get(eventId) ?? new Set();
+        const send = (payload: Uint8Array) => controller.enqueue(payload);
+        const detach = () => {
+          const removed = eventSubscribers.delete(send);
+          if (removed && eventSubscribers.size === 0) {
+            this.subscribers.delete(eventId);
+          }
+          signal.removeEventListener("abort", abort);
+          return removed;
+        };
+        const abort = () => {
+          if (detach()) {
+            controller.close();
+          }
+        };
+
+        unsubscribe = detach;
+        eventSubscribers.add(send);
+        this.subscribers.set(eventId, eventSubscribers);
+        signal.addEventListener("abort", abort, { once: true });
+        send(this.encoder.encode("event: connected\ndata: {}\n\n"));
+      },
+      cancel: () => {
+        unsubscribe?.();
       },
     });
   }
@@ -40,12 +56,8 @@ export class ChangeBroker {
       `event: changed\ndata: ${JSON.stringify({ version: change.version })}\n\n`,
     );
 
-    for (const controller of eventSubscribers) {
-      try {
-        controller.enqueue(payload);
-      } catch {
-        eventSubscribers.delete(controller);
-      }
+    for (const send of eventSubscribers) {
+      send(payload);
     }
   }
 }
