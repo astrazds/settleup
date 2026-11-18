@@ -83,8 +83,8 @@ mise run test:e2e -- core-flow.spec.ts --project=desktop-chromium
 Use the [verification skill](skills/verify-settleup/SKILL.md) on Linux. It
 checks port ownership with `ss` and procfs. Its automated expense journey
 compares the preview with the saved split and the stored shares. The feature
-map also has manual browser recipes. Run the helper in a disposable checkout
-because it writes fresh proof into the tracked example files.
+map also has manual browser recipes. Each automated drive prints its own
+directory under `.scratch/verify-settleup/`. Cleanup preserves the receipts.
 
 ## Review visual changes
 

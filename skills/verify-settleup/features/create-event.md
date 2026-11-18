@@ -24,7 +24,7 @@ Preconditions:
 - **Enter the event.** Fill the form. Run `page.getByLabel("What are you splitting?").fill("Verify weekend")`, `page.getByLabel("Your name").fill("Mia")`, and `page.getByLabel("Currency").selectOption("AUD")`. **Create private event** is enabled.
 - **Create the event.** Choose **Create private event**. Run `page.getByRole("button", { name: "Create private event" }).click()`. The URL matches `/e/…/expenses` and the level-1 heading reads `Verify weekend`.
 - **Confirm the empty ledger.** Stay on the expense page. The link **Add the first expense** is visible.
-- **Proof.** Capture the empty event. Run `page.screenshot({ path: "skills/verify-settleup/evidence/create-event/created.png" })` and `page.locator("body").ariaSnapshot({ timeout: 5000 })` into `created.aria.txt`. Both show `Verify weekend`.
+- **Proof.** Capture the empty event. Run `page.screenshot({ path: proofDir + "/created.png" })` and `page.locator("body").ariaSnapshot({ timeout: 5000 })` into `created.aria.txt`. Both show `Verify weekend`.
 
 ## Gotchas
 

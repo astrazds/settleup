@@ -30,7 +30,7 @@ Preconditions:
 - **Save.** Choose **Add expense**. Run `page.getByRole("button", { name: "Add expense" }).click()`. **Recent activity** shows `Dinner`.
 - **Open the saved split.** Choose **See exact split**. Run `page.getByText("See exact split", { exact: true }).click()`. **Recent activity** shows `$10.01` and `$10.00`.
 - **Confirm the stored shares.** Read the event snapshot. Run `page.request.get("/api/events/<token>")` using the token from the expense URL. The shares sum to 2001 cents and include 1001 cents.
-- **Proof.** The drive writes `skills/verify-settleup/evidence/record-expense/preview.png`, `preview.aria.txt`, `saved.png`, `saved.aria.txt`, `snapshot.json`, and `run.txt`.
+- **Proof.** The drive prints the fresh output directory and writes `preview.png`, `preview.aria.txt`, `saved.png`, `saved.aria.txt`, `snapshot.json`, and `run.txt`.
 
 ## Gotchas
 
