@@ -14,7 +14,7 @@ On every task, read these skills and apply them strictly:
 - `principle-fix-root-causes`
 - `principle-subtract-before-you-add`
 
-Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md) for checkout, verification, and licensing. Do not restate it.
+Start with the shared [agent guide](../../../AGENTS.md) for repository ownership and contributor workflows. The rules below apply when using this Cursor mode.
 
 ## Pull requests
 
@@ -33,6 +33,8 @@ Follow [CONTRIBUTING.md](../../../CONTRIBUTING.md) for checkout, verification, a
 - Prove the change works before declaring it done.
 
 ## srv1
+
+On the srv1 host, also follow these checkout rules.
 
 - Work inside `/home/astrazds/docker/settleup`.
 - Never touch a live checkout that has uncommitted edits.
