@@ -2,6 +2,7 @@ import type {
   EventSnapshot,
   EventSummary,
   Expense,
+  ExpenseShare,
   Participant,
   SettlementPayment,
 } from "@settleup/contracts";
@@ -13,13 +14,6 @@ export type EventRecord = Omit<EventSummary, "token">;
 export interface AmountExclusion {
   kind: "expense" | "payment";
   id: string;
-}
-
-type ExpenseRow = Omit<Expense, "shares">;
-interface ShareRow {
-  expenseId: string;
-  participantId: string;
-  amountMinor: number;
 }
 
 export const maximumExactEventAmountMinor = BigInt(Number.MAX_SAFE_INTEGER);
@@ -66,7 +60,7 @@ function loadParticipants(db: SqliteDatabase, eventId: string): Participant[] {
 }
 
 function loadExpenses(db: SqliteDatabase, eventId: string): Expense[] {
-  const expenseRows = db
+  const expenses = db
     .prepare(
       `
       SELECT
@@ -88,22 +82,24 @@ function loadExpenses(db: SqliteDatabase, eventId: string): Expense[] {
     .prepare(
       `
       SELECT
-        expense_id AS expenseId,
-        participant_id AS participantId,
-        amount_minor AS amountMinor
-      FROM expense_shares
-      WHERE expense_id IN (${expenseRows.map(() => "?").join(",") || "NULL"})
+        shares.expense_id AS expenseId,
+        shares.participant_id AS participantId,
+        shares.amount_minor AS amountMinor
+      FROM expenses
+      JOIN expense_shares AS shares ON shares.expense_id = expenses.id
+      WHERE expenses.event_id = ?
+      ORDER BY shares.expense_id, shares.position
     `,
     )
-    .all(...expenseRows.map((expense) => expense.id))
-    .map(parseShareRow);
+    .iterate(eventId);
 
-  return expenseRows.map((expense) => ({
-    ...expense,
-    shares: shareRows
-      .filter((share) => share.expenseId === expense.id)
-      .map(({ participantId, amountMinor }) => ({ participantId, amountMinor })),
-  }));
+  const expensesById = new Map(expenses.map((expense) => [expense.id, expense]));
+  for (const row of shareRows) {
+    const expenseId = readStringField(row, "expenseId");
+    expensesById.get(expenseId)?.shares.push(parseShareRow(row));
+  }
+
+  return expenses;
 }
 
 function loadPayments(db: SqliteDatabase, eventId: string): SettlementPayment[] {
@@ -176,7 +172,7 @@ function parseParticipantRow(row: unknown): Participant {
   };
 }
 
-function parseExpenseRow(row: unknown): ExpenseRow {
+function parseExpenseRow(row: unknown): Expense {
   return {
     id: readStringField(row, "id"),
     description: readStringField(row, "description"),
@@ -184,12 +180,12 @@ function parseExpenseRow(row: unknown): ExpenseRow {
     payerId: readStringField(row, "payerId"),
     createdAt: readStringField(row, "createdAt"),
     updatedAt: readStringField(row, "updatedAt"),
+    shares: [],
   };
 }
 
-function parseShareRow(row: unknown): ShareRow {
+function parseShareRow(row: unknown): ExpenseShare {
   return {
-    expenseId: readStringField(row, "expenseId"),
     participantId: readStringField(row, "participantId"),
     amountMinor: readIntegerField(row, "amountMinor"),
   };

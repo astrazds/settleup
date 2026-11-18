@@ -31,24 +31,26 @@ other's source.
 
 ## Mutation path
 
-Routes parse JSON, validate the command schema, then parse `If-Match`. Named
-service methods resolve the active event and check their resource and domain
-rules. `commitMutation` then runs this sequence in one SQLite transaction:
+Routes parse JSON, validate the command schema, then parse `If-Match`.
+`commitMutation` starts a SQLite write transaction and performs these steps.
 
-1. Check the current version against the supplied precondition.
-2. Reject an unsafe stored aggregate before any write.
-3. Check the proposed amount where applicable and write the command's rows.
-4. Increment the event version once.
+1. Resolve the event and check expiry against the transaction start time.
+2. Check the command's resource and domain rules.
+3. Check the current version against the supplied precondition.
+4. Reject an unsafe stored aggregate before any write.
+5. Check the proposed amount where applicable and write the command's rows.
+6. Increment the event version once and assemble the complete snapshot.
 
-After commit, the service reloads the complete snapshot. The route publishes
-only its event ID and version to the process-local broker, sets the ETag, and
-returns JSON. The SSE change message contains only `{ version }`. Event creation
-has its own transaction and starts at version one.
+If snapshot assembly fails, SQLite rolls back the rows and version. After
+commit, the route publishes only the event ID and version to the process-local
+broker, sets the ETag, and returns JSON. The SSE change message contains only
+`{ version }`. Event creation assembles its snapshot in its own transaction
+and starts at version one.
 
 Error order is part of the HTTP contract. Body and schema errors precede
 header errors, then event access and command-specific resource and domain
 checks precede stale-version errors. The stored-total check precedes the
-proposed-total check. Unsafe stored totals return `500`; an unsafe proposed
+proposed-total check. Unsafe stored totals return `500`. An unsafe proposed
 total returns `400`. The HTTP mutation tests cover this order, rollback, event
 isolation, and publication after successful writes.
 
@@ -58,9 +60,13 @@ Omitting the header skips the version check. The browser supplies the version
 accepted by the form, so concurrent changes cannot silently overwrite it.
 
 Money is integer minor units. Equal shares are derived when an expense is
-written and persisted with it. Snapshot assembly reads those shares, checks
-aggregate safety using `bigint`, and recomputes balances and the next settlement
-suggestion. Access expires three days after creation. At five days, the event
+written and persisted with their positions in the submitted order. Schema
+version two retains legacy share amounts, orders larger shares first to keep
+remainder cents with their recipients, and uses the existing SQLite row order for ties.
+Earlier writers inserted shares in submitted order but stored no explicit position. Snapshot
+assembly groups the event's shares by expense ID, checks aggregate safety
+using `bigint`, and recomputes balances and the next settlement suggestion.
+Access expires three days after creation. At five days, the event
 becomes eligible for deletion with its cascading rows. Startup and hourly
 cleanup remove eligible events. Expired links return `410` before cleanup and
 `404` after the rows have been deleted.

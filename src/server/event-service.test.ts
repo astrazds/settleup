@@ -46,6 +46,86 @@ describe("EventService", () => {
     expect(snapshot.settlementSuggestion).toBeNull();
   });
 
+  it("preserves submitted participant order and cents through an expense edit", () => {
+    const db = openDatabase(":memory:");
+    try {
+      const service = new EventService(db);
+      const { token } = service.createEvent({
+        title: "Trip",
+        currency: "AUD",
+        firstParticipantName: "Mia",
+      });
+      const { participants } = service.addParticipant(token, { name: "Noah" });
+      const [second, first] = participants.map(({ id }) => id).sort();
+      if (!first || !second) throw new Error("Missing fixture participants.");
+      const command = {
+        description: "Dinner",
+        amountMinor: 2001,
+        payerId: second,
+        includedParticipantIds: [first, second],
+      };
+      const saved = service.createExpense(token, command);
+      const [expense] = saved.expenses;
+      if (!expense) throw new Error("Missing fixture expense.");
+      const expectedShares = [
+        { participantId: first, amountMinor: 1001 },
+        { participantId: second, amountMinor: 1000 },
+      ];
+      expect(expense.shares).toEqual(expectedShares);
+      expect(service.getSnapshotByToken(token).expenses[0]?.shares).toEqual(expectedShares);
+
+      const edited = service.updateExpense(token, expense.id, { ...command, description: "Dinner and dessert" });
+      expect(edited.expenses[0]?.description).toBe("Dinner and dessert");
+      expect(edited.expenses[0]?.shares).toEqual(expectedShares);
+      expect(service.getSnapshotByToken(token).expenses[0]?.shares).toEqual(expectedShares);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("reads expenses and shares beyond the SQLite query parameter limit", () => {
+    const db = openDatabase(":memory:");
+    try {
+      const service = new EventService(db);
+      const { token, snapshot } = service.createEvent({
+        title: "Trip",
+        currency: "AUD",
+        firstParticipantName: "Mia",
+      });
+      const mia = participantId(snapshot, "Mia");
+      const expenseCount = 32_767;
+      db.prepare(`
+        WITH RECURSIVE numbers(value) AS (
+          SELECT 1
+          UNION ALL
+          SELECT value + 1 FROM numbers WHERE value < @expenseCount
+        )
+        INSERT INTO expenses
+          (id, event_id, description, amount_minor, payer_participant_id, created_at, updated_at)
+        SELECT CAST(value AS TEXT), @eventId, 'Dinner', 1, @payerId, @createdAt, @createdAt
+        FROM numbers
+      `).run({
+        eventId: snapshot.event.id,
+        payerId: mia,
+        createdAt: snapshot.event.createdAt,
+        expenseCount,
+      });
+      db.prepare(`
+        INSERT INTO expense_shares (expense_id, participant_id, amount_minor, position)
+        SELECT id, payer_participant_id, amount_minor, 0
+        FROM expenses WHERE event_id = ?
+      `).run(snapshot.event.id);
+
+      const { expenses } = service.getSnapshotByToken(token);
+      expect(expenses).toHaveLength(expenseCount);
+      expect(expenses.every(({ shares }) =>
+        shares.length === 1 && shares[0]?.participantId === mia && shares[0].amountMinor === 1,
+      )).toBe(true);
+    } finally {
+      db.close();
+    }
+  });
+
   it("rejects invalid expense participants without changing saved event version", () => {
     const service = new EventService(openDatabase(":memory:"));
     const created = service.createEvent({
@@ -75,13 +155,13 @@ describe("EventService", () => {
       currency: "AUD",
       firstParticipantName: "Andrejs",
     });
-    let snapshot = service.addParticipant(created.token, { name: "Mia" });
-    snapshot = service.addParticipant(created.token, { name: "Sam" });
+    service.addParticipant(created.token, { name: "Mia" });
+    const snapshot = service.addParticipant(created.token, { name: "Sam" });
     const andrejs = participantId(snapshot, "Andrejs");
     const mia = participantId(snapshot, "Mia");
     const sam = participantId(snapshot, "Sam");
 
-    snapshot = service.createExpense(created.token, {
+    service.createExpense(created.token, {
       description: "Groceries",
       amountMinor: 1200,
       payerId: andrejs,
@@ -89,8 +169,8 @@ describe("EventService", () => {
     });
 
     expect(() => service.deleteParticipant(created.token, mia)).toThrow(AppError);
-    snapshot = service.deleteParticipant(created.token, sam);
-    expect(snapshot.participants.map((participant) => participant.name)).toEqual(["Andrejs", "Mia"]);
+    const after = service.deleteParticipant(created.token, sam);
+    expect(after.participants.map((participant) => participant.name)).toEqual(["Andrejs", "Mia"]);
   });
 
   it("keeps at least one participant", () => {
@@ -137,7 +217,7 @@ describe("EventService", () => {
       throw new Error("Missing settlement payment.");
     }
 
-    snapshot = service.updateExpense(created.token, expenseId, {
+    service.updateExpense(created.token, expenseId, {
       description: "Updated large expense",
       amountMinor: Number.MAX_SAFE_INTEGER - 1,
       payerId: andrejs,
@@ -150,7 +230,7 @@ describe("EventService", () => {
     });
     const versionBeforeRejectedWrites = snapshot.event.version;
 
-    const exactnessError = expect.objectContaining({
+    const exactnessError: unknown = expect.objectContaining({
       message: "The combined event amount is too large to calculate exactly.",
       status: 400,
     });

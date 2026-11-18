@@ -5,7 +5,7 @@ import { Form, useNavigation } from "react-router";
 import { CheckIcon } from "./icons";
 import { EditConflict } from "./edit-conflict";
 import { useEventContext } from "./event-context";
-import { previewStoredShares } from "../lib/form-data";
+import { participantsInShareOrder, previewStoredShares } from "../lib/form-data";
 import {
   getParticipantPreference,
   setParticipantPreference,
@@ -38,11 +38,15 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
     : snapshot.participants.map((participant) => participant.id);
   const [amountInput, setAmountInput] = useState(currentAmount);
   const [includedIds, setIncludedIds] = useState(currentIncludedIds);
+  const [acceptedShares, setAcceptedShares] = useState(expense?.shares);
+  const splitParticipants = acceptedShares
+    ? participantsInShareOrder(snapshot.participants, acceptedShares)
+    : snapshot.participants;
   const included = new Set(includedIds);
   const preview = expenseSharePreview(
     amountInput,
     snapshot.event.currency,
-    snapshot.participants,
+    splitParticipants,
     includedIds,
   );
   const preferredPayer = getParticipantPreference(
@@ -139,7 +143,7 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
       >
         <legend className={styles.label}>Split equally between</legend>
         <ul className={styles.checkList}>
-          {snapshot.participants.map((participant) => {
+          {splitParticipants.map((participant) => {
             const inputId = `included-${participant.id}`;
             return (
               <li className={styles.checkRow} key={participant.id}>
@@ -216,6 +220,7 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
             draft.acceptLatest();
             setAmountInput(currentAmount);
             setIncludedIds(currentIncludedIds);
+            setAcceptedShares(expense?.shares);
           }}
         />
       ) : null}

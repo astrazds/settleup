@@ -109,6 +109,61 @@ describe("event mutation contract", () => {
     }
   });
 
+  it("rolls back the participant and version when snapshot assembly fails", () => {
+    const db = openDatabase(":memory:");
+    try {
+      const service = new EventService(db);
+      const { token, snapshot } = service.createEvent({
+        title: "Trip",
+        currency: "AUD",
+        firstParticipantName: "Mia",
+      });
+      db.exec(`
+        CREATE TRIGGER damage_new_participant AFTER INSERT ON participants
+        BEGIN UPDATE participants SET name = X'00' WHERE id = NEW.id; END;
+      `);
+
+      expect(() => service.addParticipant(token, { name: "Noah" }))
+        .toThrow("Database row is missing string field name.");
+      expect(service.getSnapshotByToken(token)).toEqual(snapshot);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("decides mutation expiry once, when the transaction starts", async () => {
+    const db = openDatabase(":memory:");
+    try {
+      let now = () => new Date("2026-07-01T00:00:00Z");
+      const service = new EventService(db, () => now());
+      const app = createApp({ service });
+      const { token, snapshot } = service.createEvent({
+        title: "Trip",
+        currency: "AUD",
+        firstParticipantName: "Mia",
+      });
+      const expiresAt = Date.parse(snapshot.event.expiresAt);
+      let nextTime = expiresAt - 1;
+      now = () => new Date(nextTime++);
+      const send = (name: string) => app.request(`/api/events/${token}/participants`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      const accepted = await send("Noah");
+      expect(accepted.status).toBe(201);
+      const after = eventSnapshotSchema.parse(await accepted.json());
+      expect(after.event.version).toBe(snapshot.event.version + 1);
+      expect(after.participants.map(({ name }) => name)).toEqual(["Mia", "Noah"]);
+      expect((await send("Sam")).status).toBe(410);
+      now = () => new Date(expiresAt - 1);
+      expect(service.getSnapshotByToken(token)).toEqual(after);
+    } finally {
+      db.close();
+    }
+  });
+
   it("preserves body, header, and domain errors ahead of stale version errors", async () => {
     const db = openDatabase(":memory:");
     try {

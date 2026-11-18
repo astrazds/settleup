@@ -4,7 +4,7 @@ import { dirname } from "node:path";
 
 export type SqliteDatabase = Database.Database;
 
-const schemaVersion = 1;
+const schemaVersion = 2;
 
 export function openDatabase(path: string): SqliteDatabase {
   if (path !== ":memory:") {
@@ -19,24 +19,35 @@ export function openDatabase(path: string): SqliteDatabase {
 }
 
 export function migrate(db: SqliteDatabase): void {
-  const currentVersion = db.pragma("user_version", { simple: true });
+  db.transaction(() => {
+    const currentVersion = db.pragma("user_version", { simple: true });
 
-  if (
-    typeof currentVersion !== "number"
-    || !Number.isSafeInteger(currentVersion)
-    || currentVersion < 0
-  ) {
-    throw new Error("Database schema version is invalid.");
-  }
+    if (
+      typeof currentVersion !== "number"
+      || !Number.isSafeInteger(currentVersion)
+      || currentVersion < 0
+    ) {
+      throw new Error("Database schema version is invalid.");
+    }
 
-  if (currentVersion > schemaVersion) {
-    throw new Error(
-      `Database schema version ${currentVersion} is newer than supported version ${schemaVersion}.`,
-    );
-  }
+    if (currentVersion > schemaVersion) {
+      throw new Error(
+        `Database schema version ${currentVersion} is newer than supported version ${schemaVersion}.`,
+      );
+    }
 
-  const migrateToVersionOne = db.transaction(() => {
-    db.exec(`
+    if (currentVersion < 1) {
+      migrateToVersionOne(db);
+    }
+    if (currentVersion < 2) {
+      migrateToVersionTwo(db);
+      db.pragma(`user_version = ${schemaVersion}`);
+    }
+  }).immediate();
+}
+
+function migrateToVersionOne(db: SqliteDatabase): void {
+  db.exec(`
       CREATE TABLE IF NOT EXISTS events (
         id TEXT PRIMARY KEY,
         token_hash TEXT NOT NULL UNIQUE,
@@ -92,24 +103,41 @@ export function migrate(db: SqliteDatabase): void {
 
       CREATE INDEX IF NOT EXISTS settlement_payments_event_created_idx
         ON settlement_payments(event_id, created_at DESC);
-    `);
+  `);
 
-    const participantColumns = new Set(
-      (db.pragma("table_info(participants)") as { name: string }[]).map((column) => column.name),
+  const participantColumns = new Set(
+    db.prepare("PRAGMA table_info(participants)").all().map((column) => readStringField(column, "name")),
+  );
+
+  if (participantColumns.has("initials")) {
+    db.exec("ALTER TABLE participants DROP COLUMN initials");
+  }
+  if (participantColumns.has("color")) {
+    db.exec("ALTER TABLE participants DROP COLUMN color");
+  }
+}
+
+function migrateToVersionTwo(db: SqliteDatabase): void {
+  db.exec(`
+    CREATE TABLE ordered_expense_shares (
+      expense_id TEXT NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
+      participant_id TEXT NOT NULL REFERENCES participants(id),
+      amount_minor INTEGER NOT NULL,
+      position INTEGER NOT NULL CHECK (position >= 0),
+      PRIMARY KEY (expense_id, participant_id),
+      UNIQUE (expense_id, position)
     );
 
-    if (participantColumns.has("initials")) {
-      db.exec("ALTER TABLE participants DROP COLUMN initials");
-    }
+    INSERT INTO ordered_expense_shares (expense_id, participant_id, amount_minor, position)
+    SELECT expense_id, participant_id, amount_minor,
+      ROW_NUMBER() OVER (
+        PARTITION BY expense_id ORDER BY amount_minor DESC, rowid
+      ) - 1
+    FROM expense_shares;
 
-    if (participantColumns.has("color")) {
-      db.exec("ALTER TABLE participants DROP COLUMN color");
-    }
-
-    db.pragma(`user_version = ${schemaVersion}`);
-  });
-
-  migrateToVersionOne();
+    DROP TABLE expense_shares;
+    ALTER TABLE ordered_expense_shares RENAME TO expense_shares;
+  `);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
