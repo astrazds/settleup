@@ -64,7 +64,6 @@ export function RouteDialog({
             });
           }}
         >
-          <div aria-hidden="true" className={styles.dialogHandle} />
           <div className={styles.dialogHeader}>
             <div>
               <Dialog.Title className={styles.dialogTitle}>

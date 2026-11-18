@@ -27,7 +27,7 @@ other's source.
 | Draft conflict detection and acceptance | [`apps/web/app/lib/use-accepted-draft.ts`](../apps/web/app/lib/use-accepted-draft.ts) |
 | Browser HTTP requests and response validation | [`apps/web/app/lib/api.ts`](../apps/web/app/lib/api.ts) |
 | Tab-session participant preference | [`apps/web/app/lib/participant-preference.ts`](../apps/web/app/lib/participant-preference.ts) |
-| Shared participant display names and initials | [`apps/web/app/lib/participants.ts`](../apps/web/app/lib/participants.ts) |
+| Shared participant display names | [`apps/web/app/lib/participants.ts`](../apps/web/app/lib/participants.ts) |
 
 ## Mutation path
 
