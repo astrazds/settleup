@@ -1,5 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path fill="#0e7c7b" d="M5 1H31V27L27 31H1V5Z"/>
-  <path fill="#f2e8d1" d="M5 5H27V11H13L10 14H5ZM27 17V27H5V21H19L22 18H27Z"/>
-  <path fill="#e0b12e" d="M22 12H27V16H22Z"/>
+  <style>
+    .reverse-print { display: none; }
+
+    @media (prefers-color-scheme: dark) {
+      .carbon-copy { display: none; }
+      .reverse-print { display: inline; }
+    }
+
+    @media (forced-colors: active) {
+      svg {
+        forced-color-adjust: none;
+        --logo-ink: CanvasText;
+        --logo-paper: Canvas;
+        --logo-rear: Highlight;
+        --logo-remainder: LinkText;
+      }
+    }
+  </style>
+  <defs>
+    <g id="carbon-copy">
+      <path fill="var(--logo-rear, #4e7b6c)" d="M1 2a1 1 0 0 1 1-1h26a1 1 0 0 1 1 1v2H4v24H2a1 1 0 0 1-1-1Z"/>
+      <path fill="var(--logo-paper, #f4f1e7)" stroke="var(--logo-ink, #135747)" stroke-width="2" stroke-linejoin="round"
+        d="M4 4h26v26l-7-3.25L17 30l-6-3.25L4 30Z"/>
+      <g fill="var(--logo-ink, #135747)">
+        <rect x="7.5" y="10" width="20" height="5" rx=".5"/>
+        <rect x="7.5" y="17" width="20" height="5" rx=".5"/>
+      </g>
+      <path fill="var(--logo-remainder, #e0b12e)" d="M22.5 17H27a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-4.5Z"/>
+    </g>
+    <g id="reverse-print">
+      <path fill="var(--logo-rear, #42816e)" d="M3 2.5A1.5 1.5 0 0 1 4.5 1h25A1.5 1.5 0 0 1 31 2.5v23A1.5 1.5 0 0 1 29.5 27H28V4H3Z"/>
+      <path fill="var(--logo-ink, #77ad98)"
+        d="M1 4.5A1.5 1.5 0 0 1 2.5 3h25A1.5 1.5 0 0 1 29 4.5v25a1.2 1.2 0 0 1-1.8 1.04L22 27.4l-6.4 3.45a1.2 1.2 0 0 1-1.2 0L8 27.4l-5.2 3.14A1.2 1.2 0 0 1 1 29.5Z"/>
+      <g fill="var(--logo-paper, #181c18)">
+        <rect x="5.5" y="9" width="20" height="5" rx=".5"/>
+        <rect x="5.5" y="16" width="20" height="5" rx=".5"/>
+      </g>
+      <path fill="var(--logo-remainder, #e0b12e)" d="M20.5 16H25a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-4.5Z"/>
+    </g>
+  </defs>
+  <use class="carbon-copy" href="#carbon-copy"/>
+  <use class="reverse-print" href="#reverse-print"/>
 </svg>

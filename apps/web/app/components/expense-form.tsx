@@ -18,17 +18,20 @@ import {
 import type { EventFormFailure } from "../lib/event-form-action";
 import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
+import slip from "../styles/expense-slip.module.css";
 
 interface ExpenseFormProps {
   actionFailure?: EventFormFailure;
   expense?: Expense;
   submitLabel: string;
+  inline?: { fetcherKey: string; busy: boolean; onChange: () => void };
 }
 
-export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseFormProps) {
+export function ExpenseForm({ actionFailure, expense, submitLabel, inline }: ExpenseFormProps) {
   const { snapshot } = useEventContext();
   const navigation = useNavigation();
-  const isBusy = navigation.state !== "idle";
+  const isBusy = navigation.state !== "idle" || inline?.busy;
+  const id = (name: string) => inline ? `slip-${name}` : name;
   const currentRevision = expenseRevision(expense);
   const currentAmount = expense
     ? amountMinorToDecimal(expense.amountMinor, snapshot.event.currency)
@@ -39,6 +42,7 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
   const [amountInput, setAmountInput] = useState(currentAmount);
   const [includedIds, setIncludedIds] = useState(currentIncludedIds);
   const [acceptedShares, setAcceptedShares] = useState(expense?.shares);
+  const [edited, setEdited] = useState(false);
   const splitParticipants = acceptedShares
     ? participantsInShareOrder(snapshot.participants, acceptedShares)
     : snapshot.participants;
@@ -46,7 +50,8 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
     setAmountInput(currentAmount);
     setIncludedIds(currentIncludedIds);
     setAcceptedShares(expense?.shares);
-  });
+    setEdited(false);
+  }, { followSnapshot: Boolean(inline) && !edited });
   const included = new Set(includedIds);
   const preview = expenseSharePreview(
     amountInput,
@@ -65,8 +70,49 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
       ? preferredPayer
       : snapshot.participants[0]?.id);
 
+  const splitPreview = preview.shares.length > 0 ? (
+    <section aria-label="Exact split preview" className={styles.sharePreview}>
+      <h3 className={styles.sharePreviewTitle}>Exact split</h3>
+      <ul className={styles.sharePreviewList}>
+        {preview.shares.map((share) => (
+          <li key={share.participantId}>
+            <span>
+              {
+                snapshot.participants.find(
+                  (participant) => participant.id === share.participantId,
+                )?.name
+              }
+            </span>
+            <strong>
+              {formatMoney(share.amountMinor, snapshot.event.currency)}
+            </strong>
+          </li>
+        ))}
+      </ul>
+      {preview.hasRemainder ? (
+        <p className={styles.hint}>
+          Leftover cents are assigned from top to bottom so the total stays
+          exact.
+        </p>
+      ) : null}
+    </section>
+  ) : null;
+
   return (
-    <Form className={styles.form} key={draft.formKey} method="post">
+    <Form
+      action={inline ? "new" : undefined}
+      aria-label={inline ? "Add expense" : undefined}
+      className={styles.form}
+      fetcherKey={inline?.fetcherKey}
+      key={draft.formKey}
+      method="post"
+      navigate={inline ? false : undefined}
+      onChange={inline ? () => {
+        setEdited(true);
+        inline.onChange();
+      } : undefined}
+    >
+      {inline ? <input name="entry" type="hidden" value="inline" /> : null}
       <input name="currency" type="hidden" value={snapshot.event.currency} />
       <input
         name="eventVersion"
@@ -75,15 +121,16 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
       />
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="description">
+        <label className={styles.label} htmlFor={id("description")}>
           What was it?
         </label>
         <input
           autoComplete="off"
-          autoFocus
+          autoFocus={!inline}
           className={styles.input}
           defaultValue={expense?.description}
-          id="description"
+          disabled={inline?.busy}
+          id={id("description")}
           maxLength={160}
           name="description"
           placeholder="Dinner"
@@ -93,15 +140,16 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
 
       <div className={styles.fieldRow}>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="amount">
+          <label className={styles.label} htmlFor={id("amount")}>
             Amount
           </label>
           <input
             autoComplete="off"
-            aria-describedby={preview.error ? "amount-preview-error" : undefined}
+            aria-describedby={preview.error ? id("amount-preview-error") : undefined}
             aria-invalid={preview.error ? true : undefined}
             className={styles.input}
-            id="amount"
+            disabled={inline?.busy}
+            id={id("amount")}
             inputMode="decimal"
             name="amount"
             onChange={(event) => setAmountInput(event.currentTarget.value)}
@@ -110,20 +158,21 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
             value={amountInput}
           />
           {preview.error ? (
-            <p className={styles.fieldError} id="amount-preview-error">
+            <p className={styles.fieldError} id={id("amount-preview-error")}>
               {preview.error}
             </p>
           ) : null}
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="payerId">
+          <label className={styles.label} htmlFor={id("payerId")}>
             Paid by
           </label>
           <select
             className={styles.select}
             defaultValue={defaultPayer}
-            id="payerId"
+            disabled={inline?.busy}
+            id={id("payerId")}
             name="payerId"
             onChange={(event) => {
               setParticipantPreference(snapshot.event, event.currentTarget.value);
@@ -141,15 +190,16 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
 
       <fieldset
         aria-describedby={
-          includedIds.length === 0 ? "split-selection-error" : undefined
+          includedIds.length === 0 ? id("split-selection-error") : undefined
         }
         aria-invalid={includedIds.length === 0 ? true : undefined}
         className={styles.field}
+        disabled={inline?.busy}
       >
         <legend className={styles.label}>Split equally between</legend>
         <ul className={styles.checkList}>
           {splitParticipants.map((participant) => {
-            const inputId = `included-${participant.id}`;
+            const inputId = id(`included-${participant.id}`);
             return (
               <li className={styles.checkRow} key={participant.id}>
                 <input
@@ -179,39 +229,18 @@ export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseForm
           })}
         </ul>
         {includedIds.length === 0 ? (
-          <p className={styles.fieldError} id="split-selection-error">
+          <p className={styles.fieldError} id={id("split-selection-error")}>
             Choose at least one person.
           </p>
         ) : null}
       </fieldset>
 
-      {preview.shares.length > 0 ? (
-        <section aria-label="Exact split preview" className={styles.sharePreview}>
-          <h3 className={styles.sharePreviewTitle}>Exact split</h3>
-          <ul className={styles.sharePreviewList}>
-            {preview.shares.map((share) => (
-              <li key={share.participantId}>
-                <span>
-                  {
-                    snapshot.participants.find(
-                      (participant) => participant.id === share.participantId,
-                    )?.name
-                  }
-                </span>
-                <strong>
-                  {formatMoney(share.amountMinor, snapshot.event.currency)}
-                </strong>
-              </li>
-            ))}
-          </ul>
-          {preview.hasRemainder ? (
-            <p className={styles.hint}>
-              Leftover cents are assigned from top to bottom so the total stays
-              exact.
-            </p>
-          ) : null}
-        </section>
-      ) : null}
+      {inline && splitPreview ? (
+        <details className={slip.preview}>
+          <summary>Preview exact split</summary>
+          {splitPreview}
+        </details>
+      ) : splitPreview}
 
       {actionFailure?.kind === "error" ? (
         <p aria-live="polite" className={styles.formError} role="alert">

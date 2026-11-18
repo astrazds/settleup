@@ -1,4 +1,4 @@
-import { Outlet, useFetcher } from "react-router";
+import { Link, Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { EmptyState } from "../components/empty-state";
@@ -46,19 +46,19 @@ export default function Settle() {
 
   return (
     <>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.settlementPage}`}>
         <h2 className={styles.visuallyHidden}>Settle up</h2>
 
         {!hasActivity ? (
           <EmptyState
             action={
-              <RouteDialogLink
+              <Link
                 className={`${styles.button} ${styles.buttonPrimary}`}
-                to="../expenses/new"
+                to="../expenses"
               >
                 <PlusIcon />
                 Add an expense
-              </RouteDialogLink>
+              </Link>
             }
             icon={<ReceiptIcon />}
             text="Add a shared cost to see who owes what."
@@ -154,7 +154,7 @@ export default function Settle() {
         ) : null}
 
         {snapshot.payments.length > 0 ? (
-          <section aria-labelledby="payments-heading" className={styles.section}>
+          <section aria-labelledby="payments-heading" className={`${styles.section} ${styles.paymentHistory}`}>
             <div className={styles.sectionHeader}>
               <h3 className={styles.sectionTitle} id="payments-heading">
                 Recorded payments

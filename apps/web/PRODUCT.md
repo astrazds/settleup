@@ -96,18 +96,17 @@ Every cent lands."** Supporting copy should reinforce the same verified truths:
 private-by-link access, no accounts, cent-exact equal splits, one clear
 settlement step, and payments made outside the app.
 
-The code-native **Settle Cut** mark is the binding product symbol. Its clipped
-teal plate, two cream ledger bands, and mustard remainder block express two
-sides resolving into one aligned settlement. Use it with the Barlow SettleUp
-wordmark; do not replace it with exchange arrows, currency symbols, wallets,
-banking imagery, or a generic rounded fintech tile.
+The **Carbon Copy** mark pairs a torn receipt with a closely stacked second
+sheet. Two ledger bars and a mustard block represent the split and its
+remainder. Use it with the Barlow SettleUp wordmark. Avoid exchange arrows,
+currency symbols, wallets, and banking imagery.
 
-The approved interface is **Compact original**. It preserves the Settle Cut
-mark, Barlow body text, condensed headings, warm paper, and teal actions.
-The landing page focuses on event creation. Event routes use one compact
-header and plain Expenses, Settle, and People tabs. Show event metadata once,
-keep balances in Settle, and disclose exact expense shares on demand.
-Names, money, status, and actions must remain immediately legible.
+The approved interface is **Quick slip**. The Carbon Copy mark, Barlow body
+text and condensed event titles anchor a warm paper workspace. Primary tasks
+use a light slip with a green top rule and a dashed closing rule. Expenses
+opens with an inline capture form and exact shares on demand. Settle leads
+with the next payment, and People keeps participant management in one list.
+Names, amounts, live state and actions must remain legible on phones.
 
 Brand language must never imply authenticated privacy, money transfer,
 ownership roles, permanent history, or verified social proof. The complete
@@ -121,8 +120,8 @@ outside the app.
 - The current product and design contracts live in `apps/web/PRODUCT.md` and
   `apps/web/DESIGN.md`; they describe current state rather than redesign
   history.
-- The code-native mark lives in `apps/web/app/components/icons.tsx`; favicon,
-  touch-icon, and social derivatives live in `apps/web/public/`.
+- The masthead and favicon use `apps/web/public/favicon.svg`. The touch icon
+  and social preview live in the same directory.
 - Mobile and desktop Chromium reference screenshots cover the landing page,
   root error state, and Expenses, Settle, People, empty, dialog, and dark event
   states in `apps/web/tests/e2e/states.spec.ts-snapshots/`.

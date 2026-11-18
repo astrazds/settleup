@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 
-import { LogoIcon } from "./icons";
 import styles from "../styles/brand.module.css";
 
 interface BrandProps {
@@ -14,9 +13,10 @@ export function Brand({ variant = "app" }: BrandProps) {
       className={`${styles.brand} ${styles[variant]}`}
       to="/"
     >
-      <span className={styles.mark}>
-        <LogoIcon />
-      </span>
+      <svg aria-hidden="true" className={styles.mark} viewBox="0 0 32 32">
+        <use className={styles.carbonCopy} href="/favicon.svg#carbon-copy" />
+        <use className={styles.reversePrint} href="/favicon.svg#reverse-print" />
+      </svg>
       <span className={styles.wordmark}>SettleUp</span>
     </Link>
   );

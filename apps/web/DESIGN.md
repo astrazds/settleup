@@ -2,16 +2,16 @@
 name: SettleUp
 description: A compact, private-by-link workspace for shared expenses.
 colors:
-  cream: "#faf8f1"
-  ink: "#202521"
-  teal: "#086766"
-  teal-hover: "#075553"
-  event-paper: "#efe5c9"
-  input-paper: "#fffef9"
-  muted-ink: "#535b50"
+  cream: "#f4f1e7"
+  ink: "#233a31"
+  teal: "#135747"
+  teal-hover: "#104638"
+  event-paper: "#f4f1e7"
+  input-paper: "#fffcf5"
+  muted-ink: "#546357"
   soft-teal: "#e8eee5"
-  divider: "#d0d5cb"
-  control-border: "#a9afa3"
+  divider: "#c6ccbc"
+  control-border: "#869582"
   brick: "#922b23"
 typography:
   display:
@@ -24,13 +24,13 @@ typography:
     fontFamily: '"Session Sans", Arial, sans-serif'
     fontWeight: 600
 rounded:
-  square: "0"
+  control: "4px"
 components:
   button-primary:
     backgroundColor: "{colors.teal}"
     textColor: "#ffffff"
     typography: "{typography.label}"
-    rounded: "{rounded.square}"
+    rounded: "{rounded.control}"
   button-primary-hover:
     backgroundColor: "{colors.teal-hover}"
     textColor: "#ffffff"
@@ -42,10 +42,7 @@ components:
 
 # SettleUp design system
 
-The approved direction is **Compact original**. Cream paper, teal actions,
-Barlow copy, League Gothic titles, and the Settle Cut mark preserve the existing
-identity. Shorter headers, plain tabs, and simple rows give the shared costs
-more space. [PRODUCT.md](PRODUCT.md) owns behavior and exclusions.
+The approved direction is **Quick slip**. Green rules frame the primary task on warm paper. Keep amounts aligned and keep the surrounding ledger on the page canvas. Use the same surface for first entry, settlement and participant management. [PRODUCT.md](PRODUCT.md) owns behavior and exclusions.
 
 ## Implementation owners
 
@@ -54,80 +51,45 @@ more space. [PRODUCT.md](PRODUCT.md) owns behavior and exclusions.
 | Palette, themes, fonts, focus, browser controls | [global.css](app/styles/global.css) |
 | Create-event page | [home.tsx](app/routes/home.tsx), [home.module.css](app/styles/home.module.css) |
 | Event header, lists, forms, dialogs | [app.module.css](app/styles/app.module.css) |
-| Brand | [brand.module.css](app/styles/brand.module.css), [icons.tsx](app/components/icons.tsx) |
+| Brand | [brand.module.css](app/styles/brand.module.css), [favicon.svg](public/favicon.svg) |
 | Loading and errors | [root.module.css](app/styles/root.module.css) |
 | Browser checks and reference images | [states.spec.ts](tests/e2e/states.spec.ts), [snapshots](tests/e2e/states.spec.ts-snapshots/) |
 
 ## Palette and type
 
-Semantic custom properties in `global.css` own the palette. Light pages use
-cream with dark green ink. A warm event banner groups the title, currency,
-expiry, live state, and navigation. Teal identifies actions, the active tab,
-and positive balances. Brick identifies errors and destructive commitments.
-Text also states every balance and connection state so hue carries no meaning
-alone.
+Use the shared semantic tokens for paper, ink, rules and controls. Forest green marks the primary action and active tab. Brick identifies errors and destructive actions. State changes also have text labels.
 
-League Gothic is self-hosted as `Session Display`. Use it for the landing
-promise, event title, dialog titles, and the suggested payment amount. Barlow
-is self-hosted as `Session Sans` at weights 400, 600, and 700. Body copy,
-controls, participant names, and list amounts use Barlow. Money uses tabular
-figures. Labels use sentence case.
+Use self-hosted League Gothic for the event name, landing promise and settlement amount. Use Barlow for form headings, labels, body copy and controls. Display monetary values with tabular numerals.
 
-The event title is 42px on desktop and 36px on phones. The landing promise is
-64px on desktop and 54px on phones. Avoid oversized route titles, numbered
-section markers, decorative text, clipped button edges, and background texture.
+## Brand
+
+In light mode, Carbon Copy has an outlined cream receipt with a second sheet
+peeking out along the upper left. In dark mode, Reverse Print fills the front
+receipt with lighter green, uses dark ledger bars, and moves the second sheet
+to the upper right. Both use a mustard block for the remainder. The mark follows
+the browser color scheme and uses system colors in forced-colors mode.
 
 ## Layout
 
-Event pages share a centered 960px container. The compact top bar holds the
-brand and **Share link**. The event banner follows with metadata and three peer
-tabs, **Expenses**, **Settle**, and **People**. An underline and text color
-identify the current tab. Navigation has no numbered index or descriptive
-subtitles.
+The 1100px workspace has a ruled masthead, event title, metadata and three peer tabs. On Expenses, total spent sits alongside the event title. Event metadata wraps, and long names can span multiple lines. Keep native document scrolling.
 
-The main document uses 32px padding on desktop and 20px on phones. At narrow
-widths metadata wraps, list actions move below content when necessary, and
-names wrap while amounts remain readable. The page keeps native document
-scrolling rather than a separate sidebar scroll area.
-
-The landing page has a single 520px content column. It contains the short
-promise, create-event form, link-access and three-day availability statements,
-and a note that SettleUp records payments made elsewhere. The example expense,
-numbered story panels, and repeated trust notes have been removed.
+On the landing page, the promise sits beside the create-event slip on desktop. On phones the form follows the short introduction. Place the private-link and three-day availability information beneath the submit button.
 
 ## Expenses
 
-One inline **total spent** value sits beside **Add expense**. Currency and live
-state appear once in the event banner. Expense count is not repeated in a
-summary panel. The Expenses route heading and Recent activity section heading
-remain available to assistive technology without duplicating the active tab.
+Show the expense form immediately, including on an empty ledger. Description comes first, followed by amount and payer, included people, the exact split disclosure and Save expense. Use the event’s participant preference for the payer and include everyone in a new expense by default.
 
-Simple ruled rows show description, payer, included-person count, date, and
-amount. **See exact split** expands the actual participant shares with native
-`details` and `summary`. Edit and Delete remain visible with complete accessible
-names at every width. Receipt plates and outer list boxes are removed.
-
-The empty state has one **Add the first expense** action. The header action
-appears after the first expense exists.
+Place recent expenses alongside the slip on wide screens and below it on phones. Ruled rows show the description, payer, included-person count, date and amount. Keep edit and delete actions accessible. **See exact split** reveals the stored shares in order.
 
 ## Settle and people
 
-The next suggested payment appears on one muted teal surface. Its heading
-contains both participant names and the exact amount. A short instruction
-states that payment happens outside SettleUp. The primary action opens the
-existing payment form.
+Place the next payment on a ruled slip beside current balances on wide screens. Name both participants, show the exact amount and explain that payment happens outside SettleUp. Payment history follows. At zero balance, show **Everyone is settled**.
 
-Balances use simple rows with **Gets**, **Owes**, or **Settled** labels. Recorded
-payments retain their Add another, Edit, and Delete actions. The zero-balance
-state explicitly says everyone is settled.
-
-People shows the participant count, **Add person**, names, and existing edit
-and removal controls. Balances live in Settle rather than appearing again in
-People. Participant initials and decorative row icons are removed.
+The People slip holds the participant count, add action and roster. Keep names and edit or removal actions legible at narrow widths.
 
 ## Forms and dialogs
 
-Inputs use square corners, a 1px border, and a 48px minimum height. Primary
+Inputs use 4px corners, a 1px border, and a 48px minimum height. Primary
 buttons use a solid teal rectangle with a white label. Destructive confirmation
 buttons use brick. Secondary actions use text or a plain outlined button.
 Controls retain a 44px minimum target and visible focus.
@@ -137,7 +99,7 @@ preview, remainder explanation, validation, and version-conflict handling.
 Checkbox labels wrap into rows and keep an explicit checked indicator. Money
 is never rounded or abbreviated for display.
 
-Route forms remain Radix dialogs. On desktop they are centered sheets. On
+Direct-link and edit forms use Radix dialogs. On desktop they are centered sheets. On
 phones they attach to the bottom with a fixed submit footer while the form
 body scrolls. The brief sheet entrance is removed with reduced motion.
 Dismissal returns to the immediate parent route and restores the launcher
@@ -150,7 +112,7 @@ with enlarged text and short landscape viewports.
 ## States and accessibility
 
 The server `EventSnapshot` and existing command and draft contracts remain
-authoritative. This visual change introduces no new application state model.
+authoritative.
 Live changes preserve open drafts, pause saving, and expose **Load latest**.
 The status node remains atomic and polite. The longer offline or reconnect
 notice is not another live region. Sharing retains native, clipboard, and

@@ -24,32 +24,6 @@ const strokeProps = {
   strokeWidth: 1.8,
 };
 
-export function LogoIcon(props: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="32"
-      viewBox="0 0 32 32"
-      width="32"
-      {...props}
-    >
-      <path
-        d="M5 1H31V27L27 31H1V5Z"
-        fill="var(--logo-field, #0e7c7b)"
-      />
-      <path
-        d="M5 5H27V11H13L10 14H5ZM27 17V27H5V21H19L22 18H27Z"
-        fill="var(--logo-paper, #f2e8d1)"
-      />
-      <path
-        d="M22 12H27V16H22Z"
-        fill="var(--logo-remainder, #e0b12e)"
-      />
-    </svg>
-  );
-}
-
 export function PlusIcon(props: IconProps) {
   return (
     <IconFrame {...props}>

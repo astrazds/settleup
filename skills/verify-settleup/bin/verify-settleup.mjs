@@ -193,13 +193,11 @@ async function driveRecordExpense() {
     await page.getByText("Noah", { exact: true }).waitFor();
 
     await page.getByRole("link", { name: "Expenses" }).click();
-    await page.getByRole("link", { name: "Add the first expense" }).click();
-    const dialog = page.getByRole("dialog");
-    await dialog.waitFor();
     await page.getByLabel("What was it?").fill("Dinner");
     await page.getByLabel("Amount").fill("20.01");
     const expectedDisplay = [/^Mia\s*\$10\.01$/, /^Noah\s*\$10\.00$/];
-    const previewRows = dialog.getByRole("region", { name: "Exact split preview" })
+    await page.getByText("Preview exact split", { exact: true }).click();
+    const previewRows = page.getByRole("region", { name: "Exact split preview" })
       .getByRole("listitem");
     await expect(previewRows).toHaveText(expectedDisplay);
 
@@ -209,7 +207,7 @@ async function driveRecordExpense() {
       redactToken(await page.locator("body").ariaSnapshot()),
     );
 
-    await page.getByRole("button", { name: "Add expense" }).click();
+    await page.getByRole("button", { name: "Save expense" }).click();
     const activity = page.getByLabel("Recent activity");
     const disclosure = activity.getByText("See exact split", { exact: true });
     const savedRows = activity.locator("details").getByRole("listitem");
@@ -241,7 +239,7 @@ async function driveRecordExpense() {
     await expect(savedRows).toHaveText(expectedDisplay);
     await page.getByRole("link", { name: "Edit Dinner" }).click();
     await expect(previewRows).toHaveText(expectedDisplay);
-    await page.getByLabel("What was it?").fill("Dinner and dessert");
+    await page.getByRole("dialog").getByLabel("What was it?").fill("Dinner and dessert");
     await page.getByRole("button", { name: "Save changes" }).click();
     await activity.getByText("Dinner and dessert", { exact: true }).waitFor();
     await expect(savedRows).toHaveText(expectedDisplay);
@@ -251,7 +249,7 @@ async function driveRecordExpense() {
       path.join(evidenceDir, "run.txt"),
       [
         "feature record-expense",
-        "entry Add the first expense",
+        "entry Inline expense form",
         "title Verify weekend",
         "amount 20.01 AUD",
         "preview Mia $10.01, Noah $10.00",

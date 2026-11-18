@@ -96,17 +96,17 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   await expect(page.getByText("Noah K", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Expenses" }).click();
-  await page.getByRole("link", { name: "Add the first expense" }).click();
   await page.getByLabel("What was it?").fill("Dinner");
   await page.getByLabel("Amount").fill("40.00");
-  const expenseDialog = page.getByRole("dialog");
+  const newExpense = page.getByRole("form", { name: "Add expense" });
+  await newExpense.getByText("Preview exact split").click();
   await expect(
-    expenseDialog.getByRole("heading", { name: "Exact split" }),
+    newExpense.getByRole("heading", { name: "Exact split" }),
   ).toBeVisible();
   await expect(
-    expenseDialog.getByText("$20.00", { exact: true }),
+    newExpense.getByText("$20.00", { exact: true }),
   ).toHaveCount(2);
-  await page.getByRole("button", { name: "Add expense" }).click();
+  await page.getByRole("button", { name: "Save expense" }).click();
 
   await expect(page.getByText("Dinner", { exact: true })).toBeVisible();
   await expect(
@@ -118,8 +118,8 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   ).toHaveCount(2);
 
   await page.getByRole("link", { name: "Edit Dinner" }).click();
-  await page.getByLabel("What was it?").fill("Dinner and dessert");
-  await page.getByLabel("Amount").fill("50.00");
+  await page.getByRole("dialog").getByLabel("What was it?").fill("Dinner and dessert");
+  await page.getByRole("dialog").getByLabel("Amount").fill("50.00");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Dinner and dessert", { exact: true })).toBeVisible();
 
@@ -199,10 +199,9 @@ test("adds a new participant to an existing expense", async ({ page }) => {
   await page.getByLabel("Your name").fill("Mia");
   await page.getByRole("button", { name: "Create private event" }).click();
 
-  await page.getByRole("link", { name: "Add the first expense" }).click();
   await page.getByLabel("What was it?").fill("Dinner");
   await page.getByLabel("Amount").fill("10.00");
-  await page.getByRole("button", { name: "Add expense" }).click();
+  await page.getByRole("button", { name: "Save expense" }).click();
 
   await page.getByRole("link", { name: "People" }).click();
   await page.getByRole("link", { name: "Add person" }).click();
@@ -236,6 +235,48 @@ test("adds a new participant to an existing expense", async ({ page }) => {
   await expect(
     recentActivity.getByText("$5.00", { exact: true }),
   ).toHaveCount(2);
+});
+
+test("reuses the quick slip and protects a draft through edits and live changes", async ({ page }) => {
+  const created = await page.request.post("/api/events", {
+    data: { title: "Trip lunches", currency: "AUD", firstParticipantName: "Mia" },
+  });
+  const { token } = createEventResponseSchema.parse(await created.json());
+  await page.goto(`/e/${token}/expenses`);
+
+  const slip = page.getByRole("form", { name: "Add expense" });
+  const description = slip.getByLabel("What was it?");
+  const amount = slip.getByLabel("Amount");
+  const save = slip.getByRole("button", { name: "Save expense" });
+  const ledger = page.getByRole("region", { name: "Recent activity" });
+  await description.fill("Breakfast");
+  await amount.fill("12.00");
+  await save.click();
+  await expect(ledger.getByText("Breakfast", { exact: true })).toBeVisible();
+  await expect(description).toHaveValue("");
+
+  await description.fill("Lunch");
+  await amount.fill("20.01");
+  await page.getByRole("link", { name: "Edit Breakfast" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
+  await expect(description).toHaveValue("Lunch");
+  await expect(amount).toHaveValue("20.01");
+
+  const changed = await page.request.post(`/api/events/${token}/participants`, {
+    data: { name: "Noah" },
+  });
+  expect(changed.status()).toBe(201);
+  await expect(save).toBeDisabled();
+  await expect(description).toHaveValue("Lunch");
+  await slip.getByRole("button", { name: "Load latest" }).click();
+  await expect(description).toHaveValue("");
+  await expect(slip.getByLabel("Noah", { exact: true })).toBeChecked();
+  await description.fill("Lunch");
+  await amount.fill("20.01");
+  await save.click();
+  await expect(ledger.getByText("Lunch", { exact: true })).toBeVisible();
+  await expect(description).toHaveValue("");
+  await expect(ledger.getByText("Breakfast", { exact: true })).toBeVisible();
 });
 
 test("receives event changes in another browser tab", async ({ page }) => {
@@ -324,7 +365,7 @@ test("keeps the exact split in saved order through reload and a description edit
   await page.getByRole("link", { name: "Edit Dinner" }).click();
   await expect(page.getByRole("region", { name: "Exact split preview" }).getByRole("listitem"))
     .toHaveText(expectedDisplay);
-  await page.getByLabel("What was it?").fill("Dinner and dessert");
+  await page.getByRole("dialog").getByLabel("What was it?").fill("Dinner and dessert");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(recentActivity.getByText("Dinner and dessert", { exact: true })).toBeVisible();
   await expect(expenseSplit.getByRole("listitem")).toHaveText(expectedDisplay);

@@ -52,11 +52,14 @@ export default function Home() {
         <Brand variant="landing" />
       </header>
       <main className={styles.main} id="main-content">
-        <h1 className={styles.heroTitle}>
-          Everyone pays.{" "}<br />Every cent lands.
-        </h1>
-        <p className={styles.heroLead}>Split shared costs. Settle up. No accounts.</p>
-        <section aria-label="Start a private event">
+        <div>
+          <h1 className={styles.heroTitle}>
+            Everyone pays.{" "}<br />Every cent lands.
+          </h1>
+          <p className={styles.heroLead}>Split shared costs. Settle up. No accounts.</p>
+        </div>
+        <section aria-labelledby="create-title" className={styles.slip}>
+          <h2 id="create-title">Start a private event</h2>
           <Form className={styles.createForm} method="post">
             <div className={styles.field}>
               <label htmlFor="title">What are you splitting?</label>

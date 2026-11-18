@@ -5,40 +5,63 @@
     - /url: /
     - text: SettleUp
   - button "Share link"
-- heading "Verify weekend" [level=1]
-- text: AUD
-- time: Available until 17 Nov 2026, 9:00 pm
-- status "Live updates connected": Up to date
-- navigation "Event":
-  - link "Expenses":
-    - /url: /e/[redacted]/expenses
-  - link "Settle":
-    - /url: /e/[redacted]/settle
-  - link "People":
-    - /url: /e/[redacted]/people
+- region "Verify weekend":
+  - heading "Verify weekend" [level=1]
+  - paragraph:
+    - text: Total spent
+    - strong: $20.01
+  - text: AUD
+  - time: Available until 21 Nov 2026, 4:04 pm
+  - status "Live updates connected": Up to date
+  - navigation "Event":
+    - link "Expenses":
+      - /url: /e/[redacted]/expenses
+    - link "Settle":
+      - /url: /e/[redacted]/settle
+    - link "People":
+      - /url: /e/[redacted]/people
 - main "Verify weekend event workspace":
   - heading "Expenses" [level=2]
-  - paragraph:
-    - strong: $20.01
-    - text: total spent
-  - link "Add expense":
-    - /url: /e/[redacted]/expenses/new
+  - region "Add expense":
+    - heading "Add expense" [level=2]
+    - form "Add expense":
+      - text: What was it?
+      - textbox "What was it?":
+        - /placeholder: Dinner
+      - text: Amount
+      - textbox "Amount":
+        - /placeholder: "0.00"
+      - text: Paid by
+      - combobox "Paid by":
+        - option "Mia" [selected]
+        - option "Noah"
+      - group "Split equally between":
+        - text: Split equally between
+        - list:
+          - listitem:
+            - checkbox "Mia" [checked]
+            - text: Mia
+          - listitem:
+            - checkbox "Noah" [checked]
+            - text: Noah
+      - button "Save expense"
+    - status: Dinner saved.
   - region "Recent activity":
     - heading "Recent activity" [level=3]
     - list:
       - listitem:
         - paragraph: Dinner
-        - paragraph: Mia paid · split with 2 people · 14 Nov
+        - paragraph: Mia paid · split with 2 people · 18 Nov
         - group:
           - text: See exact split
           - list:
             - listitem:
-              - text: Noah
-              - strong: $10.00
-            - listitem:
               - text: Mia
               - strong: $10.01
+            - listitem:
+              - text: Noah
+              - strong: $10.00
         - text: $20.01
         - link "Edit Dinner":
-          - /url: /e/[redacted]/expenses/fbef5e89-d0dd-4bbd-8706-fbbef783f878/edit
+          - /url: /e/[redacted]/expenses/255e0501-91dd-4812-9c56-8453d4c77b02/edit
         - button "Delete Dinner"

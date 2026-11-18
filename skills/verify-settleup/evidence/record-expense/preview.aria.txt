@@ -1,37 +1,61 @@
-- status "Live updates connected": Up to date
-- dialog "Add expense":
-  - heading "Add expense" [level=2]
-  - paragraph: Choose who paid and who shared it.
-  - button "Close"
-  - text: What was it?
-  - textbox "What was it?":
-    - /placeholder: Dinner
-    - text: Dinner
-  - text: Amount
-  - textbox "Amount":
-    - /placeholder: "0.00"
-    - text: "20.01"
-  - text: Paid by
-  - combobox "Paid by":
-    - option "Mia" [selected]
-    - option "Noah"
-  - group "Split equally between":
-    - text: Split equally between
-    - list:
-      - listitem:
-        - checkbox "Mia" [checked]
-        - text: Mia
-      - listitem:
-        - checkbox "Noah" [checked]
-        - text: Noah
-  - region "Exact split preview":
-    - heading "Exact split" [level=3]
-    - list:
-      - listitem:
-        - text: Mia
-        - strong: $10.01
-      - listitem:
-        - text: Noah
-        - strong: $10.00
-    - paragraph: Leftover cents are assigned from top to bottom so the total stays exact.
-  - button "Add expense"
+- link "Skip to main content":
+  - /url: "#main-content"
+- banner:
+  - link "SettleUp home":
+    - /url: /
+    - text: SettleUp
+  - button "Share link"
+- region "Verify weekend":
+  - heading "Verify weekend" [level=1]
+  - text: AUD
+  - time: Available until 21 Nov 2026, 4:04 pm
+  - status "Live updates connected": Up to date
+  - navigation "Event":
+    - link "Expenses":
+      - /url: /e/[redacted]/expenses
+    - link "Settle":
+      - /url: /e/[redacted]/settle
+    - link "People":
+      - /url: /e/[redacted]/people
+- main "Verify weekend event workspace":
+  - heading "Expenses" [level=2]
+  - region "Add expense":
+    - heading "Add expense" [level=2]
+    - form "Add expense":
+      - text: What was it?
+      - textbox "What was it?":
+        - /placeholder: Dinner
+        - text: Dinner
+      - text: Amount
+      - textbox "Amount":
+        - /placeholder: "0.00"
+        - text: "20.01"
+      - text: Paid by
+      - combobox "Paid by":
+        - option "Mia" [selected]
+        - option "Noah"
+      - group "Split equally between":
+        - text: Split equally between
+        - list:
+          - listitem:
+            - checkbox "Mia" [checked]
+            - text: Mia
+          - listitem:
+            - checkbox "Noah" [checked]
+            - text: Noah
+      - group:
+        - text: Preview exact split
+        - region "Exact split preview":
+          - heading "Exact split" [level=3]
+          - list:
+            - listitem:
+              - text: Mia
+              - strong: $10.01
+            - listitem:
+              - text: Noah
+              - strong: $10.00
+          - paragraph: Leftover cents are assigned from top to bottom so the total stays exact.
+      - button "Save expense"
+    - status
+  - heading "Nothing to split yet" [level=3]
+  - paragraph: Your first shared cost will appear here.

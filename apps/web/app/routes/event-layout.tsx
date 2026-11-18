@@ -12,6 +12,7 @@ import {
   Outlet,
   useLoaderData,
   useLocation,
+  useMatch,
   useRevalidator,
 } from "react-router";
 
@@ -19,6 +20,7 @@ import { Brand } from "../components/brand";
 import { EventProvider, type EventLoad } from "../components/event-context";
 import { ShareIcon } from "../components/icons";
 import { ApiError, getEvent } from "../lib/api";
+import { formatMoney } from "../lib/money";
 import { useEventStream } from "../lib/use-event-stream";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/event-layout";
@@ -83,6 +85,7 @@ export default function EventLayout() {
   const lastLoad = useLoaderData<typeof clientLoader>();
   const { snapshot, refreshFailed } = lastLoad;
   const location = useLocation();
+  const expenseRoute = useMatch("/e/:token/expenses/*");
   const revalidator = useRevalidator();
   const [shareMessage, setShareMessage] = useState("");
   const sectionMatch = /\/(expenses|settle|people)\/?$/.exec(
@@ -132,9 +135,10 @@ export default function EventLayout() {
 
     previousSectionKey.current = sectionKey;
     const frame = window.requestAnimationFrame(() => {
-      document
-        .getElementById("main-content")
-        ?.focus({ preventScroll: true });
+      const main = document.getElementById("main-content");
+      if (main && !main.contains(document.activeElement)) {
+        main.focus({ preventScroll: true });
+      }
     });
 
     return () => window.cancelAnimationFrame(frame);
@@ -191,9 +195,18 @@ export default function EventLayout() {
           <span>Share link</span>
         </button>
       </header>
-      <section aria-labelledby="event-title" className={styles.eventBanner}>
+      <section aria-labelledby="event-title">
         <div className={styles.eventHeader}>
           <h1 className={styles.eventTitle} id="event-title">{snapshot.event.title}</h1>
+          {expenseRoute && snapshot.expenses.length > 0 ? (
+            <p className={styles.total}>
+              Total spent
+              <strong>{formatMoney(
+                snapshot.expenses.reduce((sum, expense) => sum + BigInt(expense.amountMinor), 0n),
+                snapshot.event.currency,
+              )}</strong>
+            </p>
+          ) : null}
           <div className={styles.eventMeta}>
             <span>{snapshot.event.currency}</span>
             <time dateTime={snapshot.event.expiresAt}>

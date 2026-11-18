@@ -156,10 +156,11 @@ test(
     await page.getByRole("button", { name: "Add person" }).click();
 
     await page.getByRole("link", { name: "Expenses", exact: true }).click();
-    await page.getByRole("link", { name: "Add the first expense" }).click();
-    await page.getByLabel("What was it?").fill("Dinner");
-    await page.getByLabel("Amount").fill("40.00");
+    await expect(page).toHaveURL(/\/expenses$/);
+    await page.goto(page.url() + "/new");
     const expenseDialog = page.getByRole("dialog", { name: "Add expense" });
+    await expenseDialog.getByLabel("What was it?").fill("Dinner");
+    await expenseDialog.getByLabel("Amount").fill("40.00");
     await expect(expenseDialog).toBeVisible();
     await expect(
       expenseDialog.getByRole("heading", { name: "Exact split" }),
@@ -244,10 +245,10 @@ test("long delete confirmation remains usable in a short viewport", async ({
   await page.getByLabel("What are you splitting?").fill("Short viewport");
   await page.getByLabel("Your name").fill("Mia");
   await page.getByRole("button", { name: "Create private event" }).click();
-  await page.getByRole("link", { name: "Add the first expense" }).click();
+  await expect(page).toHaveURL(/\/expenses$/);
   await page.getByLabel("What was it?").fill(description);
   await page.getByLabel("Amount").fill("20.00");
-  await page.getByRole("button", { name: "Add expense" }).click();
+  await page.getByRole("button", { name: "Save expense" }).click();
 
   const viewport = page.viewportSize();
   await page.setViewportSize({

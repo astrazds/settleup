@@ -8,6 +8,7 @@ export function useAcceptedDraft(
   revision: string,
   failure: EventFormFailure | undefined,
   resetFields?: () => void,
+  { followSnapshot = false }: { followSnapshot?: boolean } = {},
 ) {
   const lastLoad = useEventContext();
   const { snapshot } = lastLoad;
@@ -38,6 +39,8 @@ export function useAcceptedDraft(
     if (!lastLoad.refreshFailed && canAccept) {
       acceptSnapshot();
     }
+  } else if (followSnapshot && !staleSave && snapshotChanged) {
+    acceptSnapshot();
   }
 
   return {

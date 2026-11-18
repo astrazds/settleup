@@ -1,11 +1,12 @@
 .form {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  min-width: 0;
+  gap: 5px;
 }
 
 fieldset.field {
@@ -30,11 +31,12 @@ fieldset.field {
 
 .input,
 .select {
+  min-width: 0;
   width: 100%;
   min-height: 48px;
   padding: 11px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: 0;
+  border-radius: var(--control-radius);
   color: var(--ink);
   background: var(--surface-raised);
   transition: background-color 140ms ease;
@@ -103,7 +105,7 @@ fieldset.field {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 0;
+  border-radius: var(--control-radius);
   cursor: pointer;
   font-weight: 600;
   text-decoration: none;
@@ -210,34 +212,40 @@ fieldset.field {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-block: 20px;
-}
-
-.eventBanner {
-  border-bottom: 1px solid var(--banner-border);
-  background: var(--banner);
+  padding-block: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
 .eventHeader {
-  padding-top: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0 16px;
+  padding-top: clamp(20px, 3vw, 40px);
 }
 
 .eventTitle {
+  grid-column: 1 / -1;
   margin: 0;
   overflow-wrap: anywhere;
   font-family: "Session Display", sans-serif;
-  font-size: 2.625rem;
+  font-size: clamp(2.875rem, 6vw, 4.875rem);
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1;
   text-wrap: balance;
 }
 
+.eventTitle:has(+ .total) {
+  grid-column: 1;
+}
+
 .eventMeta {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 16px;
-  margin-block: 10px 18px;
+  margin-block: 8px 14px;
   color: var(--ink-muted);
   font-size: 0.875rem;
 }
@@ -262,15 +270,17 @@ fieldset.field {
 }
 
 .nav {
+  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0 28px;
+  gap: 0 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 .navLink {
   display: inline-flex;
   min-width: var(--tap);
-  min-height: 48px;
+  min-height: var(--tap);
   align-items: center;
   padding: 10px 0;
   border-bottom: 3px solid transparent;
@@ -293,7 +303,7 @@ fieldset.field {
 }
 
 .main {
-  padding-block: 32px 64px;
+  padding-block: clamp(20px, 3vw, 36px) 64px;
 }
 
 .connectionNotice {
@@ -315,6 +325,21 @@ fieldset.field {
   gap: 28px;
 }
 
+.peopleSlip,
+.settlementCard,
+.settledCard,
+.empty {
+  padding: clamp(18px, 3vw, 34px);
+  border-top: var(--slip-edge);
+  border-bottom: var(--slip-end);
+  background: var(--surface-raised);
+}
+
+.peopleSlip {
+  max-width: 46rem;
+  gap: 16px;
+}
+
 .pageHeader {
   display: flex;
   align-items: center;
@@ -330,26 +355,31 @@ fieldset.field {
 .dialogTitle {
   margin: 0;
   overflow-wrap: anywhere;
-  font-family: "Session Display", sans-serif;
-  font-weight: 400;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.1;
   text-wrap: balance;
 }
 
 .pageTitle {
-  font-size: 2.125rem;
+  font-size: 1.625rem;
 }
 
 .total {
+  grid-column: 2;
+  grid-row: 1;
+  max-width: min(42vw, 25ch);
   margin: 0;
   color: var(--ink-muted);
   font-size: 0.875rem;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .total strong {
-  margin-right: 5px;
+  display: block;
   color: var(--ink);
-  font-size: 1.5625rem;
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -368,8 +398,9 @@ fieldset.field {
 
 .sectionTitle {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.3;
 }
 
@@ -387,7 +418,7 @@ fieldset.field {
   align-items: start;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 16px;
-  padding-block: 18px;
+  padding-block: 14px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -506,7 +537,6 @@ fieldset.field {
   display: grid;
   justify-items: start;
   gap: 12px;
-  padding-block: 20px;
 }
 
 .emptyIcon {
@@ -571,16 +601,17 @@ fieldset.field {
 
 .settlementCard {
   display: grid;
-  justify-items: start;
   gap: 20px;
-  padding: 24px;
-  background: var(--surface-muted);
+}
+
+.settlementCard .buttonPrimary {
+  width: 100%;
 }
 
 .settlementText {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 1.25rem;
+  font-size: 1.625rem;
   font-weight: 600;
   line-height: 1.4;
 }
@@ -589,7 +620,7 @@ fieldset.field {
   display: block;
   margin-top: 8px;
   font-family: "Session Display", sans-serif;
-  font-size: 3rem;
+  font-size: clamp(3rem, 5vw, 4.5rem);
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -606,8 +637,6 @@ fieldset.field {
   display: grid;
   justify-items: start;
   gap: 8px;
-  padding: 24px;
-  background: var(--surface-muted);
 }
 
 .settledTitle {
@@ -641,11 +670,11 @@ fieldset.field {
 
 .checkLabel {
   display: flex;
-  min-height: 48px;
+  min-height: var(--tap);
   align-items: center;
   gap: 9px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-strong);
+  padding: 5px 4px;
+  border-radius: var(--control-radius);
   cursor: pointer;
 }
 
@@ -656,11 +685,12 @@ fieldset.field {
   flex: 0 0 20px;
   place-items: center;
   border: 1px solid var(--border-strong);
+  border-radius: 3px;
   color: transparent;
   background: var(--surface-raised);
 }
 
-.checkInput:checked + .checkLabel {
+.checkLabel:hover {
   background: var(--surface-muted);
 }
 
@@ -697,7 +727,7 @@ fieldset.field {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
-  border: 1px solid var(--border-strong);
+  border-top: var(--slip-edge);
   color: var(--ink);
   background: var(--surface-raised);
   animation: sheetIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -712,7 +742,7 @@ fieldset.field {
 }
 
 .dialogTitle {
-  font-size: 2.125rem;
+  font-size: 1.625rem;
 }
 
 .dialogDescription {
@@ -741,7 +771,8 @@ fieldset.field {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 24px;
-  border: 1px solid var(--border-strong);
+  border-top: 4px solid var(--negative);
+  border-bottom: var(--slip-end);
   color: var(--ink);
   background: var(--surface-raised);
   transform: translate(-50%, -50%);
@@ -780,6 +811,17 @@ fieldset.field {
 }
 
 @media (min-width: 820px) {
+  .settlementPage {
+    grid-template-columns: minmax(0, 1.27fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: clamp(24px, 5vw, 68px);
+  }
+
+  .paymentHistory,
+  .settlementPage > .formError {
+    grid-column: 1 / -1;
+  }
+
   .dialogContent {
     top: 50%;
     right: auto;
@@ -787,7 +829,8 @@ fieldset.field {
     left: 50%;
     width: min(calc(100% - 48px), 560px);
     max-height: min(94dvh, 820px);
-    padding: 24px;
+    padding: 28px;
+    border-bottom: var(--slip-end);
     transform: translate(-50%, -50%);
     animation: none;
   }
@@ -819,19 +862,15 @@ fieldset.field {
   .eventTopbar,
   .eventHeader,
   .main {
-    padding-inline: 20px;
+    padding-inline: 16px;
   }
 
   .eventTopbar {
-    padding-block: 14px;
+    padding-block: 8px;
   }
 
   .eventHeader {
     padding-top: 20px;
-  }
-
-  .eventTitle {
-    font-size: 2.25rem;
   }
 
   .eventMeta {
@@ -841,8 +880,7 @@ fieldset.field {
   }
 
   .nav {
-    justify-content: space-between;
-    gap: 20px;
+    gap: 24px;
   }
 
   .main {
@@ -858,10 +896,6 @@ fieldset.field {
     align-items: start;
     flex-direction: column;
     gap: 4px;
-  }
-
-  .fieldRow {
-    grid-template-columns: 1fr;
   }
 
   .conflictNotice {

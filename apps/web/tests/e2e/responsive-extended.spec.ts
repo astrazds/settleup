@@ -61,14 +61,14 @@ test("keeps key event and dialog controls usable at 200 percent text", async ({
     level: 1,
     name: "Community garden planning weekend",
   });
-  const addExpense = page.getByRole("link", {
-    name: "Add the first expense",
-  });
+  const addExpense = page.getByRole("button", { name: "Save expense" });
   await expectContained(eventHeading);
   await expectTapTarget(addExpense);
   await expectNoHorizontalOverflow(page);
 
-  await addExpense.click();
+  await page.setViewportSize({ height: 540, width: 320 });
+  await page.goto(page.url() + "/new");
+  await applyDoubleTextSize(page);
   const dialog = page.getByRole("dialog", { name: "Add expense" });
   const closeButton = dialog.getByRole("button", { name: "Close" });
   const submitButton = dialog.getByRole("button", { name: "Add expense" });
@@ -96,10 +96,9 @@ test("keeps destructive confirmation usable in landscape at 200 percent text", a
   const browserErrors = watchForBrowserErrors(page);
   await page.setViewportSize({ height: 640, width: 568 });
   await createEvent(page, "Landscape campsite");
-  await page.getByRole("link", { name: "Add the first expense" }).click();
   await page.getByLabel("What was it?").fill(longDescription);
   await page.getByLabel("Amount").fill("20.00");
-  await page.getByRole("button", { name: "Add expense" }).click();
+  await page.getByRole("button", { name: "Save expense" }).click();
 
   await page.setViewportSize({ height: 320, width: 568 });
   await applyDoubleTextSize(page);
