@@ -9,7 +9,8 @@ SettleUp's primary surface is the web UI. The API on port 8787 is the ledger beh
 
 This copy lives at `skills/verify-settleup/` so a pull request can review it. `.cursor/skills/` and `.agents/skills/` are gitignored. Do not stop ignoring them, and do not copy this skill into those folders as the reviewed source.
 
-A fresh clone needs `mise install`, `mise run install`, and `mise run browsers:install` before launch. Those installs are not repeated here.
+Run this helper on Linux with `ss` and procfs available. For native Windows, follow the [desktop Chromium workflow](../../CONTRIBUTING.md#verify-the-change).
+A fresh clone needs `mise install`, `mise run install`, and `mise run browsers:install` before launch.
 
 ## Launch
 
@@ -53,7 +54,7 @@ Playwright must be able to start Chromium. The helper sets `PLAYWRIGHT_BROWSERS_
 
 ## Evidence
 
-The record-expense drive writes proof to `skills/verify-settleup/evidence/record-expense/`:
+Each record-expense drive prints its absolute output path before it opens Chromium. It writes the following files under `.scratch/verify-settleup/<run-id>/record-expense/`. A retry gets a fresh directory, even within the same launch.
 
 - `preview.png` and `preview.aria.txt` show the exact-split preview before save.
 - `saved.png` and `saved.aria.txt` show the saved expense after **See exact split** is opened.
@@ -62,13 +63,15 @@ The record-expense drive writes proof to `skills/verify-settleup/evidence/record
 
 Proof has to show the action and the resulting state. The preview screenshot is the action. The saved screenshot and the snapshot shares are the resulting state. The snapshot is the side effect: the stored share rows, not only the pixels.
 
+The [tracked examples](evidence/record-expense/) show a historical run. Use the current drive's output for a review.
+
 ## Cleanup
 
 ```sh
 node skills/verify-settleup/bin/verify-settleup.mjs cleanup
 ```
 
-Cleanup sends `SIGTERM`, then `SIGKILL` if needed, to the process groups recorded at launch. It deletes `/tmp/settleup-verify/`. It does not delete `skills/verify-settleup/evidence/`. After cleanup, the evidence files must still be present. Run cleanup after a failed launch or drive too, so a broken attempt does not keep the ports.
+Cleanup signals the recorded process groups and removes the temporary database and logs under `/tmp/settleup-verify/`. It prints the automated drive directories for this instance and preserves their contents, including partial results after a failure. Run cleanup after a failed launch or drive to release the ports.
 
 ## Helpers
 

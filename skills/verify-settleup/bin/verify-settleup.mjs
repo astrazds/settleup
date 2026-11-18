@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { existsSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
-const evidenceDir = path.join(repoRoot, "skills/verify-settleup/evidence/record-expense");
+const evidenceRoot = path.join(repoRoot, ".scratch/verify-settleup");
 const scratchRoot = "/tmp/settleup-verify";
 const statePath = path.join(scratchRoot, "state.json");
 const webUrl = "http://127.0.0.1:5173";
@@ -64,6 +64,7 @@ async function launch() {
   });
   const state = {
     runId,
+    evidenceRoot,
     apiPid: api.pid,
     webPid: null,
     dbPath,
@@ -159,6 +160,13 @@ async function doctor() {
 async function driveRecordExpense() {
   const report = await doctor();
   console.log(report);
+  const state = readState();
+  const root = state.evidenceRoot ?? evidenceRoot;
+  mkdirSync(root, { recursive: true });
+  const runDir = mkdtempSync(path.join(root, `${state.runId}-`));
+  const evidenceDir = path.join(runDir, "record-expense");
+  mkdirSync(evidenceDir);
+  console.log(`evidence ${evidenceDir}`);
   prepareBrowserEnv();
   const require = createRequire(path.join(repoRoot, "apps/web/package.json"));
   const { chromium } = require("playwright");
@@ -195,7 +203,6 @@ async function driveRecordExpense() {
       throw new Error("Exact split preview did not show $10.01 and $10.00.");
     }
 
-    mkdirSync(evidenceDir, { recursive: true });
     await page.screenshot({ path: path.join(evidenceDir, "preview.png"), fullPage: true });
     writeFileSync(
       path.join(evidenceDir, "preview.aria.txt"),
@@ -236,11 +243,10 @@ async function driveRecordExpense() {
         "amount 20.01 AUD",
         "preview $10.01 and $10.00",
         "stored-shares 1001 and 1000",
-        `git ${readState().gitHead}`,
+        `git ${state.gitHead}`,
         "",
       ].join("\n"),
     );
-    console.log(`evidence ${evidenceDir}`);
   } finally {
     await browser.close();
   }
@@ -262,12 +268,14 @@ async function cleanup() {
     }
   }
   rmSync(scratchRoot, { force: true, recursive: true });
-  const kept = existsSync(evidenceDir)
-    ? readdirSync(evidenceDir).sort()
-    : [];
-  console.log(`cleanup: instance removed; evidence kept at ${evidenceDir}`);
-  if (kept.length > 0) {
-    console.log(kept.join("\n"));
+  console.log("cleanup: instance removed");
+  const root = state.evidenceRoot ?? evidenceRoot;
+  if (existsSync(root)) {
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.startsWith(`${state.runId}-`)) {
+        console.log(`evidence kept at ${path.join(root, entry.name, "record-expense")}`);
+      }
+    }
   }
 }
 

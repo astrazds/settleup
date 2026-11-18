@@ -21,7 +21,8 @@ Keep changes focused and describe their observable effect. Start with the
 
 ## Set up the checkout
 
-Run these commands from the repository root:
+Work from the repository root. If mise reports an untrusted configuration,
+review [mise.toml](mise.toml) and run `mise trust` before installing the tools.
 
 ```sh
 mise install
@@ -69,12 +70,28 @@ rollback, snapshot recomputation, and event isolation. Browser tests cover
 workflows, draft conflicts, accessibility, and responsive states. Run the full
 gate after focused checks when changing application code.
 
+On Windows, run the desktop Chromium expense workflow from the repository
+root. This exercises the production frontend and an in-memory API without
+comparing Linux screenshot baselines.
+
+```sh
+mise run test:e2e -- core-flow.spec.ts --project=desktop-chromium
+```
+
+## Drive a user journey
+
+Use the [verification skill](skills/verify-settleup/SKILL.md) on Linux. It
+checks port ownership with `ss` and procfs. Its automated expense journey
+compares the preview with the saved split and the stored shares. The feature
+map also has manual browser recipes. Each automated drive prints its own
+directory under `.scratch/verify-settleup/`. Cleanup preserves the receipts.
+
 ## Review visual changes
 
 Local mobile and desktop Chromium runs compare screenshots in
 `apps/web/tests/e2e/states.spec.ts-snapshots`. Firefox and WebKit run semantic
 checks without pixel comparisons. CI skips pixel comparisons for all projects.
-Keep `CI` unset when checking local visual baselines.
+Run local pixel checks on Linux with `CI` unset to use the tracked baselines.
 
 Event captures use `apps/web/tests/e2e/screenshot.css` to stabilize time labels
 and the skip-link capture state. Desktop event captures allow a 1% pixel
