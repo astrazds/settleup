@@ -47,14 +47,14 @@ Run the full local gate:
 mise run check
 ```
 
-This runs lint, typecheck, unit tests, production builds, and browser tests in
-order. Keep the gates sequential because several rebuild the same contracts
-output. If a development watcher loses that output during verification,
-restart `mise run dev` after the check finishes.
+The full gate compiles the contracts and generates route types once. It runs
+lint, typechecks, and unit tests, builds the API and web app, then serves that
+web build to Playwright. Use `mise run check:code` for everything through the
+production builds. Focused tasks prepare their own prerequisites.
 
-Frontend lint and typecheck each generate React Router types before using
-them. A fresh checkout does not need a prior build to lint. Do not edit or
-commit `.react-router`, `dist`, or `build` output.
+The API and web development servers import contract source directly. Edits to
+shared schemas restart the API and reload open development tabs. Do not commit
+`.react-router`, `dist`, or `build` output.
 
 For a focused check, use the task that covers the changed behavior:
 

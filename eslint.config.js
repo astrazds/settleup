@@ -6,11 +6,11 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   {
     ignores: [
-      ".react-router/**",
-      "build/**",
-      "eslint.config.js",
-      "playwright-report/**",
-      "test-results/**",
+      "**/.react-router/**",
+      "**/build/**",
+      "**/dist/**",
+      "**/playwright-report/**",
+      "**/test-results/**",
     ],
   },
   eslint.configs.recommended,
@@ -18,15 +18,16 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.node,
-      },
+      globals: globals.node,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
+  },
+  {
+    files: ["apps/web/**/*.{ts,tsx}"],
+    languageOptions: { globals: globals.browser },
     plugins: {
       "react-hooks": reactHooks,
     },

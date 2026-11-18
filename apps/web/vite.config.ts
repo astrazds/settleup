@@ -1,5 +1,8 @@
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
+import { defineConfig, normalizePath } from "vite";
+
+const contractSource = normalizePath(fileURLToPath(new URL("../../packages/contracts/src/", import.meta.url)));
 
 const apiProxy = {
   "/api": {
@@ -9,7 +12,20 @@ const apiProxy = {
 };
 
 export default defineConfig({
-  plugins: [reactRouter()],
+  plugins: [
+    reactRouter(),
+    {
+      name: "reload-contract-consumers",
+      apply: "serve",
+      handleHotUpdate({ file, server }) {
+        // An open route can retain its previous clientAction after a component refresh.
+        if (normalizePath(file).startsWith(contractSource)) {
+          server.ws.send({ type: "full-reload" });
+        }
+      },
+    },
+  ],
+  optimizeDeps: { include: ["@settleup/contracts > zod"] },
   preview: {
     proxy: apiProxy,
   },

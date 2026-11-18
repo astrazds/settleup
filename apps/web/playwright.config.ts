@@ -50,16 +50,19 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command:
-      `npm run build:web && ` +
-      `concurrently --kill-others --names api,web ` +
-      `"npm run dev:api:watch" ` +
-      `"npm run preview --workspace @settleup/web -- --port 4173"`,
-    cwd: "../..",
-    env: { SETTLEUP_DB: ":memory:" },
-    port: 4173,
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
+  webServer: [
+    {
+      command: process.env.SETTLEUP_PREBUILT === "1" ? "npm start" : "npm run build:all && npm start",
+      cwd: "../..",
+      env: { SETTLEUP_DB: ":memory:", PORT: "8787" },
+      port: 8787,
+      reuseExistingServer: false,
+      timeout: 180_000,
+    },
+    {
+      command: "npm run preview -- --port 4173 --strictPort",
+      port: 4173,
+      reuseExistingServer: false,
+    },
+  ],
 });

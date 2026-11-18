@@ -22,7 +22,7 @@ description = "Run the API development server"
 run = "npm run dev:api"
 
 [tasks.lint]
-description = "Lint the frontend"
+description = "Lint API, contracts, and frontend"
 run = "npm run lint"
 
 [tasks.typecheck]
@@ -65,10 +65,12 @@ run = "npm exec --workspace @settleup/web -- playwright install chromium firefox
 
 [tasks.check]
 description = "Run every repository gate in order"
+env = { SETTLEUP_PREBUILT = "1" }
 run = [
-  "mise run lint",
-  "mise run typecheck",
-  "mise run test",
-  "mise run build",
-  "mise run test:e2e",
+  "npm run check:code",
+  "npm exec --workspace @settleup/web -- playwright test",
 ]
+
+[tasks."check:code"]
+description = "Verify TypeScript, unit tests, and production builds"
+run = "npm run check:code"

@@ -23,17 +23,8 @@ jobs:
       - name: Install dependencies
         run: mise run install
 
-      - name: Lint
-        run: mise run lint
-
-      - name: Typecheck
-        run: mise run typecheck
-
-      - name: Test
-        run: mise run test
-
-      - name: Build
-        run: mise run build
+      - name: Verify code and builds
+        run: mise run check:code
 
   e2e:
     runs-on: ubuntu-latest
