@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 
 import { PersonForm } from "../components/person-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, addParticipant } from "../lib/api";
+import { addParticipant } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readParticipantSubmission } from "../lib/form-data";
 import type { Route } from "./+types/person-new";
 
@@ -20,7 +21,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/people`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -33,7 +34,7 @@ export default function NewPerson() {
       description="They will be available in expense and payment forms."
       title="Add person"
     >
-      <PersonForm actionError={actionData?.error} submitLabel="Add person" />
+      <PersonForm actionFailure={actionData} submitLabel="Add person" />
     </RouteDialog>
   );
 }

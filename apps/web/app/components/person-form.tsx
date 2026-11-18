@@ -2,26 +2,25 @@ import type { Participant } from "@settleup/contracts";
 import { Form, useNavigation } from "react-router";
 
 import { EditConflict } from "./edit-conflict";
-import { useEventContext } from "./event-context";
+import type { EventFormFailure } from "../lib/event-form-action";
 import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface PersonFormProps {
-  actionError?: string;
+  actionFailure?: EventFormFailure;
   participant?: Participant;
   submitLabel: string;
 }
 
 export function PersonForm({
-  actionError,
+  actionFailure,
   participant,
   submitLabel,
 }: PersonFormProps) {
-  const { snapshot } = useEventContext();
   const navigation = useNavigation();
   const isBusy = navigation.state !== "idle";
   const currentRevision = participant?.name ?? "new";
-  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
+  const draft = useAcceptedDraft(currentRevision, actionFailure);
 
   return (
     <Form className={styles.form} key={draft.formKey} method="post">
@@ -47,14 +46,14 @@ export function PersonForm({
         />
       </div>
 
-      {actionError ? (
+      {actionFailure?.kind === "error" ? (
         <p aria-live="polite" className={styles.formError} role="alert">
-          {actionError}
+          {actionFailure.message}
         </p>
       ) : null}
 
       {draft.hasConflict ? (
-        <EditConflict onReload={draft.acceptLatest} />
+        <EditConflict isLoading={draft.isLoadingLatest} onReload={draft.loadLatest} />
       ) : null}
 
       <div className={styles.dialogActions}>

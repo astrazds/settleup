@@ -15,21 +15,21 @@ import {
   formatMoney,
   parseAmountMinor,
 } from "../lib/money";
+import type { EventFormFailure } from "../lib/event-form-action";
 import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface ExpenseFormProps {
-  actionError?: string;
+  actionFailure?: EventFormFailure;
   expense?: Expense;
   submitLabel: string;
 }
 
-export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormProps) {
+export function ExpenseForm({ actionFailure, expense, submitLabel }: ExpenseFormProps) {
   const { snapshot } = useEventContext();
   const navigation = useNavigation();
   const isBusy = navigation.state !== "idle";
   const currentRevision = expenseRevision(expense);
-  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
   const currentAmount = expense
     ? amountMinorToDecimal(expense.amountMinor, snapshot.event.currency)
     : "";
@@ -42,6 +42,11 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
   const splitParticipants = acceptedShares
     ? participantsInShareOrder(snapshot.participants, acceptedShares)
     : snapshot.participants;
+  const draft = useAcceptedDraft(currentRevision, actionFailure, () => {
+    setAmountInput(currentAmount);
+    setIncludedIds(currentIncludedIds);
+    setAcceptedShares(expense?.shares);
+  });
   const included = new Set(includedIds);
   const preview = expenseSharePreview(
     amountInput,
@@ -208,21 +213,14 @@ export function ExpenseForm({ actionError, expense, submitLabel }: ExpenseFormPr
         </section>
       ) : null}
 
-      {actionError ? (
+      {actionFailure?.kind === "error" ? (
         <p aria-live="polite" className={styles.formError} role="alert">
-          {actionError}
+          {actionFailure.message}
         </p>
       ) : null}
 
       {draft.hasConflict ? (
-        <EditConflict
-          onReload={() => {
-            draft.acceptLatest();
-            setAmountInput(currentAmount);
-            setIncludedIds(currentIncludedIds);
-            setAcceptedShares(expense?.shares);
-          }}
-        />
+        <EditConflict isLoading={draft.isLoadingLatest} onReload={draft.loadLatest} />
       ) : null}
 
       <div className={styles.dialogActions}>

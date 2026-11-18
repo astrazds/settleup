@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 import { useEventContext } from "../components/event-context";
 import { PersonForm } from "../components/person-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, renameParticipant } from "../lib/api";
+import { renameParticipant } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readParticipantSubmission } from "../lib/form-data";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/person-edit";
@@ -22,7 +23,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/people`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -41,7 +42,7 @@ export default function EditPerson({ params }: Route.ComponentProps) {
     >
       {participant ? (
         <PersonForm
-          actionError={actionData?.error}
+          actionFailure={actionData}
           participant={participant}
           submitLabel="Save changes"
         />

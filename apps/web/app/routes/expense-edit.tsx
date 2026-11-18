@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 import { useEventContext } from "../components/event-context";
 import { ExpenseForm } from "../components/expense-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, updateExpense } from "../lib/api";
+import { updateExpense } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readExpenseSubmission } from "../lib/form-data";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/expense-edit";
@@ -22,7 +23,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/expenses`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -39,7 +40,7 @@ export default function EditExpense({ params }: Route.ComponentProps) {
     >
       {expense ? (
         <ExpenseForm
-          actionError={actionData?.error}
+          actionFailure={actionData}
           expense={expense}
           submitLabel="Save changes"
         />
