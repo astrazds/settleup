@@ -6,7 +6,9 @@ a[href="#main-content"] {
   visibility: hidden !important;
 }
 
-header time {
+/* Keep the expiry mask at its reference width (201px at the mobile 13px font). */
+[aria-labelledby="event-title"] time {
+  inline-size: 15.46em;
   overflow: hidden;
   white-space: nowrap;
 }
