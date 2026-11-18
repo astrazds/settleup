@@ -164,6 +164,16 @@ describe("API adapter", () => {
     });
   });
 
+  it("treats a disconnect after the response headers as a network failure", async () => {
+    const response = new Response(new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.error(new TypeError("connection closed"));
+      },
+    }));
+    await expect(getEvent("token", { fetch: () => Promise.resolve(response) }))
+      .rejects.toMatchObject({ kind: "network", status: null });
+  });
+
   it("maps invalid successful payloads to a server contract error", async () => {
     const fetcher = vi.fn<typeof fetch>(() =>
       Promise.resolve(jsonResponse({})),

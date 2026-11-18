@@ -1,10 +1,12 @@
 import Database from "better-sqlite3";
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
-import { migrate, openDatabase, type SqliteDatabase } from "./database.js";
+import { migrate, openDatabase, readStringField, type SqliteDatabase } from "./database.js";
+import { EventService } from "./event-service.js";
 
 describe("database migrations", () => {
-  it("creates the presentation-neutral participant schema at version one", () => {
+  it("creates the presentation-neutral participant schema and ordered expense shares", () => {
     const db = openDatabase(":memory:");
 
     try {
@@ -16,7 +18,13 @@ describe("database migrations", () => {
         "created_at",
         "updated_at",
       ]);
-      expect(db.pragma("user_version", { simple: true })).toBe(1);
+      expect(tableColumnNames(db, "expense_shares")).toEqual([
+        "expense_id",
+        "participant_id",
+        "amount_minor",
+        "position",
+      ]);
+      expect(db.pragma("user_version", { simple: true })).toBe(2);
     } finally {
       db.close();
     }
@@ -84,7 +92,55 @@ describe("database migrations", () => {
         paymentAmountMinor: 500,
       });
       expect(db.pragma("foreign_key_check")).toEqual([]);
-      expect(db.pragma("user_version", { simple: true })).toBe(1);
+      expect(db.pragma("user_version", { simple: true })).toBe(2);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("keeps stored cents on a version-one split through migration and edits", () => {
+    const db = new Database(":memory:");
+    try {
+      db.pragma("foreign_keys = ON");
+      createLegacyDatabase(db);
+      db.exec(`
+        ALTER TABLE participants DROP COLUMN initials;
+        ALTER TABLE participants DROP COLUMN color;
+        INSERT INTO participants (id, event_id, name, sort_order, created_at, updated_at)
+        SELECT 'participant-0', event_id, 'Noah', 2, created_at, updated_at
+        FROM participants WHERE id = 'participant-1';
+        UPDATE expense_shares SET amount_minor = 1001 - amount_minor;
+        INSERT INTO expense_shares (expense_id, participant_id, amount_minor)
+        VALUES ('expense-1', 'participant-0', 500);
+        UPDATE expenses SET amount_minor = 1501;
+        PRAGMA user_version = 1;
+      `);
+      const token = "legacy-event";
+      db.prepare("UPDATE events SET token_hash = ?").run(createHash("sha256").update(token).digest("hex"));
+
+      migrate(db);
+      migrate(db);
+
+      const service = new EventService(db, () => new Date("2026-07-02T00:00:00Z"));
+      const snapshot = service.getSnapshotByToken(token);
+      const [expense] = snapshot.expenses;
+      if (!expense) throw new Error("Missing legacy expense.");
+      const shares = [
+        { participantId: "participant-2", amountMinor: 501 },
+        { participantId: "participant-1", amountMinor: 500 },
+        { participantId: "participant-0", amountMinor: 500 },
+      ];
+      expect(expense.shares).toEqual(shares);
+
+      const edited = service.updateExpense(token, expense.id, {
+        description: "Pizza and drinks",
+        amountMinor: expense.amountMinor,
+        payerId: expense.payerId,
+        includedParticipantIds: expense.shares.map(({ participantId }) => participantId),
+      });
+      expect(edited.expenses[0]?.shares).toEqual(shares);
+      expect(edited.balances).toEqual(snapshot.balances);
+      expect(db.pragma("foreign_key_check")).toEqual([]);
     } finally {
       db.close();
     }
@@ -121,16 +177,16 @@ describe("database migrations", () => {
     const db = new Database(":memory:");
     db.pragma("foreign_keys = ON");
     createLegacyDatabase(db);
-    db.pragma("user_version = 2");
+    db.pragma("user_version = 3");
 
     try {
       expect(() => migrate(db)).toThrow(
-        "Database schema version 2 is newer than supported version 1.",
+        "Database schema version 3 is newer than supported version 2.",
       );
       expect(tableColumnNames(db, "participants")).toContain("initials");
       expect(tableColumnNames(db, "participants")).toContain("color");
       expect(db.prepare("SELECT COUNT(*) AS count FROM participants").get()).toEqual({ count: 2 });
-      expect(db.pragma("user_version", { simple: true })).toBe(2);
+      expect(db.pragma("user_version", { simple: true })).toBe(3);
       expect(db.pragma("foreign_key_check")).toEqual([]);
     } finally {
       db.close();
@@ -139,7 +195,7 @@ describe("database migrations", () => {
 });
 
 function tableColumnNames(db: SqliteDatabase, table: string): string[] {
-  return (db.pragma(`table_info(${table})`) as { name: string }[]).map((column) => column.name);
+  return db.prepare(`PRAGMA table_info(${table})`).all().map((column) => readStringField(column, "name"));
 }
 
 function createLegacyDatabase(db: SqliteDatabase): void {

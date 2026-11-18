@@ -1,6 +1,11 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { useRef, type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import type { ReactNode } from "react";
+import {
+  NavigationType,
+  useLocation,
+  useNavigate,
+  useNavigationType,
+} from "react-router";
 
 import { CloseIcon } from "./icons";
 import styles from "../styles/app.module.css";
@@ -19,13 +24,16 @@ export function RouteDialog({
   title,
 }: RouteDialogProps) {
   const navigate = useNavigate();
-  const returnFocus = useRef<HTMLElement | null>(
-    typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement &&
-      document.activeElement !== document.body
-      ? document.activeElement
-      : null,
-  );
+  const navigationType = useNavigationType();
+  const locationState: unknown = useLocation().state;
+  const openerId =
+    navigationType !== NavigationType.Pop &&
+    typeof locationState === "object" &&
+    locationState !== null &&
+    "routeDialogOpenerId" in locationState &&
+    typeof locationState.routeDialogOpenerId === "string"
+      ? locationState.routeDialogOpenerId
+      : null;
 
   return (
     <Dialog.Root
@@ -42,13 +50,17 @@ export function RouteDialog({
           className={styles.dialogContent}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
-            const target = returnFocus.current;
             requestAnimationFrame(() => {
-              if (target?.isConnected) {
-                target.focus();
-              } else {
-                document.getElementById("main-content")?.focus();
+              const main = document.getElementById("main-content");
+              if (
+                document.activeElement !== document.body &&
+                document.activeElement !== main
+              ) {
+                return;
               }
+
+              const opener = openerId ? document.getElementById(openerId) : null;
+              (opener ?? main)?.focus();
             });
           }}
         >

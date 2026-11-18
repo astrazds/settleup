@@ -1,8 +1,9 @@
-import { Link, Outlet, useFetcher } from "react-router";
+import { Outlet, useFetcher } from "react-router";
 
 import { DeleteConfirm } from "../components/delete-confirm";
 import { useEventContext } from "../components/event-context";
 import { EditIcon, PlusIcon } from "../components/icons";
+import { RouteDialogLink } from "../components/route-dialog-link";
 import { actionErrorMessage, deleteParticipant } from "../lib/api";
 import { readFormString, readFormVersion } from "../lib/form-data";
 import styles from "../styles/app.module.css";
@@ -36,13 +37,13 @@ export default function People() {
               {snapshot.participants.length === 1 ? "person" : "people"}
             </h2>
           </div>
-          <Link
+          <RouteDialogLink
             className={`${styles.button} ${styles.buttonPrimary}`}
             to="new"
           >
             <PlusIcon />
             <span>Add person</span>
-          </Link>
+          </RouteDialogLink>
         </div>
 
         {fetcher.data && "error" in fetcher.data ? (
@@ -61,7 +62,7 @@ export default function People() {
                     <p className={styles.listTitle}>{participant.name}</p>
                   </div>
                   <div className={styles.itemActions}>
-                    <Link
+                    <RouteDialogLink
                       aria-label={`Edit ${participant.name}`}
                       className={styles.iconButton}
                       title={`Edit ${participant.name}`}
@@ -71,7 +72,7 @@ export default function People() {
                       <span aria-hidden="true" className={styles.actionLabel}>
                         Edit
                       </span>
-                    </Link>
+                    </RouteDialogLink>
                     <DeleteConfirm
                       description={`“${participant.name}” can only be removed if they are not referenced by an expense or payment.`}
                       disabled={

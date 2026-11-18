@@ -50,6 +50,10 @@ node skills/verify-settleup/bin/verify-settleup.mjs drive record-expense
 
 This runs the mapped **Record an expense** journey in headless Chromium against `http://127.0.0.1:5173`. It uses accessible names from the feature file. It does not call an internal setter or a test-only endpoint. The other feature files are the recipes for later runs; follow their Playwright steps against the launched URL. Do not mark those features verified because record-expense passed.
 
+The journey checks share names, amounts, and order in the preview and saved
+expense. It also checks that reloading the page and editing only the
+description preserve the split in the browser and API.
+
 Playwright must be able to start Chromium. The helper sets `PLAYWRIGHT_BROWSERS_PATH` to `.scratch/playwright`, the same path `mise.toml` uses. If that directory has no Chromium build, install it with `mise run browsers:install` and run the drive again.
 
 ## Evidence

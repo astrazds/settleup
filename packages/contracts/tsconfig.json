@@ -1,26 +1,13 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
-    "lib": [
-      "ES2023",
-      "DOM"
-    ],
+    "lib": ["ES2023", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "noEmit": false,
+    "noEmit": true,
     "noUncheckedIndexedAccess": true,
-    "outDir": "dist",
-    "rootDir": "src",
-    "sourceMap": true,
     "strict": true,
     "target": "ES2023",
     "types": []
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/**/*.test.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

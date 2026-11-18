@@ -22,11 +22,10 @@ describe("API app", () => {
       method: "POST",
       status: 201,
     });
-    let snapshot = created.snapshot;
 
     expect(createEventResponseSchema.parse(created)).toEqual(created);
 
-    snapshot = await jsonRequest<EventSnapshot>(app, `/api/events/${created.token}/participants`, {
+    let snapshot = await jsonRequest<EventSnapshot>(app, `/api/events/${created.token}/participants`, {
       body: { name: "Mia" },
       method: "POST",
       status: 201,

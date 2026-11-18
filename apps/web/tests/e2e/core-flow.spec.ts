@@ -1,8 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { createEventResponseSchema, eventSnapshotSchema } from "@settleup/contracts";
 
 test("creates, edits, settles, and cleans up a shared event", async ({
   browserName,
+  hasTouch,
   page,
 }) => {
   const suffix = Date.now().toString().slice(-6);
@@ -61,9 +63,18 @@ test("creates, edits, settles, and cleans up a shared event", async ({
 
   await page.getByRole("link", { name: "People" }).click();
   const addPersonLink = page.getByRole("link", { name: "Add person" });
-  await addPersonLink.click();
+  if (hasTouch) {
+    await addPersonLink.tap();
+  } else {
+    await addPersonLink.click();
+  }
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: "Close" }).click();
+  const closeDialogButton = page.getByRole("button", { name: "Close" });
+  if (hasTouch) {
+    await closeDialogButton.tap();
+  } else {
+    await closeDialogButton.click();
+  }
   await expect(addPersonLink).toBeFocused();
   await addPersonLink.click();
   await page.getByLabel("Name").fill("Noah");
@@ -71,9 +82,10 @@ test("creates, edits, settles, and cleans up a shared event", async ({
   await expect(page.getByText("Noah", { exact: true })).toBeVisible();
 
   const editNoahLink = page.getByRole("link", { name: "Edit Noah" });
-  await editNoahLink.click();
+  await editNoahLink.press("Enter");
   await expect(page).toHaveURL(/\/people\/[^/]+\/edit$/);
-  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("dialog").locator(":focus")).toHaveCount(1);
+  await page.keyboard.press("Escape");
   await expect(page).toHaveURL(/\/people$/);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(editNoahLink).toBeFocused();
@@ -268,4 +280,57 @@ test("receives event changes in another browser tab", async ({ page }) => {
   ).toBeEnabled();
 
   await secondPage.close();
+});
+
+test("keeps the exact split in saved order through reload and a description edit", async ({ page }) => {
+  const created = await page.request.post("/api/events", {
+    data: { title: "Dinner split", currency: "AUD", firstParticipantName: "Mia" },
+  });
+  expect(created.status()).toBe(201);
+  const { token } = createEventResponseSchema.parse(await created.json());
+  const eventPath = `/api/events/${token}`;
+  const added = await page.request.post(`${eventPath}/participants`, { data: { name: "Noah" } });
+  expect(added.status()).toBe(201);
+  const { participants } = eventSnapshotSchema.parse(await added.json());
+  const [mia, noah] = participants;
+  if (!mia || !noah) throw new Error("Missing fixture participants.");
+
+  const saved = await page.request.post(`${eventPath}/expenses`, {
+    data: {
+      description: "Dinner",
+      amountMinor: 2001,
+      payerId: mia.id,
+      includedParticipantIds: [noah.id, mia.id],
+    },
+  });
+  expect(saved.status()).toBe(201);
+  const expectedShares = [
+    { participantId: noah.id, amountMinor: 1001 },
+    { participantId: mia.id, amountMinor: 1000 },
+  ];
+  const savedSnapshot = eventSnapshotSchema.parse(await saved.json());
+  expect(savedSnapshot.expenses[0]?.shares).toEqual(expectedShares);
+
+  const recentActivity = page.getByLabel("Recent activity");
+  const expenseSplit = recentActivity.locator("details");
+  const expectedDisplay = [/^Noah\s*\$10\.01$/, /^Mia\s*\$10\.00$/];
+  await page.goto(`/e/${token}/expenses`);
+  await expenseSplit.getByText("See exact split", { exact: true }).click();
+  await expect(expenseSplit.getByRole("listitem")).toHaveText(expectedDisplay);
+  await page.reload();
+  await expenseSplit.getByText("See exact split", { exact: true }).click();
+  await expect(expenseSplit.getByRole("listitem")).toHaveText(expectedDisplay);
+
+  await page.getByRole("link", { name: "Edit Dinner" }).click();
+  await expect(page.getByRole("region", { name: "Exact split preview" }).getByRole("listitem"))
+    .toHaveText(expectedDisplay);
+  await page.getByLabel("What was it?").fill("Dinner and dessert");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(recentActivity.getByText("Dinner and dessert", { exact: true })).toBeVisible();
+  await expect(expenseSplit.getByRole("listitem")).toHaveText(expectedDisplay);
+
+  const reloaded = await page.request.get(eventPath);
+  expect(reloaded.status()).toBe(200);
+  const snapshot = eventSnapshotSchema.parse(await reloaded.json());
+  expect(snapshot.expenses[0]?.shares).toEqual(expectedShares);
 });

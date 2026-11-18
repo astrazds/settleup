@@ -59,6 +59,8 @@ describe("money helpers", () => {
     expect(formatMoney(1_234, "AUD", "en-AU")).toBe("$12.34");
     expect(formatMoney(-1_234, "USD", "en-US")).toBe("-$12.34");
     expect(formatMoney(0, "GBP", "en-GB")).toBe("£0.00");
+    expect(formatMoney(-12, "USD", "en-US")).toBe("-$0.12");
+    expect(formatMoney(1234, "USD", "ar-EG")).toContain("١٢٫٣٤");
     expect(formatMoney(1_234, "EUR", "de-DE")).toContain("12,34");
     expect(formatMoney(9_007_199_254_740_992n, "AUD", "en-AU")).toBe(
       "$90,071,992,547,409.92",

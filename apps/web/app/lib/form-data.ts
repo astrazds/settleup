@@ -4,6 +4,7 @@ import {
   type CurrencyCode,
   type ExpenseCommand,
   type ExpenseShare,
+  type Participant,
   type ParticipantCommand,
   type PaymentCommand,
 } from "@settleup/contracts";
@@ -38,6 +39,22 @@ export function includedParticipantIdsInSubmitOrder(
   return participantsInDocumentOrder
     .filter((participant) => included.has(participant.id))
     .map((participant) => participant.id);
+}
+
+export function participantsInShareOrder(
+  participants: readonly Participant[],
+  shares: readonly ExpenseShare[],
+): Participant[] {
+  const remaining = new Map(participants.map((participant) => [participant.id, participant]));
+  const ordered: Participant[] = [];
+  for (const { participantId } of shares) {
+    const participant = remaining.get(participantId);
+    if (participant) {
+      ordered.push(participant);
+      remaining.delete(participantId);
+    }
+  }
+  return [...ordered, ...remaining.values()];
 }
 
 export function previewStoredShares(

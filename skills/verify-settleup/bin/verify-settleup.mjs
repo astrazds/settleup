@@ -170,6 +170,7 @@ async function driveRecordExpense() {
   prepareBrowserEnv();
   const require = createRequire(path.join(repoRoot, "apps/web/package.json"));
   const { chromium } = require("playwright");
+  const { expect } = require("@playwright/test");
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({
     baseURL: webUrl,
@@ -197,11 +198,10 @@ async function driveRecordExpense() {
     await dialog.waitFor();
     await page.getByLabel("What was it?").fill("Dinner");
     await page.getByLabel("Amount").fill("20.01");
-    await dialog.getByRole("heading", { name: "Exact split" }).waitFor();
-    const previewText = await dialog.innerText();
-    if (!previewText.includes("$10.01") || !previewText.includes("$10.00")) {
-      throw new Error("Exact split preview did not show $10.01 and $10.00.");
-    }
+    const expectedDisplay = [/^Mia\s*\$10\.01$/, /^Noah\s*\$10\.00$/];
+    const previewRows = dialog.getByRole("region", { name: "Exact split preview" })
+      .getByRole("listitem");
+    await expect(previewRows).toHaveText(expectedDisplay);
 
     await page.screenshot({ path: path.join(evidenceDir, "preview.png"), fullPage: true });
     writeFileSync(
@@ -210,30 +210,43 @@ async function driveRecordExpense() {
     );
 
     await page.getByRole("button", { name: "Add expense" }).click();
-    await page.getByLabel("Recent activity").getByText("Dinner", { exact: true }).waitFor();
-    await page.getByText("See exact split", { exact: true }).click();
-    const savedText = await page.getByLabel("Recent activity").innerText();
-    if (!savedText.includes("$10.01") || !savedText.includes("$10.00")) {
-      throw new Error("Saved expense did not show $10.01 and $10.00.");
-    }
+    const activity = page.getByLabel("Recent activity");
+    const disclosure = activity.getByText("See exact split", { exact: true });
+    const savedRows = activity.locator("details").getByRole("listitem");
+    await activity.getByText("Dinner", { exact: true }).waitFor();
+    await disclosure.click();
+    await expect(savedRows).toHaveText(expectedDisplay);
     await page.screenshot({ path: path.join(evidenceDir, "saved.png"), fullPage: true });
     writeFileSync(path.join(evidenceDir, "saved.aria.txt"), redactToken(await page.locator("body").ariaSnapshot()));
 
     const token = new URL(page.url()).pathname.split("/")[2];
-    const snapshotResponse = await page.request.get(`/api/events/${token}`);
-    if (!snapshotResponse.ok()) {
-      throw new Error(`Snapshot read returned ${snapshotResponse.status()}.`);
-    }
-    const snapshot = await snapshotResponse.json();
-    const shares = snapshot.expenses?.[0]?.shares ?? [];
-    const amounts = shares.map((share) => share.amountMinor).sort((left, right) => right - left);
-    if (amounts[0] !== 1001 || amounts[1] !== 1000) {
-      throw new Error(`Stored shares were ${JSON.stringify(amounts)}, expected 1001 and 1000.`);
-    }
-    if (snapshot.event) {
+    const readSnapshot = async () => {
+      const response = await page.request.get(`/api/events/${token}`);
+      if (!response.ok()) {
+        throw new Error(`Snapshot read returned ${response.status()}.`);
+      }
+      const snapshot = await response.json();
+      const names = new Map(snapshot.participants.map(({ id, name }) => [id, name]));
+      expect(snapshot.expenses[0].shares.map(({ participantId, amountMinor }) =>
+        [names.get(participantId), amountMinor],
+      )).toEqual([["Mia", 1001], ["Noah", 1000]]);
       snapshot.event.token = "[redacted]";
-    }
+      return snapshot;
+    };
+    const snapshot = await readSnapshot();
     writeFileSync(path.join(evidenceDir, "snapshot.json"), `${JSON.stringify(snapshot, null, 2)}\n`);
+
+    await page.reload();
+    await disclosure.click();
+    await expect(savedRows).toHaveText(expectedDisplay);
+    await page.getByRole("link", { name: "Edit Dinner" }).click();
+    await expect(previewRows).toHaveText(expectedDisplay);
+    await page.getByLabel("What was it?").fill("Dinner and dessert");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await activity.getByText("Dinner and dessert", { exact: true }).waitFor();
+    await expect(savedRows).toHaveText(expectedDisplay);
+    await readSnapshot();
+
     writeFileSync(
       path.join(evidenceDir, "run.txt"),
       [
@@ -241,8 +254,9 @@ async function driveRecordExpense() {
         "entry Add the first expense",
         "title Verify weekend",
         "amount 20.01 AUD",
-        "preview $10.01 and $10.00",
-        "stored-shares 1001 and 1000",
+        "preview Mia $10.01, Noah $10.00",
+        "stored shares Mia 1001, Noah 1000",
+        "same split after reload and description edit",
         `git ${state.gitHead}`,
         "",
       ].join("\n"),

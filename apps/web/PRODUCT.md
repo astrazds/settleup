@@ -66,7 +66,8 @@ finance product or a money-transfer service.
   weights, itemization, or manually entered shares.
 - Money crosses the API as integer minor units. Every cent is assigned
   deterministically, and remainder cents are visibly allocated from top to
-  bottom in the submitted participant order.
+  bottom in the submitted participant order. The saved split and edit form
+  preserve that order.
 - The server recomputes and returns the complete snapshot after each
   transactional mutation. The browser does not author ledger balances.
 - Settlement presents one next suggested payment at a time. Payments happen
