@@ -46,8 +46,10 @@ finance product or a money-transfer service.
   The interface may already be open on several phones or browser tabs.
 - The server snapshot is authoritative. Live change notifications cause the
   client to refetch it. An open form retains its draft and pauses saving when
-  the event changes. **Load latest** replaces the draft with current values
-  before the person continues. New forms reset to their current defaults.
+  the event changes or the server rejects a save based on an older version.
+  **Load latest** replaces the draft when current values are available. If
+  loading fails, the draft stays visible and **Load latest** remains available.
+  New forms reset to their current defaults.
 - Previously loaded details can remain visible when a device goes offline, but
   changes require a connection. The event is not kept as an offline or
   persistent browser ledger.

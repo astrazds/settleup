@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 
 import { ExpenseForm } from "../components/expense-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, createExpense } from "../lib/api";
+import { createExpense } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readExpenseSubmission } from "../lib/form-data";
 import type { Route } from "./+types/expense-new";
 
@@ -20,7 +21,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/expenses`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -33,7 +34,7 @@ export default function NewExpense() {
       description="Choose who paid and who shared it."
       title="Add expense"
     >
-      <ExpenseForm actionError={actionData?.error} submitLabel="Add expense" />
+      <ExpenseForm actionFailure={actionData} submitLabel="Add expense" />
     </RouteDialog>
   );
 }

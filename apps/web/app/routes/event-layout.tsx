@@ -4,7 +4,6 @@ import {
   useEffect,
   useEffectEvent,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -17,7 +16,7 @@ import {
 } from "react-router";
 
 import { Brand } from "../components/brand";
-import { EventProvider, type EventContextValue } from "../components/event-context";
+import { EventProvider, type EventLoad } from "../components/event-context";
 import { ShareIcon } from "../components/icons";
 import { ApiError, getEvent } from "../lib/api";
 import { useEventStream } from "../lib/use-event-stream";
@@ -26,7 +25,10 @@ import type { Route } from "./+types/event-layout";
 
 let activeSnapshot: EventSnapshot | undefined;
 
-export async function clientLoader({ params, request }: Route.ClientLoaderArgs) {
+export async function clientLoader({
+  params,
+  request,
+}: Route.ClientLoaderArgs): Promise<EventLoad> {
   const { token } = params;
   if (!token) {
     throw new Error("Event token is missing.");
@@ -78,7 +80,8 @@ function navClassName({ isActive }: { isActive: boolean }) {
 }
 
 export default function EventLayout() {
-  const { snapshot, refreshFailed } = useLoaderData<typeof clientLoader>();
+  const lastLoad = useLoaderData<typeof clientLoader>();
+  const { snapshot, refreshFailed } = lastLoad;
   const location = useLocation();
   const revalidator = useRevalidator();
   const [shareMessage, setShareMessage] = useState("");
@@ -121,13 +124,6 @@ export default function EventLayout() {
     version: snapshot.event.version,
     revalidate,
   });
-  const context = useMemo<EventContextValue>(
-    () => ({
-      snapshot,
-      streamStatus: stream.status,
-    }),
-    [snapshot, stream.status],
-  );
 
   useEffect(() => {
     if (!sectionKey || previousSectionKey.current === sectionKey) {
@@ -265,7 +261,7 @@ export default function EventLayout() {
           id="main-content"
           tabIndex={-1}
         >
-          <EventProvider value={context}>
+          <EventProvider value={lastLoad}>
             <Outlet />
           </EventProvider>
         </main>

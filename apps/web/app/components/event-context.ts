@@ -1,17 +1,15 @@
 import type { EventSnapshot } from "@settleup/contracts";
 import { createContext, useContext } from "react";
 
-import type { EventStreamStatus } from "../lib/use-event-stream";
-
-export interface EventContextValue {
+export interface EventLoad {
   snapshot: EventSnapshot;
-  streamStatus: EventStreamStatus;
+  refreshFailed: boolean;
 }
 
-const EventContext = createContext<EventContextValue | null>(null);
+const EventContext = createContext<EventLoad | null>(null);
 export const EventProvider = EventContext.Provider;
 
-export function useEventContext(): EventContextValue {
+export function useEventContext(): EventLoad {
   const context = useContext(EventContext);
   if (!context) {
     throw new Error("Event components must be inside EventProvider.");

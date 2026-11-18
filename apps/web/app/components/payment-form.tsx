@@ -12,18 +12,19 @@ import {
   getParticipantPreference,
   setParticipantPreference,
 } from "../lib/participant-preference";
+import type { EventFormFailure } from "../lib/event-form-action";
 import { useAcceptedDraft } from "../lib/use-accepted-draft";
 import styles from "../styles/app.module.css";
 
 interface PaymentFormProps {
-  actionError?: string;
+  actionFailure?: EventFormFailure;
   payment?: SettlementPayment;
   submitLabel: string;
   suggestion?: SettlementSuggestion | null;
 }
 
 export function PaymentForm({
-  actionError,
+  actionFailure,
   payment,
   submitLabel,
   suggestion,
@@ -50,7 +51,10 @@ export function PaymentForm({
   const [to, setTo] = useState(initialTo);
   const isBusy = navigation.state !== "idle";
   const currentRevision = paymentRevision(payment);
-  const draft = useAcceptedDraft(snapshot.event.version, currentRevision);
+  const draft = useAcceptedDraft(currentRevision, actionFailure, () => {
+    setFrom(initialFrom);
+    setTo(initialTo);
+  });
 
   return (
     <Form className={styles.form} key={draft.formKey} method="post">
@@ -148,20 +152,14 @@ export function PaymentForm({
         </p>
       </div>
 
-      {actionError ? (
+      {actionFailure?.kind === "error" ? (
         <p aria-live="polite" className={styles.formError} role="alert">
-          {actionError}
+          {actionFailure.message}
         </p>
       ) : null}
 
       {draft.hasConflict ? (
-        <EditConflict
-          onReload={() => {
-            draft.acceptLatest();
-            setFrom(payment?.from ?? initialFrom);
-            setTo(payment?.to ?? initialTo);
-          }}
-        />
+        <EditConflict isLoading={draft.isLoadingLatest} onReload={draft.loadLatest} />
       ) : null}
 
       {snapshot.participants.length < 2 ? (

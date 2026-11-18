@@ -80,11 +80,12 @@ online event trigger router revalidation. Mutation actions validate
 the response and let the router reload its authoritative snapshot.
 
 Each form owns its editable fields. `useAcceptedDraft` remembers the event
-version and entity revision the user accepted. A newer loader snapshot pauses
-submission without replacing the draft. Choosing **Load latest** accepts the
-current version and remounts uncontrolled fields; each form explicitly resets
-its controlled fields. Submission readers return the command together with
-that accepted version. Delete actions use the current loader version at
+version and entity revision the user accepted. A newer loader snapshot or a
+stale save response pauses submission and preserves the draft. Choosing
+**Load latest** accepts the current version if already loaded or revalidates
+the event first. Acceptance remounts uncontrolled fields, and each form
+resets its controlled fields. Submission readers return the command together
+with that accepted version. Delete actions use the current loader version at
 confirmation time.
 
 The API validates event access when an SSE subscription opens. The broker sends

@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 import { useEventContext } from "../components/event-context";
 import { PaymentForm } from "../components/payment-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, createPayment } from "../lib/api";
+import { createPayment } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readPaymentSubmission } from "../lib/form-data";
 import type { Route } from "./+types/payment-new";
 
@@ -20,7 +21,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/settle`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -35,7 +36,7 @@ export default function NewPayment() {
       title="Record payment"
     >
       <PaymentForm
-        actionError={actionData?.error}
+        actionFailure={actionData}
         submitLabel="Record payment"
         suggestion={snapshot.settlementSuggestion}
       />

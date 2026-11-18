@@ -3,7 +3,8 @@ import { redirect, useActionData } from "react-router";
 import { useEventContext } from "../components/event-context";
 import { PaymentForm } from "../components/payment-form";
 import { RouteDialog } from "../components/route-dialog";
-import { actionErrorMessage, updatePayment } from "../lib/api";
+import { updatePayment } from "../lib/api";
+import { eventFormFailure } from "../lib/event-form-action";
 import { readPaymentSubmission } from "../lib/form-data";
 import styles from "../styles/app.module.css";
 import type { Route } from "./+types/payment-edit";
@@ -22,7 +23,7 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
     );
     return redirect(`/e/${encodeURIComponent(token)}/settle`);
   } catch (error) {
-    return { error: actionErrorMessage(error) };
+    return eventFormFailure(error, formData);
   }
 }
 
@@ -39,7 +40,7 @@ export default function EditPayment({ params }: Route.ComponentProps) {
     >
       {payment ? (
         <PaymentForm
-          actionError={actionData?.error}
+          actionFailure={actionData}
           payment={payment}
           submitLabel="Save changes"
         />
