@@ -35,7 +35,7 @@ export const meta: MetaFunction = () => [
   { property: "og:image", content: "/og.png" },
   {
     property: "og:image:alt",
-    content: "The SettleUp Session Cut landing page and private event form.",
+    content: "SettleUp landing page with the Quick slip form for starting a private event.",
   },
   { name: "twitter:card", content: "summary_large_image" },
   { name: "twitter:title", content: "SettleUp" },
@@ -46,12 +46,12 @@ export const meta: MetaFunction = () => [
   { name: "twitter:image", content: "/og.png" },
   {
     name: "twitter:image:alt",
-    content: "The SettleUp Session Cut landing page and private event form.",
+    content: "SettleUp landing page with the Quick slip form for starting a private event.",
   },
   { name: "robots", content: "noindex, nofollow, noarchive" },
   { name: "referrer", content: "no-referrer" },
-  { name: "theme-color", content: "#e0b12e", media: "(prefers-color-scheme: light)" },
-  { name: "theme-color", content: "#0b0b0b", media: "(prefers-color-scheme: dark)" },
+  { name: "theme-color", content: "#f4f1e7", media: "(prefers-color-scheme: light)" },
+  { name: "theme-color", content: "#181c18", media: "(prefers-color-scheme: dark)" },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {

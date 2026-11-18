@@ -7,19 +7,24 @@
 .masthead {
   width: min(100%, var(--content));
   margin-inline: auto;
-  padding: 20px 32px;
+  padding: 18px 32px;
+  border-bottom: 1px solid var(--border);
 }
 
 .main {
-  width: min(100%, 584px);
-  margin: 20px auto 0;
+  width: min(100%, var(--content));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(32px, 6vw, 76px);
+  margin: clamp(40px, 7vw, 96px) auto 0;
   padding: 0 32px 32px;
 }
 
 .heroTitle {
   margin: 0;
   font-family: "Session Display", sans-serif;
-  font-size: 4rem;
+  font-size: clamp(4rem, 6.8vw, 5.75rem);
   font-weight: 400;
   line-height: 1.05;
   text-wrap: balance;
@@ -30,14 +35,28 @@
   color: var(--ink-muted);
 }
 
+.slip {
+  padding: clamp(20px, 3vw, 34px);
+  border-top: var(--slip-edge);
+  border-bottom: var(--slip-end);
+  background: var(--surface-raised);
+}
+
+.slip h2 {
+  margin: 0 0 18px;
+  font-size: 1.625rem;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
 .createForm {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
 .field {
   display: grid;
-  gap: 8px;
+  gap: 5px;
 }
 
 .field label {
@@ -50,7 +69,7 @@
   min-height: 48px;
   padding: 11px 12px;
   border: 1px solid var(--border-strong);
-  border-radius: 0;
+  border-radius: var(--control-radius);
   color: var(--ink);
   background: var(--surface-raised);
   transition: background-color 140ms ease;
@@ -89,7 +108,7 @@
   margin-top: 4px;
   padding: 11px 16px;
   border: 1px solid var(--accent-field);
-  border-radius: 0;
+  border-radius: var(--control-radius);
   color: var(--button-ink);
   background: var(--accent-field);
   cursor: pointer;
@@ -113,21 +132,27 @@
 }
 
 .footer {
-  width: min(100%, 584px);
+  width: min(100%, var(--content));
   margin-inline: auto;
   padding: 0 32px 32px;
   color: var(--ink-muted);
   font-size: 0.8125rem;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   .masthead {
     padding: 14px 20px;
   }
 
   .main {
-    margin-top: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 24px;
     padding-inline: 20px;
+  }
+
+  .heroLead {
+    margin: 10px 0 0;
   }
 
   .heroTitle {

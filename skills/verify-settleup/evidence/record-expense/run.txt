@@ -1,7 +1,10 @@
 feature record-expense
-entry Add the first expense
+entry Inline expense form
 title Verify weekend
 amount 20.01 AUD
-preview $10.01 and $10.00
-stored-shares 1001 and 1000
-git 3b057f59133811a74dbac67e40c6eb4b43c5a1eb
+preview Mia $10.01, Noah $10.00
+stored shares Mia 1001, Noah 1000
+same split after reload and description edit
+git dc5bc4ff6a8eddb030cc5cd2bba80a88e2a57f3f
+checkout Working tree with Quick slip and Carbon Copy changes
+screenshot style apps/web/tests/e2e/screenshot.css

@@ -29,7 +29,7 @@ export default function People() {
 
   return (
     <>
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.peopleSlip}`}>
         <div className={styles.pageHeader}>
           <div className={styles.pageHeaderCopy}>
             <h2 className={styles.pageTitle}>

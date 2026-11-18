@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme/settleup-icon.png" width="112" height="112" alt="SettleUp Settle Cut icon">
+  <img src="docs/assets/readme/settleup-icon.png" width="112" height="112" alt="SettleUp Carbon Copy icon">
 </p>
 
 <h1 align="center">SettleUp</h1>
@@ -76,7 +76,7 @@ flowchart LR
   P --> S
 ```
 
-Add and edit tasks are URL-addressable sheets. Live updates cause the browser
+Expenses can be entered directly on the ledger. Add and edit forms also have direct URLs. Live updates cause the browser
 to fetch the latest event snapshot. If the event changes while you edit, your
 draft stays visible and saving pauses. Choose **Load latest** to reset the form
 to the current event before continuing.

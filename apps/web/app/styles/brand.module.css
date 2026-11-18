@@ -17,9 +17,28 @@
   flex: 0 0 30px;
 }
 
-.mark svg {
-  width: 100%;
-  height: 100%;
+.reversePrint {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .carbonCopy {
+    display: none;
+  }
+
+  .reversePrint {
+    display: inline;
+  }
+}
+
+@media (forced-colors: active) {
+  .mark {
+    forced-color-adjust: none;
+    --logo-ink: CanvasText;
+    --logo-paper: Canvas;
+    --logo-rear: Highlight;
+    --logo-remainder: LinkText;
+  }
 }
 
 .wordmark {
@@ -55,13 +74,5 @@
     width: 29px;
     height: 29px;
     flex-basis: 29px;
-  }
-}
-
-@media (forced-colors: active) {
-  .mark {
-    --logo-field: ButtonText;
-    --logo-paper: ButtonFace;
-    --logo-remainder: Highlight;
   }
 }

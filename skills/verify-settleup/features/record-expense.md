@@ -4,7 +4,7 @@ Record an expense lets a person enter a cost, see the exact equal split before s
 
 ## Sub-features
 
-- `expense-open` opens the new-expense sheet from the empty state.
+- `expense-open` shows the inline expense form in the ledger.
 - `expense-preview` shows the exact split, including a remainder cent, before save.
 - `expense-save` stores the expense and shows it in Recent activity.
 - `expense-saved-split` opens the saved exact split.
@@ -12,8 +12,7 @@ Record an expense lets a person enter a cost, see the exact equal split before s
 ## How to get to it (user POV)
 
 - Create an event, add a second person from **People**, then open **Expenses**.
-- Choose **Add the first expense**.
-- On an event that already has an expense, choose **Add expense**.
+- Use the expense form above or beside recent activity.
 
 ## Driving it with Playwright
 
@@ -25,9 +24,9 @@ Preconditions:
 
 - **Create the event.** From `/`, enter the title, name, and currency. Run `page.getByLabel("What are you splitting?").fill("Verify weekend")`, `page.getByLabel("Your name").fill("Mia")`, `page.getByLabel("Currency").selectOption("AUD")`, and `page.getByRole("button", { name: "Create private event" }).click()`. The heading reads `Verify weekend`.
 - **Add Noah.** Open **People**, then **Add person**. Run `page.getByRole("link", { name: "People" }).click()`, `page.getByRole("link", { name: "Add person" }).click()`, `page.getByLabel("Name").fill("Noah")`, and `page.getByRole("button", { name: "Add person" }).click()`. The text `Noah` is visible.
-- **Open the first expense.** Go to **Expenses** and choose **Add the first expense**. Run `page.getByRole("link", { name: "Expenses" }).click()` and `page.getByRole("link", { name: "Add the first expense" }).click()`. A dialog is visible.
-- **Enter the cost.** Type the description and amount. Run `page.getByLabel("What was it?").fill("Dinner")` and `page.getByLabel("Amount").fill("20.01")`. **Exact split** shows Mia with `$10.01` and then Noah with `$10.00`.
-- **Save.** Choose **Add expense**. Run `page.getByRole("button", { name: "Add expense" }).click()`. **Recent activity** shows `Dinner`.
+- **Open the expense form.** Go to **Expenses**. The form is already visible.
+- **Enter the cost.** Type the description and amount. Run `page.getByLabel("What was it?").fill("Dinner")` and `page.getByLabel("Amount").fill("20.01")`. Open **Preview exact split** to see Mia with `$10.01` and then Noah with `$10.00`.
+- **Save.** Choose **Save expense**. Run `page.getByRole("button", { name: "Save expense" }).click()`. **Recent activity** shows `Dinner`.
 - **Open the saved split.** Choose **See exact split**. Run `page.getByText("See exact split", { exact: true }).click()`. The split matches the preview in names, amounts, and order.
 - **Confirm the stored shares.** Read the event snapshot. Run `page.request.get("/api/events/<token>")` using the token from the expense URL. The shares list Mia with 1001 cents and then Noah with 1000 cents.
 - **Reload and edit.** Reload the page and open the saved split. Open **Edit Dinner** and check that the preview still matches. Change the description to `Dinner and dessert` and select **Save changes**. Confirm that both the saved split and API response still list Mia and Noah in the same order with the same amounts.
@@ -37,5 +36,4 @@ Preconditions:
 
 - The amount preview appears only after the amount parses. Assert **Exact split** after filling `20.01`, not before.
 - Both people are included by default. The extra cent is shown on the first person in the list, Mia, as `$10.01`.
-- **Add expense** in the page header is absent until the first expense exists. The empty state entry is **Add the first expense**.
 - A preview without the saved snapshot does not prove the ledger stored the shares.

@@ -1,42 +1,42 @@
 {
   "event": {
-    "id": "1d1bffc4-b2cf-4c7e-83bc-44c159dbdc58",
+    "id": "47097d93-58af-46f9-9f65-8d1f76e1b16f",
     "title": "Verify weekend",
     "currency": "AUD",
-    "createdAt": "2026-11-14T10:00:16.313Z",
-    "expiresAt": "2026-11-17T10:00:16.313Z",
-    "cleanupAfter": "2026-11-19T10:00:16.313Z",
+    "createdAt": "2026-11-18T05:04:07.570Z",
+    "expiresAt": "2026-11-21T05:04:07.570Z",
+    "cleanupAfter": "2026-11-23T05:04:07.570Z",
     "version": 3,
     "token": "[redacted]"
   },
   "participants": [
     {
-      "id": "d3316d20-6336-4b96-ab2a-db03ba57ad7f",
+      "id": "c04e3e39-23d2-446d-aaa3-a2220db39864",
       "name": "Mia",
       "sortOrder": 0
     },
     {
-      "id": "874eb09f-e66d-4352-b12f-ae11904e1986",
+      "id": "82924b90-1963-462b-91ec-4c3bdc9714a7",
       "name": "Noah",
       "sortOrder": 1
     }
   ],
   "expenses": [
     {
-      "id": "fbef5e89-d0dd-4bbd-8706-fbbef783f878",
+      "id": "255e0501-91dd-4812-9c56-8453d4c77b02",
       "description": "Dinner",
       "amountMinor": 2001,
-      "payerId": "d3316d20-6336-4b96-ab2a-db03ba57ad7f",
-      "createdAt": "2026-11-14T10:00:17.794Z",
-      "updatedAt": "2026-11-14T10:00:17.794Z",
+      "payerId": "c04e3e39-23d2-446d-aaa3-a2220db39864",
+      "createdAt": "2026-11-18T05:04:08.205Z",
+      "updatedAt": "2026-11-18T05:04:08.205Z",
       "shares": [
         {
-          "participantId": "874eb09f-e66d-4352-b12f-ae11904e1986",
-          "amountMinor": 1000
+          "participantId": "c04e3e39-23d2-446d-aaa3-a2220db39864",
+          "amountMinor": 1001
         },
         {
-          "participantId": "d3316d20-6336-4b96-ab2a-db03ba57ad7f",
-          "amountMinor": 1001
+          "participantId": "82924b90-1963-462b-91ec-4c3bdc9714a7",
+          "amountMinor": 1000
         }
       ]
     }
@@ -44,21 +44,21 @@
   "payments": [],
   "balances": [
     {
-      "participantId": "d3316d20-6336-4b96-ab2a-db03ba57ad7f",
+      "participantId": "c04e3e39-23d2-446d-aaa3-a2220db39864",
       "paidMinor": 2001,
       "owedMinor": 1001,
       "netMinor": 1000
     },
     {
-      "participantId": "874eb09f-e66d-4352-b12f-ae11904e1986",
+      "participantId": "82924b90-1963-462b-91ec-4c3bdc9714a7",
       "paidMinor": 0,
       "owedMinor": 1000,
       "netMinor": -1000
     }
   ],
   "settlementSuggestion": {
-    "from": "874eb09f-e66d-4352-b12f-ae11904e1986",
-    "to": "d3316d20-6336-4b96-ab2a-db03ba57ad7f",
+    "from": "82924b90-1963-462b-91ec-4c3bdc9714a7",
+    "to": "c04e3e39-23d2-446d-aaa3-a2220db39864",
     "amountMinor": 1000
   }
 }

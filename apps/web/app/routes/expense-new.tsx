@@ -1,6 +1,5 @@
 import { redirect, useActionData } from "react-router";
 
-
 import { ExpenseForm } from "../components/expense-form";
 import { RouteDialog } from "../components/route-dialog";
 import { createExpense } from "../lib/api";
@@ -14,11 +13,14 @@ export async function clientAction({ params, request }: Route.ClientActionArgs) 
 
   try {
     const { command, expectedVersion } = readExpenseSubmission(formData);
-    await createExpense(
+    const snapshot = await createExpense(
       token,
       command,
       { expectedVersion },
     );
+    if (formData.get("entry") === "inline") {
+      return { savedVersion: snapshot.event.version, description: command.description };
+    }
     return redirect(`/e/${encodeURIComponent(token)}/expenses`);
   } catch (error) {
     return eventFormFailure(error, formData);
@@ -34,7 +36,10 @@ export default function NewExpense() {
       description="Choose who paid and who shared it."
       title="Add expense"
     >
-      <ExpenseForm actionFailure={actionData} submitLabel="Add expense" />
+      <ExpenseForm
+        actionFailure={actionData && "kind" in actionData ? actionData : undefined}
+        submitLabel="Add expense"
+      />
     </RouteDialog>
   );
 }

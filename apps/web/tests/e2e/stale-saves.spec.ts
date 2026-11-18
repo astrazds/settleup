@@ -149,6 +149,43 @@ for (const editor of editors) {
   }
 }
 
+test("the inline expense slip recovers from a stale save", async ({ page }) => {
+  const { token, eventApi, before, mia } = await createFixture(page);
+  await page.route(`**${eventApi}/stream`, (route) => route.abort());
+  await page.goto(`/e/${token}/expenses`);
+  const form = page.getByRole("form", { name: "Add expense" });
+  const description = form.getByLabel("What was it?");
+  const amount = form.getByLabel("Amount", { exact: true });
+  const save = form.getByRole("button", { name: "Save expense" });
+  const loadLatest = form.getByRole("button", { name: "Load latest" });
+
+  await description.fill("Train tickets");
+  await amount.fill("12.34");
+  const changed = await page.request.patch(`${eventApi}/participants/${mia.id}`, {
+    data: { name: "Mia updated" },
+    headers: { "If-Match": `"v${before.event.version}"` },
+  });
+  expect(changed.status()).toBe(200);
+
+  const rejected = page.waitForResponse((response) =>
+    new URL(response.url()).pathname === `${eventApi}/expenses` && response.status() === 412,
+  );
+  await save.click();
+  await rejected;
+  await expect(loadLatest).toBeVisible();
+  await expect(description).toHaveValue("Train tickets");
+  await expect(amount).toHaveValue("12.34");
+  await expect(save).toBeDisabled();
+
+  await loadLatest.click();
+  await expect(loadLatest).toHaveCount(0);
+  await expect(description).toHaveValue("");
+  await description.fill("Train tickets");
+  await amount.fill("12.34");
+  await save.click();
+  await expect(page.getByLabel("Recent activity").getByText("Train tickets", { exact: true })).toBeVisible();
+});
+
 test("keeps a save error when an expense payer has been removed", async ({ page }) => {
   const { token, eventApi } = await createFixture(page);
   const added = await page.request.post(`${eventApi}/participants`, { data: { name: "Ivy" } });

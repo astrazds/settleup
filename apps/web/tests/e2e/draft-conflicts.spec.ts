@@ -26,13 +26,14 @@ for (const editor of ["expense", "payment"] as const) {
     if (!expense) throw new Error("Missing fixture expense.");
 
     await page.goto(`/e/${token}/${editor === "expense" ? `expenses/${expense.id}/edit` : "settle/new"}`);
-    await expect(page.getByRole("dialog")).toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
     await expect(page.getByTitle("Live updates connected")).toBeVisible();
-    await page.getByLabel("Amount", { exact: true }).fill("12.34");
+    await dialog.getByLabel("Amount", { exact: true }).fill("12.34");
     if (editor === "expense") {
-      await page.getByLabel("What was it?").fill("My unsaved description");
-      await page.getByLabel("Noah", { exact: true }).focus();
-      await page.getByLabel("Noah", { exact: true }).press("Space");
+      await dialog.getByLabel("What was it?").fill("My unsaved description");
+      await dialog.getByLabel("Noah", { exact: true }).focus();
+      await dialog.getByLabel("Noah", { exact: true }).press("Space");
     }
 
     const changed = await page.request.patch(`/api/events/${token}/expenses/${expense.id}`, {
@@ -41,33 +42,33 @@ for (const editor of ["expense", "payment"] as const) {
     });
     expect(changed.status()).toBe(200);
     const after = eventSnapshotSchema.parse(await changed.json());
-    const submit = page.getByRole("button", { name: editor === "expense" ? "Save changes" : "Record payment" });
-    const reload = page.getByRole("button", { name: "Load latest" });
+    const submit = dialog.getByRole("button", { name: editor === "expense" ? "Save changes" : "Record payment" });
+    const reload = dialog.getByRole("button", { name: "Load latest" });
     await expect(reload).toBeVisible();
     await expect(submit).toBeDisabled();
-    await expect(page.getByLabel("Amount", { exact: true })).toHaveValue("12.34");
-    await expect(page.locator('input[name="eventVersion"]')).toHaveValue(String(before.event.version));
+    await expect(dialog.getByLabel("Amount", { exact: true })).toHaveValue("12.34");
+    await expect(dialog.locator('input[name="eventVersion"]')).toHaveValue(String(before.event.version));
 
     if (editor === "expense") {
-      await expect(page.getByLabel("What was it?")).toHaveValue("My unsaved description");
-      await expect(page.getByLabel("Noah", { exact: true })).not.toBeChecked();
+      await expect(dialog.getByLabel("What was it?")).toHaveValue("My unsaved description");
+      await expect(dialog.getByLabel("Noah", { exact: true })).not.toBeChecked();
     }
 
     await reload.click();
     await expect(reload).not.toBeVisible();
     await expect(submit).toBeEnabled();
-    await expect(page.locator('input[name="eventVersion"]')).toHaveValue(String(after.event.version));
+    await expect(dialog.locator('input[name="eventVersion"]')).toHaveValue(String(after.event.version));
     if (editor === "expense") {
-      await expect(page.getByLabel("What was it?")).toHaveValue("Dinner updated");
-      await expect(page.getByLabel("Amount", { exact: true })).toHaveValue("20.01");
-      await expect(page.getByLabel("Paid by")).toHaveValue(noah.id);
-      await expect(page.getByLabel("Noah", { exact: true })).toBeChecked();
+      await expect(dialog.getByLabel("What was it?")).toHaveValue("Dinner updated");
+      await expect(dialog.getByLabel("Amount", { exact: true })).toHaveValue("20.01");
+      await expect(dialog.getByLabel("Paid by")).toHaveValue(noah.id);
+      await expect(dialog.getByLabel("Noah", { exact: true })).toBeChecked();
     } else {
-      await expect(page.getByLabel("Amount", { exact: true })).toHaveValue("10.01");
-      await expect(page.getByLabel("From", { exact: true })).toHaveValue(mia.id);
-      await expect(page.getByLabel("To", { exact: true })).toHaveValue(noah.id);
+      await expect(dialog.getByLabel("Amount", { exact: true })).toHaveValue("10.01");
+      await expect(dialog.getByLabel("From", { exact: true })).toHaveValue(mia.id);
+      await expect(dialog.getByLabel("To", { exact: true })).toHaveValue(noah.id);
     }
     await submit.click();
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
   });
 }
