@@ -59,12 +59,13 @@
     "preview:web": "npm run preview --workspace @settleup/web",
     "check:design-doc": "node --test scripts/check-design-doc.test.mjs && node scripts/check-design-doc.mjs",
     "check:commit-signature": "node --test scripts/check-pr-body.test.mjs",
+    "check:minimatch": "node --test scripts/check-minimatch.test.mjs && node scripts/check-minimatch.mjs",
     "check:prepare": "npm run build:contracts && npm run typegen --workspace @settleup/web",
     "check:types": "npm run typecheck:contracts && npm run typecheck:server && npm exec --workspace @settleup/web -- tsc --noEmit",
     "check:lint": "eslint src/server packages/contracts/src apps/web/app apps/web/tests apps/web/*.ts",
     "check:tests": "npm run test:contracts && npm run test:server && npm run test:web",
     "check:build": "npm run clean:server && tsc -p tsconfig.server.json && npm run build --workspace @settleup/web",
-    "check:code": "npm run check:design-doc && npm run check:commit-signature && npm run check:prepare && npm run check:lint && npm run check:types && npm run check:tests && npm run check:build"
+    "check:code": "npm run check:design-doc && npm run check:commit-signature && npm run check:minimatch && npm run check:prepare && npm run check:lint && npm run check:types && npm run check:tests && npm run check:build"
   },
   "dependencies": {
     "@settleup/contracts": "0.1.0",
