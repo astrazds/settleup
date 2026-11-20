@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: mise run install
 
+      - name: Reject stylesheet lengths in the design doc
+        run: npm run check:design-doc
+
       - name: Verify code and builds
         run: mise run check:code
 
