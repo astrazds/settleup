@@ -15,8 +15,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Reject an agent footer in the pull request body
+      - name: Reject an agent footer or Cursor commit trailer
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node scripts/check-pr-body.mjs

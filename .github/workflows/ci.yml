@@ -26,6 +26,9 @@ jobs:
       - name: Reject stylesheet lengths in the design doc
         run: npm run check:design-doc
 
+      - name: Reject a Cursor agent commit trailer
+        run: npm run check:commit-signature
+
       - name: Verify code and builds
         run: mise run check:code
 
