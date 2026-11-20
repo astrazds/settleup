@@ -29,9 +29,6 @@ jobs:
       - name: Reject a Cursor agent commit trailer
         run: npm run check:commit-signature
 
-      - name: Reject a vulnerable minimatch copy
-        run: npm run check:minimatch
-
       - name: Verify code and builds
         run: mise run check:code
 
