@@ -19,3 +19,13 @@ record findings in the configured CodeWiki KB. Pass the KB explicitly. Use
 `repositories/settleup/wiki/` for durable knowledge and
 `repositories/settleup/chronicle/` for working notes. Verify cited source
 paths against the checkout before relying on a note.
+
+## Rules these checks enforce
+
+| Rule | What enforces it |
+| --- | --- |
+| `apps/web/DESIGN.md` does not copy `px`, `rem`, `em`, or `clamp` values. Put a measurement in the CSS module named in that file's Implementation owners table. | `npm run check:design-doc` |
+| A pull request body does not contain the footer marker `CURSOR_AGENT_PR_BODY`. | `node scripts/check-pr-body.mjs` on pull requests, with `PR_BODY` set |
+| A commit in the pull request does not contain `Co-authored-by: Cursor Agent <cursoragent@cursor.com>`. Commit as Andrejs Strazds. | `node scripts/check-pr-body.mjs` on pull requests, with `BASE_SHA` set to the base commit |
+
+`mise run check:code` runs the design doc check and the commit-signature tests. The pull request workflow runs `node scripts/check-pr-body.mjs` against the body and the commits.

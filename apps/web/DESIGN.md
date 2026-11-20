@@ -24,7 +24,7 @@ typography:
     fontFamily: '"Session Sans", Arial, sans-serif'
     fontWeight: 600
 rounded:
-  control: "4px"
+  control: "var(--control-radius)"
 components:
   button-primary:
     backgroundColor: "{colors.teal}"
@@ -71,7 +71,7 @@ the browser color scheme and uses system colors in forced-colors mode.
 
 ## Layout
 
-The 1100px workspace has a ruled masthead, event title, metadata and three peer tabs. On Expenses, total spent sits alongside the event title. Event metadata wraps, and long names can span multiple lines. Keep native document scrolling.
+The workspace column (`--content` in [global.css](app/styles/global.css)) has a ruled masthead, event title, metadata and three peer tabs. On Expenses, total spent sits alongside the event title. Event metadata wraps, and long names can span multiple lines. Keep native document scrolling.
 
 On the landing page, the promise sits beside the create-event slip on desktop. On phones the form follows the short introduction. Place the private-link and three-day availability information beneath the submit button.
 
@@ -89,10 +89,12 @@ The People slip holds the participant count, add action and roster. Keep names a
 
 ## Forms and dialogs
 
-Inputs use 4px corners, a 1px border, and a 48px minimum height. Primary
+Inputs use `--control-radius`, a solid border, and the field height in
+[home.module.css](app/styles/home.module.css) and
+[app.module.css](app/styles/app.module.css). Primary
 buttons use a solid teal rectangle with a white label. Destructive confirmation
 buttons use brick. Secondary actions use text or a plain outlined button.
-Controls retain a 44px minimum target and visible focus.
+Controls retain the `--tap` target from [global.css](app/styles/global.css) and visible focus.
 
 Expense forms retain payer choice, included-person checkboxes, exact split
 preview, remainder explanation, validation, and version-conflict handling.
@@ -122,7 +124,7 @@ Dark mode applies to the landing form and all event pages. Semantic paper,
 ink, divider, banner, error, and positive-balance tokens adapt together.
 Forced colors use platform colors for active tabs, primary and destructive
 buttons, the brand mark, and checked controls. Keyboard focus, form labels,
-error announcements, reduced motion, 320px layouts, enlarged text, and short
+error announcements, reduced motion, the narrow layouts in [PRODUCT.md](PRODUCT.md), enlarged text, and short
 viewports remain part of the browser verification contract.
 
 Use [CONTRIBUTING.md](../../CONTRIBUTING.md#review-visual-changes) for browser
